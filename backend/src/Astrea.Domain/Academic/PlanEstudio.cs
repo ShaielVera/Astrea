@@ -9,6 +9,7 @@ namespace Astrea.Domain.Academic;
 public sealed class PlanEstudio : Entity
 {
     private readonly List<PlanMateria> _materias = [];
+    private readonly List<Correlatividad> _correlatividades = [];
 
     private PlanEstudio()
     {
@@ -38,6 +39,8 @@ public sealed class PlanEstudio : Entity
     public bool Activo { get; private set; }
 
     public IReadOnlyCollection<PlanMateria> Materias => _materias.AsReadOnly();
+
+    public IReadOnlyCollection<Correlatividad> Correlatividades => _correlatividades.AsReadOnly();
 
     public static PlanEstudio Crear(Guid id, Carrera carrera, string codigoVersion, string nombre, DateOnly? vigenciaDesde, DateOnly? vigenciaHasta)
     {
@@ -86,6 +89,99 @@ public sealed class PlanEstudio : Entity
 
         ValidarAnio(anio);
         planMateria.Asignar(anio, cuatrimestre, cargaHorariaSemanal, obligatoria);
+    }
+
+    /// <summary>
+    /// Agrega un requisito para cursar o rendir una materia del plan. Destino y requisito deben pertenecer
+    /// a este plan; no se admiten duplicados ni cadenas circulares entre materias.
+    /// </summary>
+    public Correlatividad AgregarCorrelatividad(
+        Guid id,
+        Guid planMateriaDestinoId,
+        TipoCorrelatividad tipo,
+        Guid? planMateriaRequisitoId,
+        CondicionRequisito condicion,
+        int? grupoAlternativa,
+        string? descripcion)
+    {
+        ValidarMateriaDelPlan(planMateriaDestinoId);
+        if (planMateriaRequisitoId is Guid requisitoId)
+        {
+            ValidarMateriaDelPlan(requisitoId);
+        }
+
+        var correlatividad = new Correlatividad(id, Id, planMateriaDestinoId, tipo, planMateriaRequisitoId, condicion, grupoAlternativa, descripcion);
+
+        if (planMateriaRequisitoId is not null && _correlatividades.Any(existente =>
+                existente.PlanMateriaDestinoId == planMateriaDestinoId
+                && existente.Tipo == tipo
+                && existente.PlanMateriaRequisitoId == planMateriaRequisitoId))
+        {
+            throw new DomainException("Esa materia ya es requisito para este destino.");
+        }
+
+        if (planMateriaRequisitoId is Guid requisito && Requiere(requisito, planMateriaDestinoId))
+        {
+            throw new DomainException("La correlatividad generaría una cadena circular entre materias.");
+        }
+
+        _correlatividades.Add(correlatividad);
+        return correlatividad;
+    }
+
+    public void QuitarCorrelatividad(Guid correlatividadId)
+    {
+        var correlatividad = _correlatividades.SingleOrDefault(existente => existente.Id == correlatividadId)
+            ?? throw new DomainException("La correlatividad no pertenece a este plan.");
+
+        _correlatividades.Remove(correlatividad);
+    }
+
+    public IReadOnlyList<Correlatividad> CorrelatividadesDe(Guid planMateriaDestinoId, TipoCorrelatividad tipo) =>
+        _correlatividades.Where(regla => regla.PlanMateriaDestinoId == planMateriaDestinoId && regla.Tipo == tipo).ToList();
+
+    public VerificacionCorrelatividades VerificarCorrelatividades(
+        Guid planMateriaDestinoId,
+        TipoCorrelatividad tipo,
+        IReadOnlyDictionary<Guid, EstadoMateria> estados)
+    {
+        ValidarMateriaDelPlan(planMateriaDestinoId);
+        return VerificadorCorrelatividades.Verificar(CorrelatividadesDe(planMateriaDestinoId, tipo), estados);
+    }
+
+    /// <summary>Indica si <paramref name="origen"/> exige, directa o indirectamente, a <paramref name="buscada"/>.</summary>
+    private bool Requiere(Guid origen, Guid buscada)
+    {
+        var visitadas = new HashSet<Guid>();
+        var pendientes = new Stack<Guid>([origen]);
+
+        while (pendientes.TryPop(out var actual))
+        {
+            if (actual == buscada)
+            {
+                return true;
+            }
+
+            if (!visitadas.Add(actual))
+            {
+                continue;
+            }
+
+            foreach (var regla in _correlatividades.Where(regla => regla.PlanMateriaDestinoId == actual && regla.PlanMateriaRequisitoId is not null))
+            {
+                pendientes.Push(regla.PlanMateriaRequisitoId!.Value);
+            }
+        }
+
+        return false;
+    }
+
+    private void ValidarMateriaDelPlan(Guid planMateriaId)
+    {
+        if (_materias.All(existente => existente.Id != planMateriaId))
+        {
+            throw new DomainException("La materia no forma parte de este plan.");
+        }
     }
 
     private void ValidarAnio(int anio)

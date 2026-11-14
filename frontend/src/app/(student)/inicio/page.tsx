@@ -5,7 +5,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 
 const modulos: { titulo: string; descripcion: string; href?: string }[] = [
   { titulo: "Plan de estudios", descripcion: "Las materias de cada carrera, año por año.", href: "/plan-de-estudios" },
-  { titulo: "Correlatividades", descripcion: "Qué necesitás para cursar y para rendir cada materia." },
+  { titulo: "Correlatividades", descripcion: "Qué necesitás para cursar y para rendir cada materia.", href: "/correlatividades" },
   { titulo: "Mesas de examen", descripcion: "Llamados, fechas, horarios y tribunales." },
   { titulo: "Mis trámites", descripcion: "Pedí constancias y seguí su estado." },
   { titulo: "Hallazgos", descripcion: "Objetos perdidos encontrados en el instituto." },

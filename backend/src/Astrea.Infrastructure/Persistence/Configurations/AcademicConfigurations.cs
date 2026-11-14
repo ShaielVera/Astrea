@@ -40,6 +40,48 @@ internal sealed class PlanEstudioConfiguration : IEntityTypeConfiguration<PlanEs
         builder.Navigation(plan => plan.Materias)
             .HasField("_materias")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasMany(plan => plan.Correlatividades)
+            .WithOne()
+            .HasForeignKey(correlatividad => correlatividad.PlanEstudioId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(plan => plan.Correlatividades)
+            .HasField("_correlatividades")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+internal sealed class CorrelatividadConfiguration : IEntityTypeConfiguration<Correlatividad>
+{
+    public void Configure(EntityTypeBuilder<Correlatividad> builder)
+    {
+        builder.ToTable("correlatividades");
+        builder.HasKey(correlatividad => correlatividad.Id);
+        builder.Property(correlatividad => correlatividad.Id).ValueGeneratedNever();
+        builder.Property(correlatividad => correlatividad.Tipo).HasConversion<string>().HasMaxLength(10);
+        builder.Property(correlatividad => correlatividad.Condicion).HasConversion<string>().HasMaxLength(15);
+        builder.Property(correlatividad => correlatividad.Descripcion).HasMaxLength(300);
+        builder.Ignore(correlatividad => correlatividad.RequiereVerificacionManual);
+
+        // NO ACTION (no RESTRICT): se verifica al final de la sentencia, así borrar un plan
+        // en cascada elimina materias del plan y correlatividades sin conflicto de orden.
+        builder.HasOne<PlanMateria>()
+            .WithMany()
+            .HasForeignKey(correlatividad => correlatividad.PlanMateriaDestinoId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasOne<PlanMateria>()
+            .WithMany()
+            .HasForeignKey(correlatividad => correlatividad.PlanMateriaRequisitoId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // Consulta principal: requisitos de una materia para cursar o rendir.
+        builder.HasIndex(correlatividad => new { correlatividad.PlanMateriaDestinoId, correlatividad.Tipo });
+
+        // Respaldo en la base de la regla de dominio "sin requisitos repetidos".
+        builder.HasIndex(correlatividad => new { correlatividad.PlanMateriaDestinoId, correlatividad.Tipo, correlatividad.PlanMateriaRequisitoId })
+            .IsUnique()
+            .HasFilter("plan_materia_requisito_id IS NOT NULL");
     }
 }
 

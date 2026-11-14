@@ -104,6 +104,10 @@ static async Task PrepararBaseDeDatosAsync(WebApplication app)
 
     if (sembrar)
     {
-        await CatalogoInstitucionalSeeder.SembrarAsync(db, DateTimeOffset.UtcNow);
+        var resultado = await CatalogoInstitucionalSeeder.SembrarAsync(db, DateTimeOffset.UtcNow);
+        foreach (var advertencia in resultado.Advertencias)
+        {
+            app.Logger.LogWarning("Catálogo institucional: {Advertencia}", advertencia);
+        }
     }
 }

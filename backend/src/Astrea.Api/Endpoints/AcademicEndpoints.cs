@@ -28,6 +28,21 @@ internal static class AcademicEndpoints
             .Produces<PagedResult<MateriaDePlanDto>>()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        catalogo.MapGet("/planes/{planId:guid}/materias/{materiaId:guid}/correlatividades", async (Guid planId, Guid materiaId, Correlatividades correlatividades, CancellationToken ct) =>
+                (await correlatividades.ObtenerAsync(planId, materiaId, incluirInactivas: false, ct)).AHttp())
+            .WithName("ObtenerCorrelatividades")
+            .WithDescription("Requisitos para cursar y para rendir la materia. Mismo grupoAlternativa = alcanza con uno; sin grupo = obligatorio.")
+            .Produces<CorrelatividadesDeMateriaDto>()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        catalogo.MapPost("/planes/{planId:guid}/materias/{materiaId:guid}/correlatividades/verificacion", async (Guid planId, Guid materiaId, VerificarCorrelatividadesCommand comando, Correlatividades correlatividades, CancellationToken ct) =>
+                (await correlatividades.VerificarAsync(planId, materiaId, comando, ct)).AHttp())
+            .WithName("VerificarCorrelatividades")
+            .WithDescription("Verifica si, con las materias regularizadas o aprobadas indicadas, se cumplen los requisitos. No guarda nada.")
+            .Produces<VerificacionCorrelatividadesDto>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         // Administración: incluye lo inactivo y permite altas y modificaciones.
         var admin = api.MapGroup("/admin")
             .RequireAuthorization(Politicas.Administrador)
@@ -77,6 +92,24 @@ internal static class AcademicEndpoints
                 (await administracion.ActualizarMateriaAsync(planId, planMateriaId, comando, ct)).AHttp())
             .WithName("ActualizarMateria")
             .Produces<MateriaDePlanDto>();
+
+        admin.MapGet("/planes/{planId:guid}/materias/{materiaId:guid}/correlatividades", async (Guid planId, Guid materiaId, Correlatividades correlatividades, CancellationToken ct) =>
+                (await correlatividades.ObtenerAsync(planId, materiaId, incluirInactivas: true, ct)).AHttp())
+            .WithName("AdminObtenerCorrelatividades")
+            .Produces<CorrelatividadesDeMateriaDto>();
+
+        admin.MapPost("/planes/{planId:guid}/correlatividades", async (Guid planId, AgregarCorrelatividadCommand comando, Correlatividades correlatividades, CancellationToken ct) =>
+                (await correlatividades.AgregarAsync(planId, comando, ct))
+                    .ACreado(detalle => $"/api/v1/planes/{planId}/materias/{detalle.MateriaId}/correlatividades"))
+            .WithName("AgregarCorrelatividad")
+            .Produces<CorrelatividadesDeMateriaDto>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        admin.MapDelete("/planes/{planId:guid}/correlatividades/{correlatividadId:guid}", async (Guid planId, Guid correlatividadId, Correlatividades correlatividades, CancellationToken ct) =>
+                (await correlatividades.QuitarAsync(planId, correlatividadId, ct)).ASinContenido())
+            .WithName("QuitarCorrelatividad")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         return api;
     }

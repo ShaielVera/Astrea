@@ -47,5 +47,8 @@ export async function apiFetch<T>(ruta: string, { method = "GET", token, body }:
     );
   }
 
+  // 204 No Content (por ejemplo, al quitar algo): no hay cuerpo que leer.
+  if (respuesta.status === 204) return undefined as T;
+
   return (await respuesta.json()) as T;
 }

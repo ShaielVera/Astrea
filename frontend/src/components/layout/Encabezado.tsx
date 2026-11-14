@@ -33,6 +33,11 @@ export function Encabezado() {
                 Plan de estudios
               </Link>
             )}
+            {tieneRol(perfil, ROLES.estudiante) && (
+              <Link href="/correlatividades" className="hover:underline">
+                Correlatividades
+              </Link>
+            )}
             {tieneRol(perfil, ROLES.administrador) && (
               <Link href="/admin" className="hover:underline">
                 Administración

@@ -15,6 +15,7 @@ public static class DependencyInjection
         services.AddScoped<ObtenerResumenUsuariosHandler>();
         services.AddScoped<ConsultasCatalogo>();
         services.AddScoped<AdministracionCatalogo>();
+        services.AddScoped<Correlatividades>();
 
         return services;
     }

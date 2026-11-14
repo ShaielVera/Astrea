@@ -11,6 +11,7 @@ import {
   type MateriaDePlan,
   type PlanEstudio,
 } from "@/features/academico/api";
+import { EditorCorrelatividades } from "@/features/academico/EditorCorrelatividades";
 import { ListaMateriasPorAnio } from "@/features/academico/ListaMateriasPorAnio";
 
 const campo = "rounded-md border border-zinc-300 bg-transparent px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900";
@@ -26,6 +27,7 @@ export default function AdministracionAcademica() {
   const [plan, setPlan] = useState<PlanEstudio | null>(null);
   const [materias, setMaterias] = useState<MateriaDePlan[]>([]);
   const [editando, setEditando] = useState<MateriaDePlan | null>(null);
+  const [correlativasDe, setCorrelativasDe] = useState<MateriaDePlan | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   /** Ejecuta una acción contra la API mostrando el error, si lo hay. */
@@ -66,6 +68,7 @@ export default function AdministracionAcademica() {
   async function elegirPlan(elegido: PlanEstudio, token?: string) {
     setPlan(elegido);
     setEditando(null);
+    setCorrelativasDe(null);
     const cargar = async (t: string) => setMaterias(await academicoApi.materias(t, elegido.id, "admin"));
     if (token) await cargar(token);
     else await ejecutar(cargar);
@@ -189,14 +192,43 @@ export default function AdministracionAcademica() {
                 />
                 <ListaMateriasPorAnio
                   materias={materias}
-                  acciones={(materia) =>
-                    editando?.planMateriaId === materia.planMateriaId ? null : (
-                      <button type="button" className={botonSecundario} onClick={() => setEditando(materia)}>
-                        Editar
+                  acciones={(materia) => (
+                    <>
+                      <button
+                        type="button"
+                        className={botonSecundario}
+                        aria-label={`Correlatividades de ${materia.nombre}`}
+                        onClick={() => {
+                          setEditando(null);
+                          setCorrelativasDe(materia);
+                        }}
+                      >
+                        Correlatividades
                       </button>
-                    )
-                  }
+                      {editando?.planMateriaId !== materia.planMateriaId && (
+                        <button
+                          type="button"
+                          className={botonSecundario}
+                          onClick={() => {
+                            setCorrelativasDe(null);
+                            setEditando(materia);
+                          }}
+                        >
+                          Editar
+                        </button>
+                      )}
+                    </>
+                  )}
                 />
+                {correlativasDe && (
+                  <EditorCorrelatividades
+                    key={correlativasDe.materiaId}
+                    planId={plan.id}
+                    materia={correlativasDe}
+                    materiasDelPlan={materias}
+                    onCerrar={() => setCorrelativasDe(null)}
+                  />
+                )}
                 {editando && (
                   <EdicionMateria
                     materia={editando}

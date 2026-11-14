@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Persistence\Seed\catalogo-isp20.json" />
+    <EmbeddedResource Include="Persistence\Seed\correlatividades-isp20.json" />
   </ItemGroup>
 
 </Project>

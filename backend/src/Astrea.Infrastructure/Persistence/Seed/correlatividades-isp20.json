@@ -1,0 +1,308 @@
+{
+  "fuente": "https://isp20.edu.ar/nuevo/ - 'Régimen de correlatividades' publicado por el instituto para cada carrera (wp-content/uploads/2026/04, consultado el 14/11/2026)",
+  "nota": "Por materia destino y tipo (cursar/rendir): 'regularizadas' y 'aprobadas' son nombres de materias del mismo plan, tal como figuran en catalogo-isp20.json. 'A | B' es un grupo de alternativas (alcanza con una). 'otros' son requisitos sin materia asociada, que exigen verificación de Bedelía y se cargan con condición Aprobada.",
+  "carreras": {
+    "PEI": {
+      "Didáctica General": { "rendir": { "aprobadas": ["Pedagogía", "Psicología y Educación"] } },
+      "Movimiento y Cuerpo II": { "rendir": { "aprobadas": ["Movimiento y Cuerpo I"] } },
+      "Matemática y su Didáctica I": { "rendir": { "aprobadas": ["Resolución de Problemas y Creatividad"] } },
+      "Ciencias Naturales y su Didáctica": { "rendir": { "aprobadas": ["Ambiente y Sociedad"] } },
+      "Literatura y su Didáctica": { "rendir": { "aprobadas": ["Comunicación y Expresión Oral y Escrita"] } },
+      "Sujeto de la Educación Inicial": { "rendir": { "aprobadas": ["Psicología y Educación"] } },
+      "Didáctica de Educación Inicial I": { "rendir": { "aprobadas": ["Pedagogía", "Psicología y Educación"] } },
+      "Historia Social de la Educación y Política Educativa Argentina": { "rendir": { "aprobadas": ["Historia Argentina y Latinoamericana", "Sociología de la Educación"] } },
+      "Lengua y su Didáctica": { "rendir": { "aprobadas": ["Literatura y su Didáctica", "Didáctica General"] } },
+      "Alfabetización Inicial": { "rendir": { "aprobadas": ["Literatura y su Didáctica", "Didáctica General"] } },
+      "Matemática y su Didáctica II": { "rendir": { "aprobadas": ["Matemática y su Didáctica I", "Didáctica General"] } },
+      "Área Estético-Expresiva II": { "rendir": { "aprobadas": ["Área Estético-Expresiva I"] } },
+      "Ciencias Sociales y su Didáctica": { "rendir": { "aprobadas": ["Ambiente y Sociedad", "Didáctica General"] } },
+      "Didáctica de la Educación Inicial II": { "rendir": { "aprobadas": ["Didáctica General", "Didáctica de Educación Inicial I"] } },
+      "Problemáticas Contemporáneas de la Educación Inicial II": { "rendir": { "aprobadas": ["Problemáticas Contemporáneas de la Educación Inicial I"] } },
+      "Ética, Trabajo Docente, Derechos Humanos y Ciudadanos": { "rendir": { "aprobadas": ["Filosofía de la Educación", "Conocimiento y Educación", "Historia Social de la Educación y Política Educativa Argentina"] } },
+      "Taller de Práctica II: Seminario de lo Grupal y los Grupos de Aprendizaje": {
+        "cursar": {
+          "regularizadas": ["Pedagogía", "Psicología y Educación"],
+          "aprobadas": ["Taller de Práctica I"],
+          "otros": ["Al menos tres talleres de primer año del Campo de la Formación Específica aprobados"]
+        }
+      },
+      "Trayecto de Práctica III: Seminario de Instituciones Educativas": {
+        "cursar": {
+          "regularizadas": ["Didáctica General", "Didáctica de Educación Inicial I", "Sujeto de la Educación Inicial", "Matemática y su Didáctica I", "Literatura y su Didáctica", "Ciencias Naturales y su Didáctica", "Conocimiento y Educación"],
+          "aprobadas": ["Taller de Práctica II: Seminario de lo Grupal y los Grupos de Aprendizaje"],
+          "otros": ["Todas las unidades curriculares de los tres campos de primer año aprobadas"]
+        }
+      },
+      "Taller de Práctica IV": {
+        "cursar": {
+          "regularizadas": ["Tecnologías de la Información y de la Comunicación", "Matemática y su Didáctica II", "Lengua y su Didáctica", "Alfabetización Inicial", "Ciencias Sociales y su Didáctica", "Problemáticas Contemporáneas de la Educación Inicial II"],
+          "aprobadas": ["Trayecto de Práctica III: Seminario de Instituciones Educativas", "Área Estético-Expresiva II"],
+          "otros": ["Todas las unidades curriculares de los tres campos de segundo año aprobadas"]
+        }
+      },
+      "Ateneo: Matemática - Ambiente y Sociedad (Ciencias Naturales - Ciencias Sociales) - Lengua y Literatura - Formación Ética y Ciudadana": {
+        "cursar": {
+          "regularizadas": ["Tecnologías de la Información y de la Comunicación", "Matemática y su Didáctica II", "Lengua y su Didáctica", "Alfabetización Inicial", "Ciencias Sociales y su Didáctica", "Problemáticas Contemporáneas de la Educación Inicial II"],
+          "aprobadas": ["Trayecto de Práctica III: Seminario de Instituciones Educativas", "Área Estético-Expresiva II"],
+          "otros": ["Todas las unidades curriculares de los tres campos de segundo año aprobadas"]
+        }
+      }
+    },
+    "PEA": {
+      "Instituciones Educativas": { "cursar": { "regularizadas": ["Pedagogía"] }, "rendir": { "aprobadas": ["Pedagogía"] } },
+      "Didáctica y Curriculum": { "cursar": { "regularizadas": ["Pedagogía"] }, "rendir": { "aprobadas": ["Pedagogía"] } },
+      "Administración II": {
+        "cursar": { "regularizadas": ["Administración General", "Administración I"] },
+        "rendir": { "regularizadas": ["Administración I"], "aprobadas": ["Administración General"] }
+      },
+      "Sistema de Información Contable II": { "cursar": { "regularizadas": ["Sistema de Información Contable I"] }, "rendir": { "aprobadas": ["Sistema de Información Contable I"] } },
+      "Derecho I": { "cursar": { "regularizadas": ["Construcción de Ciudadanía"] }, "rendir": { "regularizadas": ["Construcción de Ciudadanía"] } },
+      "Economía": {
+        "cursar": { "regularizadas": ["Historia Económica"] },
+        "rendir": { "regularizadas": ["Administración General"], "aprobadas": ["Historia Económica"] }
+      },
+      "Estadística Aplicada": { "cursar": { "regularizadas": ["Matemática"] }, "rendir": { "aprobadas": ["Matemática"] } },
+      "Didáctica de la Administración I": {
+        "cursar": { "regularizadas": ["Administración General", "Administración I", "Sistema de Información Contable I", "Construcción de Ciudadanía"] },
+        "rendir": { "regularizadas": ["Construcción de Ciudadanía", "Sistema de Información Contable I"], "aprobadas": ["Administración General", "Administración I"] }
+      },
+      "Práctica Docente II": { "cursar": { "regularizadas": ["Pedagogía", "Administración General"], "aprobadas": ["Práctica Docente I"] } },
+      "Historia y Política de la Educación Argentina": { "cursar": { "regularizadas": ["Instituciones Educativas"] }, "rendir": { "aprobadas": ["Pedagogía"] } },
+      "Filosofía": { "rendir": { "aprobadas": ["Pedagogía"] } },
+      "Administración III": {
+        "cursar": { "regularizadas": ["Administración II", "Sistema de Información Contable II"], "aprobadas": ["Administración General", "Administración I", "Sistema de Información Contable I"] },
+        "rendir": { "regularizadas": ["Sistema de Información Contable II", "Estadística Aplicada"], "aprobadas": ["Administración II"] }
+      },
+      "Sistema de Información Contable III": {
+        "cursar": { "regularizadas": ["Administración General", "Administración I", "Administración II", "Sistema de Información Contable II"], "aprobadas": ["Sistema de Información Contable I"] },
+        "rendir": { "regularizadas": ["Administración II"], "aprobadas": ["Administración General", "Administración I", "Sistema de Información Contable II"] }
+      },
+      "Práctica Impositiva y Laboral": {
+        "cursar": { "regularizadas": ["Sistema de Información Contable II", "Administración II", "Derecho I", "Economía"], "aprobadas": ["Administración General", "Administración I", "Construcción de Ciudadanía", "Sistema de Información Contable I"] },
+        "rendir": { "regularizadas": ["Sistema de Información Contable II", "Administración II", "Derecho I", "Economía", "Estadística Aplicada"], "aprobadas": ["Construcción de Ciudadanía"] }
+      },
+      "Derecho II": {
+        "cursar": { "regularizadas": ["Sistema de Información Contable II", "Administración II", "Derecho I"], "aprobadas": ["Construcción de Ciudadanía", "Administración General", "Administración I"] },
+        "rendir": { "regularizadas": ["Administración I", "Administración II"], "aprobadas": ["Derecho I"] }
+      },
+      "Didáctica de la Administración II": {
+        "cursar": { "regularizadas": ["Didáctica de la Administración I", "Didáctica y Curriculum"], "aprobadas": ["Administración General", "Administración I", "Sistema de Información Contable I"] },
+        "rendir": { "aprobadas": ["Didáctica de la Administración I"] }
+      },
+      "Sujetos de la Educación Secundaria": { "cursar": { "regularizadas": ["Psicología y Educación"] }, "rendir": { "aprobadas": ["Psicología y Educación"] } },
+      "Práctica Docente III": {
+        "cursar": {
+          "regularizadas": ["Psicología y Educación", "Didáctica y Curriculum", "Administración II", "Sistema de Información Contable II", "Derecho I"],
+          "aprobadas": ["Práctica Docente II", "Didáctica de la Administración I"],
+          "otros": ["Todas las unidades curriculares del Campo de la Formación General y del Campo de la Formación Específica de primer año aprobadas"]
+        }
+      },
+      "Producción de los Recursos Didácticos I": {
+        "cursar": { "regularizadas": ["Administración II", "Didáctica y Curriculum", "Didáctica de la Administración I"], "aprobadas": ["Administración General", "Administración I", "Sistema de Información Contable I"] },
+        "rendir": { "regularizadas": ["Didáctica de la Administración I", "Didáctica y Curriculum", "Administración II", "Sistema de Información Contable II"], "aprobadas": ["Práctica Docente II"] }
+      },
+      "Administración IV": {
+        "cursar": { "regularizadas": ["Administración III", "Sistema de Información Contable III"], "aprobadas": ["Administración II", "Estadística Aplicada"] },
+        "rendir": { "regularizadas": ["Sistema de Información Contable III"], "aprobadas": ["Administración III"] }
+      },
+      "Gestión Organizacional": {
+        "cursar": { "regularizadas": ["Administración III", "Sistema de Información Contable III", "Derecho II", "Práctica Impositiva y Laboral"], "aprobadas": ["Administración II", "Sistema de Información Contable II", "Economía", "Derecho I", "Estadística Aplicada"] },
+        "rendir": { "regularizadas": ["Administración III", "Sistema de Información Contable III", "Derecho II"], "aprobadas": ["Práctica Impositiva y Laboral"] }
+      },
+      "Matemática Financiera": {
+        "cursar": { "regularizadas": ["Administración III", "Sistema de Información Contable III"], "aprobadas": ["Estadística Aplicada", "Administración II", "Sistema de Información Contable II"] },
+        "rendir": { "regularizadas": ["Administración III", "Sistema de Información Contable III"] }
+      },
+      "Prácticas de Investigación": {
+        "cursar": { "regularizadas": ["Metodología de la Investigación"], "aprobadas": ["Estadística Aplicada", "Administración II", "Sistema de Información Contable II", "Didáctica de la Administración I"] },
+        "rendir": { "aprobadas": ["Metodología de la Investigación", "Didáctica de la Administración II"] }
+      },
+      "Práctica Docente IV (Residencia)": {
+        "cursar": {
+          "regularizadas": ["Sujetos de la Educación Secundaria", "Administración III", "Sistema de Información Contable III", "Derecho II"],
+          "aprobadas": ["Didáctica de la Administración II", "Práctica Docente III", "Producción de los Recursos Didácticos I"],
+          "otros": ["Todas las unidades curriculares del Campo de la Formación General y del Campo de la Formación Específica de segundo año aprobadas"]
+        }
+      },
+      "Producción de los Recursos Didácticos II": {
+        "cursar": { "regularizadas": ["Producción de los Recursos Didácticos I", "Administración III", "Sistema de Información Contable III"], "aprobadas": ["Didáctica de la Administración II", "Práctica Docente III"] },
+        "rendir": { "regularizadas": ["Administración III"], "aprobadas": ["Didáctica de la Administración II", "Producción de los Recursos Didácticos I", "Práctica Docente III"] }
+      },
+      "Ética y Trabajo Docente": { "rendir": { "aprobadas": ["Filosofía", "Construcción de Ciudadanía"] } },
+      "Educación Sexual Integral": { "rendir": { "aprobadas": ["Sujetos de la Educación Secundaria"] } }
+    },
+    "PEE": {
+      "Instituciones Educativas": { "cursar": { "regularizadas": ["Pedagogía"] }, "rendir": { "aprobadas": ["Pedagogía"] } },
+      "Didáctica y Curriculum": { "cursar": { "regularizadas": ["Pedagogía"] }, "rendir": { "aprobadas": ["Pedagogía"] } },
+      "Economía II": {
+        "cursar": { "regularizadas": ["Historia Económica", "Geografía Económica", "Economía I", "Construcción de Ciudadanía"] },
+        "rendir": { "regularizadas": ["Geografía Económica", "Construcción de Ciudadanía"], "aprobadas": ["Historia Económica", "Economía I"] }
+      },
+      "Sistema de Información Contable II": { "cursar": { "regularizadas": ["Sistema de Información Contable I"] }, "rendir": { "aprobadas": ["Sistema de Información Contable I"] } },
+      "Derecho I": { "cursar": { "regularizadas": ["Construcción de Ciudadanía"] }, "rendir": { "regularizadas": ["Construcción de Ciudadanía"] } },
+      "Estadística Aplicada": { "cursar": { "regularizadas": ["Matemática"] }, "rendir": { "aprobadas": ["Matemática"] } },
+      "Didáctica de la Economía I": {
+        "cursar": { "regularizadas": ["Historia Económica", "Geografía Económica", "Economía I", "Construcción de Ciudadanía"] },
+        "rendir": { "regularizadas": ["Historia Económica", "Geografía Económica", "Construcción de Ciudadanía", "Sistema de Información Contable I"], "aprobadas": ["Economía I"] }
+      },
+      "Práctica Docente II": { "cursar": { "regularizadas": ["Pedagogía", "Economía I"], "aprobadas": ["Práctica Docente I"] } },
+      "Historia y Política de la Educación Argentina": { "cursar": { "regularizadas": ["Instituciones Educativas"] }, "rendir": { "aprobadas": ["Pedagogía"] } },
+      "Filosofía": { "rendir": { "aprobadas": ["Pedagogía"] } },
+      "Economía III": {
+        "cursar": { "regularizadas": ["Economía II"], "aprobadas": ["Historia Económica", "Geografía Económica", "Economía I"] },
+        "rendir": { "regularizadas": ["Estadística Aplicada"], "aprobadas": ["Economía II"] }
+      },
+      "Finanzas Públicas": {
+        "cursar": { "regularizadas": ["Economía II", "Derecho I"], "aprobadas": ["Economía I", "Construcción de Ciudadanía", "Administración General"] },
+        "rendir": { "regularizadas": ["Economía II", "Derecho I"] }
+      },
+      "Derecho II": {
+        "cursar": { "regularizadas": ["Economía II", "Derecho I"], "aprobadas": ["Construcción de Ciudadanía"] },
+        "rendir": { "regularizadas": ["Economía II", "Derecho I"] }
+      },
+      "Didáctica de la Economía II": {
+        "cursar": { "regularizadas": ["Economía II", "Derecho I", "Didáctica de la Economía I", "Didáctica y Curriculum"], "aprobadas": ["Administración General", "Economía I", "Historia Económica", "Geografía Económica", "Construcción de Ciudadanía"] },
+        "rendir": { "aprobadas": ["Didáctica de la Economía I", "Didáctica y Curriculum"] }
+      },
+      "Sujetos de la Educación Secundaria": { "cursar": { "regularizadas": ["Psicología y Educación"] }, "rendir": { "aprobadas": ["Psicología y Educación"] } },
+      "Práctica Docente III": {
+        "cursar": {
+          "regularizadas": ["Psicología y Educación", "Didáctica y Curriculum", "Economía II", "Sistema de Información Contable II", "Derecho I"],
+          "aprobadas": ["Práctica Docente II", "Didáctica de la Economía I"],
+          "otros": ["Todas las unidades curriculares del Campo de la Formación General y del Campo de la Formación Específica de primer año aprobadas"]
+        }
+      },
+      "Producción de los Recursos Didácticos I": {
+        "cursar": { "regularizadas": ["Economía II", "Didáctica de la Economía I", "Didáctica y Curriculum"], "aprobadas": ["Administración General", "Economía I", "Sistema de Información Contable I", "Geografía Económica", "Historia Económica", "Construcción de Ciudadanía"] },
+        "rendir": { "regularizadas": ["Didáctica de la Economía I", "Didáctica y Curriculum", "Economía II", "Derecho I"], "aprobadas": ["Práctica Docente II"] }
+      },
+      "Economía Social y Sostenible": {
+        "cursar": { "regularizadas": ["Economía III", "Finanzas Públicas", "Derecho II"], "aprobadas": ["Economía II", "Estadística Aplicada", "Derecho I"] },
+        "rendir": { "regularizadas": ["Economía III", "Finanzas Públicas"] }
+      },
+      "Economía Argentina, Latinoamericana e Internacional": {
+        "cursar": { "regularizadas": ["Economía III", "Finanzas Públicas"], "aprobadas": ["Economía II", "Estadística Aplicada", "Derecho I"] },
+        "rendir": { "regularizadas": ["Derecho II"], "aprobadas": ["Economía III", "Finanzas Públicas"] }
+      },
+      "Prácticas de Investigación": {
+        "cursar": { "regularizadas": ["Metodología de la Investigación"], "aprobadas": ["Estadística Aplicada", "Economía II", "Didáctica de la Economía I"] },
+        "rendir": { "regularizadas": ["Finanzas Públicas"], "aprobadas": ["Práctica Docente III", "Metodología de la Investigación", "Didáctica de la Economía II"] }
+      },
+      "Práctica Docente IV (Residencia)": {
+        "cursar": {
+          "regularizadas": ["Sujetos de la Educación Secundaria", "Economía III", "Finanzas Públicas", "Derecho II"],
+          "aprobadas": ["Didáctica de la Economía II", "Práctica Docente III", "Producción de los Recursos Didácticos I"],
+          "otros": ["Todas las unidades curriculares del Campo de la Formación General y del Campo de la Formación Específica de segundo año aprobadas"]
+        }
+      },
+      "Producción de los Recursos Didácticos II": {
+        "cursar": { "regularizadas": ["Didáctica de la Economía II", "Derecho II", "Finanzas Públicas", "Economía III", "Producción de los Recursos Didácticos I"], "aprobadas": ["Didáctica de la Economía I", "Práctica Docente III"] },
+        "rendir": { "aprobadas": ["Didáctica de la Economía II", "Producción de los Recursos Didácticos I", "Práctica Docente III"] }
+      },
+      "Ética y Trabajo Docente": { "rendir": { "aprobadas": ["Filosofía"] } },
+      "Educación Sexual Integral": { "rendir": { "aprobadas": ["Sujetos de la Educación Secundaria"] } }
+    },
+    "PET": {
+      "Diseño y Producción Tecnológica II": { "cursar": { "regularizadas": ["Diseño y Producción Tecnológica I"] }, "rendir": { "aprobadas": ["Diseño y Producción Tecnológica I"] } },
+      "Didáctica Específica I": {
+        "cursar": { "regularizadas": ["Diseño y Producción Tecnológica I", "Introducción a la Tecnología"] },
+        "rendir": { "aprobadas": ["Pedagogía", "Introducción a la Tecnología", "Diseño y Producción Tecnológica I"] }
+      },
+      "Práctica Docente II: La Institución Escolar": { "cursar": { "regularizadas": ["Introducción a la Tecnología", "Pedagogía"], "aprobadas": ["Práctica Docente I: Escenarios Educativos"] } },
+      "Didáctica y Curriculum": { "rendir": { "aprobadas": ["Pedagogía"] } },
+      "Instituciones Educativas": { "rendir": { "aprobadas": ["Pedagogía"] } },
+      "TIC para la Enseñanza": { "rendir": { "aprobadas": ["Introducción a la Tecnología"] } },
+      "Sujetos de la Educación II": { "cursar": { "regularizadas": ["Sujetos de la Educación I"] }, "rendir": { "aprobadas": ["Sujetos de la Educación I", "Psicología de la Educación"] } },
+      "Diseño y Producción Tecnológica III": {
+        "cursar": { "regularizadas": ["Diseño y Producción Tecnológica II"], "aprobadas": ["Diseño y Producción Tecnológica I"] },
+        "rendir": { "aprobadas": ["Diseño y Producción Tecnológica II"] }
+      },
+      "Didáctica Específica II": {
+        "cursar": { "regularizadas": ["Didáctica Específica I", "Didáctica y Curriculum", "TIC para la Enseñanza"] },
+        "rendir": { "aprobadas": ["Didáctica Específica I", "Didáctica y Curriculum", "TIC para la Enseñanza"] }
+      },
+      "Práctica Docente III: La Clase": {
+        "cursar": {
+          "regularizadas": ["Instituciones Educativas", "Didáctica y Curriculum", "Psicología de la Educación", "Didáctica Específica I", "Sujetos de la Educación I", "Procesos Productivos | Diseño y Producción Tecnológica II"],
+          "aprobadas": ["Práctica Docente II: La Institución Escolar"],
+          "otros": ["Todas las unidades curriculares de los Campos General y Específico de primer año aprobadas"]
+        }
+      },
+      "Filosofía y Educación": { "rendir": { "aprobadas": ["Pedagogía"] } },
+      "Materiales": { "rendir": { "aprobadas": ["Diseño y Producción Tecnológica II", "Física"] } },
+      "Química": { "rendir": { "aprobadas": ["Diseño y Producción Tecnológica II"] } },
+      "Procesos de Control": { "rendir": { "aprobadas": ["Procesos Productivos"] } },
+      "Tecnologías Regionales": { "rendir": { "aprobadas": ["Introducción a la Tecnología", "Historia de la Tecnología"] } },
+      "Diseño y Producción Tecnológica IV": {
+        "cursar": { "regularizadas": ["Diseño y Producción Tecnológica III"], "aprobadas": ["Diseño y Producción Tecnológica II"] },
+        "rendir": { "aprobadas": ["Diseño y Producción Tecnológica III"] }
+      },
+      "Taller de Producción Didáctica": {
+        "cursar": { "regularizadas": ["Didáctica Específica II", "Diseño y Producción Tecnológica III"] },
+        "rendir": { "aprobadas": ["Didáctica Específica II", "Diseño y Producción Tecnológica III"] }
+      },
+      "Práctica Docente IV: El Rol Docente y su Práctica": {
+        "cursar": {
+          "regularizadas": ["Didáctica Específica II", "Sujetos de la Educación II", "Tecnologías Regionales", "Diseño y Producción Tecnológica III", "Materiales"],
+          "aprobadas": ["Práctica Docente III: La Clase"],
+          "otros": ["Todas las unidades curriculares de los Campos General y Específico de segundo año aprobadas"]
+        }
+      },
+      "Prácticas de Investigación": { "cursar": { "regularizadas": ["Metodología de la Investigación"], "aprobadas": ["Práctica Docente III: La Clase"] } },
+      "Ética y Trabajo Docente": { "rendir": { "regularizadas": ["Filosofía y Educación"] } },
+      "Biotecnología": { "rendir": { "aprobadas": ["Química"] } },
+      "Procesos de Comunicación": { "rendir": { "aprobadas": ["Procesos de Control", "Diseño y Producción Tecnológica III"] } },
+      "Problemáticas Sociotécnicas": { "rendir": { "aprobadas": ["Diseño y Producción Tecnológica III"] } }
+    },
+    "TSDS": {
+      "Inglés Técnico II": { "rendir": { "aprobadas": ["Inglés Técnico I"] } },
+      "Programación I": { "rendir": { "aprobadas": ["Lógica y Estructura de Datos"] } },
+      "Ingeniería de Software II": { "rendir": { "aprobadas": ["Ingeniería de Software I"] } },
+      "Redes y Comunicación": { "rendir": { "aprobadas": ["Tecnología de la Información", "Sistemas Operativos"] } },
+      "Programación II": { "rendir": { "aprobadas": ["Programación I"] } },
+      "Base de Datos II": { "rendir": { "aprobadas": ["Base de Datos I", "Sistemas Operativos"] } },
+      "Gestión de Proyectos de Software": { "rendir": { "aprobadas": ["Ingeniería de Software II"] } },
+      "Práctica Profesionalizante II": { "rendir": { "aprobadas": ["Práctica Profesionalizante I", "Administración", "Innovación y Desarrollo Emprendedor"] } }
+    },
+    "TSE": {
+      "Biología Humana II": { "rendir": { "aprobadas": ["Biología Humana I"] } },
+      "Sujeto, Cultura y Sociedad II": { "rendir": { "aprobadas": ["Sujeto, Cultura y Sociedad I"] } },
+      "Cuidados de Enfermería a los Adultos y Adultos Mayores": { "rendir": { "aprobadas": ["Fundamentos del Cuidado en Enfermería", "Cuidados de Enfermería en la Comunidad y en la Familia"] } },
+      "Cuidados de Enfermería al Niño y al Adolescente": { "rendir": { "aprobadas": ["Cuidados de Enfermería a los Adultos y Adultos Mayores"] } },
+      "Práctica Profesionalizante II": { "rendir": { "aprobadas": ["Práctica Profesionalizante I"] } },
+      "Práctica Profesionalizante III": { "rendir": { "aprobadas": ["Práctica Profesionalizante II"] } }
+    },
+    "TSGER": {
+      "Instalaciones Eléctricas Eficientes": { "rendir": { "aprobadas": ["Matemática y Estadística", "Física", "Electrotecnia"] } },
+      "Instalaciones Térmicas Eficientes": { "rendir": { "aprobadas": ["Matemática y Estadística", "Física", "Electrotecnia"] } },
+      "Inmótica": { "rendir": { "aprobadas": ["Informática", "Sistemas de Representación"] } },
+      "Energía de Biomasa": { "rendir": { "aprobadas": ["Política Energética", "Química"] } },
+      "Gestión de la Energía": { "rendir": { "aprobadas": ["Política Energética"] } },
+      "Evaluación y Gestión de Proyectos de Inversión": { "rendir": { "aprobadas": ["Gestión de la Energía"] } },
+      "Energía Hidráulica": { "rendir": { "aprobadas": ["Política Energética"] } },
+      "Energía Eólica": { "rendir": { "aprobadas": ["Política Energética"] } },
+      "Arquitectura Bioclimática": { "rendir": { "aprobadas": ["Inmótica"] } },
+      "Práctica Profesionalizante II": { "rendir": { "aprobadas": ["Práctica Profesionalizante I", "Innovación y Desarrollo Emprendedor"] } }
+    },
+    "TSGO": {
+      "Gestión de Costos": { "rendir": { "aprobadas": ["Economía", "Matemática y Estadística", "Contabilidad"] } },
+      "Gestión Contable": { "rendir": { "aprobadas": ["Economía", "Matemática y Estadística", "Contabilidad"] } },
+      "Estrategia Empresarial": { "rendir": { "aprobadas": ["Gestión de la Producción", "Gestión del Talento Humano", "Gestión de Comercialización e Investigación Comercial", "Gestión Contable"] } },
+      "Gestión Financiera": { "rendir": { "aprobadas": ["Gestión Contable"] } },
+      "Sistema de Información para la Gestión de las Organizaciones": { "rendir": { "aprobadas": ["Gestión Contable"] } },
+      "Evaluación y Administración de Proyectos de Inversión": { "rendir": { "aprobadas": ["Gestión Contable"] } },
+      "Práctica Profesionalizante II": { "rendir": { "aprobadas": ["Práctica Profesionalizante I", "Innovación y Desarrollo Emprendedor"] } }
+    },
+    "TSSITI": {
+      "Algoritmos y Estructuras de Datos": { "rendir": { "aprobadas": ["Matemática", "Lógica y Programación"] } },
+      "Base de Datos": { "rendir": { "aprobadas": ["Lógica y Programación"] } },
+      "Sistemas Operativos": { "rendir": { "aprobadas": ["Arquitectura de las Computadoras"] } },
+      "Infraestructura de Redes II": { "rendir": { "aprobadas": ["Infraestructura de Redes I"] } },
+      "Administración de Base de Datos": { "rendir": { "aprobadas": ["Base de Datos"] } },
+      "Administración de Sistemas Operativos y Redes": { "rendir": { "aprobadas": ["Infraestructura de Redes II", "Sistemas Operativos"] } },
+      "Seguridad de los Sistemas": { "rendir": { "aprobadas": ["Sistemas Operativos"] } },
+      "Integridad y Migración de Datos": { "rendir": { "aprobadas": ["Infraestructura de Redes II", "Administración"] } },
+      "Práctica Profesionalizante II": { "rendir": { "aprobadas": ["Práctica Profesionalizante I", "Innovación y Desarrollo Emprendedor"] } }
+    }
+  }
+}

@@ -11,6 +11,9 @@ internal static class ResultadosHttp
     public static IResult ACreado<T>(this Result<T> resultado, Func<T, string> ubicacion) =>
         resultado.EsExitoso ? Results.Created(ubicacion(resultado.Valor), resultado.Valor) : resultado.Error!.AProblema();
 
+    public static IResult ASinContenido<T>(this Result<T> resultado) =>
+        resultado.EsExitoso ? Results.NoContent() : resultado.Error!.AProblema();
+
     public static IResult AProblema(this Error error)
     {
         var status = error.Tipo switch

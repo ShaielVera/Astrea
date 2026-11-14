@@ -20,6 +20,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<PlanMateria> PlanMaterias => Set<PlanMateria>();
 
+    public DbSet<Correlatividad> Correlatividades => Set<Correlatividad>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Extensión pgvector para guardar los embeddings del pipeline RAG.

@@ -38,6 +38,53 @@ export type MateriaDePlan = {
   activa: boolean;
 };
 
+export type TipoCorrelatividad = "Cursar" | "Rendir";
+export type CondicionRequisito = "Regularizada" | "Aprobada";
+export type EstadoMateria = "SinCursar" | "Regularizada" | "Aprobada";
+export type ResultadoVerificacion = "Cumple" | "NoCumple" | "RequiereVerificacion";
+
+/**
+ * Requisito de correlatividad. Sin `materiaId` es una condición en texto que verifica Bedelía.
+ * Los requisitos con el mismo `grupoAlternativa` son alternativas (alcanza con uno); sin grupo, obligatorios.
+ */
+export type Requisito = {
+  id: string;
+  condicion: CondicionRequisito;
+  grupoAlternativa: number | null;
+  materiaId: string | null;
+  codigo: string | null;
+  nombre: string | null;
+  anio: number | null;
+  descripcion: string | null;
+};
+
+export type CorrelatividadesDeMateria = {
+  planId: string;
+  planMateriaId: string;
+  materiaId: string;
+  codigo: string;
+  nombre: string;
+  anio: number;
+  paraCursar: Requisito[];
+  paraRendir: Requisito[];
+};
+
+export type Verificacion = {
+  tipo: TipoCorrelatividad;
+  resultado: ResultadoVerificacion;
+  faltantes: Requisito[];
+  aVerificar: Requisito[];
+};
+
+export type NuevaCorrelatividad = {
+  materiaDestinoId: string;
+  tipo: TipoCorrelatividad;
+  materiaRequisitoId: string | null;
+  condicion: CondicionRequisito;
+  grupoAlternativa: number | null;
+  descripcion: string | null;
+};
+
 export const ETIQUETA_CUATRIMESTRE: Record<Cuatrimestre, string> = {
   Anual: "Anual",
   Primero: "1.º cuatrimestre",
@@ -88,6 +135,28 @@ export const academicoApi = {
 
   actualizarMateria: (token: string, planId: string, materia: MateriaDePlan) =>
     apiFetch<MateriaDePlan>(`/admin/planes/${planId}/materias/${materia.planMateriaId}`, { method: "PUT", token, body: materia }),
+
+  correlatividades: (token: string, planId: string, materiaId: string, alcance: Alcance = "estudiante") =>
+    apiFetch<CorrelatividadesDeMateria>(`${prefijo(alcance)}/planes/${planId}/materias/${materiaId}/correlatividades`, { token }),
+
+  verificarCorrelatividades: (
+    token: string,
+    planId: string,
+    materiaId: string,
+    tipo: TipoCorrelatividad,
+    estados: { materiaId: string; estado: EstadoMateria }[],
+  ) =>
+    apiFetch<Verificacion>(`/planes/${planId}/materias/${materiaId}/correlatividades/verificacion`, {
+      method: "POST",
+      token,
+      body: { tipo, estados },
+    }),
+
+  agregarCorrelatividad: (token: string, planId: string, datos: NuevaCorrelatividad) =>
+    apiFetch<CorrelatividadesDeMateria>(`/admin/planes/${planId}/correlatividades`, { method: "POST", token, body: datos }),
+
+  quitarCorrelatividad: (token: string, planId: string, correlatividadId: string) =>
+    apiFetch<void>(`/admin/planes/${planId}/correlatividades/${correlatividadId}`, { method: "DELETE", token }),
 };
 
 /** Agrupa las materias por año, respetando el orden del plan. */

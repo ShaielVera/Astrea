@@ -1,5 +1,6 @@
 using Astrea.Application.Contracts.Pagination;
 using Astrea.Domain.Academic;
+using Astrea.Infrastructure.Persistence;
 using Astrea.Infrastructure.Persistence.Repositories;
 using Astrea.Infrastructure.Persistence.Seed;
 using AwesomeAssertions;
@@ -27,7 +28,10 @@ public sealed class CatalogoInstitucionalSeederTests(BaseDeDatosFixture baseDeDa
     {
         await using (var db = baseDeDatos.CrearContexto())
         {
-            (await CatalogoInstitucionalSeeder.SembrarAsync(db, Ahora)).Should().Be(9);
+            var resultado = await CatalogoInstitucionalSeeder.SembrarAsync(db, Ahora);
+            resultado.CarrerasAgregadas.Should().Be(9);
+            resultado.PlanesConCorrelatividades.Should().Be(9);
+            resultado.Advertencias.Should().BeEmpty();
         }
 
         await using var consulta = baseDeDatos.CrearContexto();
@@ -71,7 +75,9 @@ public sealed class CatalogoInstitucionalSeederTests(BaseDeDatosFixture baseDeDa
 
         await using (var db = baseDeDatos.CrearContexto())
         {
-            (await CatalogoInstitucionalSeeder.SembrarAsync(db, Ahora)).Should().Be(0);
+            var resultado = await CatalogoInstitucionalSeeder.SembrarAsync(db, Ahora);
+            resultado.CarrerasAgregadas.Should().Be(0);
+            resultado.PlanesConCorrelatividades.Should().Be(0);
         }
 
         await using var consulta = baseDeDatos.CrearContexto();
@@ -103,5 +109,110 @@ public sealed class CatalogoInstitucionalSeederTests(BaseDeDatosFixture baseDeDa
         segundaPagina.Items.Should().HaveCount(3);
         primeraPagina.Items.Concat(segundaPagina.Items).Select(c => c.Nombre).Should().BeInAscendingOrder(StringComparer.Ordinal);
         todas.TotalItems.Should().Be(9);
+    }
+
+    [Fact]
+    public async Task Carga_las_correlatividades_oficiales_diferenciando_cursar_y_rendir()
+    {
+        await using (var db = baseDeDatos.CrearContexto())
+        {
+            await CatalogoInstitucionalSeeder.SembrarAsync(db, Ahora);
+        }
+
+        await using var consulta = baseDeDatos.CrearContexto();
+        var repositorio = new EfAcademicRepository(consulta);
+        var (planId, materias) = await MateriasDeAsync(consulta, "PEA");
+
+        var administracionIII = await repositorio.ObtenerCorrelatividadesAsync(planId, materias["Administración III"], incluirInactivas: false, CancellationToken.None);
+
+        administracionIII.Should().NotBeNull();
+        administracionIII!.ParaCursar.Where(r => r.Condicion == CondicionRequisito.Regularizada).Select(r => r.Nombre)
+            .Should().BeEquivalentTo("Administración II", "Sistema de Información Contable II");
+        administracionIII.ParaCursar.Where(r => r.Condicion == CondicionRequisito.Aprobada).Select(r => r.Nombre)
+            .Should().BeEquivalentTo("Administración General", "Administración I", "Sistema de Información Contable I");
+        administracionIII.ParaRendir.Select(r => (r.Nombre, r.Condicion)).Should().BeEquivalentTo(new[]
+        {
+            ("Sistema de Información Contable II", CondicionRequisito.Regularizada),
+            ("Estadística Aplicada", CondicionRequisito.Regularizada),
+            ("Administración II", CondicionRequisito.Aprobada),
+        });
+        administracionIII.ParaCursar.Select(r => r.Anio).Should().BeInAscendingOrder();
+    }
+
+    [Fact]
+    public async Task Carga_alternativas_y_requisitos_en_texto()
+    {
+        await using (var db = baseDeDatos.CrearContexto())
+        {
+            await CatalogoInstitucionalSeeder.SembrarAsync(db, Ahora);
+        }
+
+        await using var consulta = baseDeDatos.CrearContexto();
+        var (planId, materias) = await MateriasDeAsync(consulta, "PET");
+
+        var practicaIII = await new EfAcademicRepository(consulta)
+            .ObtenerCorrelatividadesAsync(planId, materias["Práctica Docente III: La Clase"], incluirInactivas: false, CancellationToken.None);
+
+        var alternativas = practicaIII!.ParaCursar.Where(r => r.GrupoAlternativa is not null).ToList();
+        alternativas.Select(r => r.Nombre).Should().BeEquivalentTo("Procesos Productivos", "Diseño y Producción Tecnológica II");
+        alternativas.Select(r => r.GrupoAlternativa).Distinct().Should().ContainSingle();
+        practicaIII.ParaCursar.Should().ContainSingle(r => r.MateriaId == null)
+            .Which.Descripcion.Should().Contain("primer año");
+        practicaIII.ParaRendir.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task No_vuelve_a_cargar_correlatividades_de_un_plan_que_ya_tiene()
+    {
+        await using (var db = baseDeDatos.CrearContexto())
+        {
+            await CatalogoInstitucionalSeeder.SembrarAsync(db, Ahora);
+        }
+
+        int cantidad;
+        await using (var db = baseDeDatos.CrearContexto())
+        {
+            cantidad = await db.Correlatividades.CountAsync();
+            await CatalogoInstitucionalSeeder.SembrarAsync(db, Ahora);
+        }
+
+        await using var consulta = baseDeDatos.CrearContexto();
+        cantidad.Should().BeGreaterThan(400);
+        (await consulta.Correlatividades.CountAsync()).Should().Be(cantidad);
+    }
+
+    [Fact]
+    public async Task Si_Bedelia_renombro_una_materia_avisa_y_no_carga_ese_plan()
+    {
+        await using (var db = baseDeDatos.CrearContexto())
+        {
+            await CatalogoInstitucionalSeeder.SembrarAsync(db, Ahora);
+            await db.Correlatividades.ExecuteDeleteAsync();
+            var programacion = await db.Materias.SingleAsync(materia => materia.Nombre == "Programación I");
+            programacion.Actualizar("Programación Inicial", activa: true);
+            await db.SaveChangesAsync();
+        }
+
+        await using (var db = baseDeDatos.CrearContexto())
+        {
+            var resultado = await CatalogoInstitucionalSeeder.SembrarAsync(db, Ahora);
+
+            resultado.PlanesConCorrelatividades.Should().Be(8);
+            resultado.Advertencias.Should().ContainSingle().Which.Should().Contain("TSDS").And.Contain("Programación I");
+        }
+    }
+
+    private static async Task<(Guid PlanId, Dictionary<string, Guid> Materias)> MateriasDeAsync(AppDbContext db, string codigoCarrera)
+    {
+        var carrera = await db.Carreras.SingleAsync(carrera => carrera.Codigo == codigoCarrera);
+        var plan = await db.PlanesEstudio.SingleAsync(plan => plan.CarreraId == carrera.Id);
+        var materias = await (
+            from planMateria in db.PlanMaterias
+            join materia in db.Materias on planMateria.MateriaId equals materia.Id
+            where planMateria.PlanEstudioId == plan.Id
+            select new { materia.Nombre, materia.Id })
+            .ToListAsync();
+
+        return (plan.Id, materias.GroupBy(m => m.Nombre).ToDictionary(g => g.Key, g => g.First().Id));
     }
 }

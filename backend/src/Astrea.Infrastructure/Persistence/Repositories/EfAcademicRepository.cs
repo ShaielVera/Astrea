@@ -15,7 +15,11 @@ internal sealed class EfAcademicRepository(AppDbContext db) : IAcademicRepositor
         db.Carreras.SingleOrDefaultAsync(carrera => carrera.Id == carreraId, cancellationToken);
 
     public Task<PlanEstudio?> ObtenerPlanAsync(Guid planId, CancellationToken cancellationToken) =>
-        db.PlanesEstudio.Include(plan => plan.Materias).SingleOrDefaultAsync(plan => plan.Id == planId, cancellationToken);
+        db.PlanesEstudio
+            .Include(plan => plan.Materias)
+            .Include(plan => plan.Correlatividades)
+            .AsSplitQuery()
+            .SingleOrDefaultAsync(plan => plan.Id == planId, cancellationToken);
 
     public Task<Materia?> ObtenerMateriaAsync(Guid materiaId, CancellationToken cancellationToken) =>
         db.Materias.SingleOrDefaultAsync(materia => materia.Id == materiaId, cancellationToken);
@@ -98,5 +102,74 @@ internal sealed class EfAcademicRepository(AppDbContext db) : IAcademicRepositor
             .ToListAsync(cancellationToken);
 
         return PagedResult<MateriaDePlanDto>.From(items, pagina, total);
+    }
+
+    public async Task<CorrelatividadesDeMateriaDto?> ObtenerCorrelatividadesAsync(
+        Guid planId,
+        Guid materiaId,
+        bool incluirInactivas,
+        CancellationToken cancellationToken)
+    {
+        var destino = await (
+            from planMateria in db.PlanMaterias.AsNoTracking()
+            join materia in db.Materias.AsNoTracking() on planMateria.MateriaId equals materia.Id
+            join plan in db.PlanesEstudio.AsNoTracking() on planMateria.PlanEstudioId equals plan.Id
+            where planMateria.PlanEstudioId == planId
+                && materia.Id == materiaId
+                && (incluirInactivas || (materia.Activa && plan.Activo))
+            select new { planMateria.Id, materia.Codigo, materia.Nombre, planMateria.AnioEnPlan })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (destino is null)
+        {
+            return null;
+        }
+
+        var reglas = await db.Correlatividades.AsNoTracking()
+            .Where(regla => regla.PlanMateriaDestinoId == destino.Id)
+            .ToListAsync(cancellationToken);
+
+        var idsRequisitos = reglas
+            .Where(regla => regla.PlanMateriaRequisitoId != null)
+            .Select(regla => regla.PlanMateriaRequisitoId!.Value)
+            .Distinct()
+            .ToList();
+
+        var requisitos = await (
+            from planMateria in db.PlanMaterias.AsNoTracking()
+            join materia in db.Materias.AsNoTracking() on planMateria.MateriaId equals materia.Id
+            where idsRequisitos.Contains(planMateria.Id)
+            select new { planMateria.Id, MateriaId = materia.Id, materia.Codigo, materia.Nombre, planMateria.AnioEnPlan, planMateria.Orden })
+            .ToDictionaryAsync(fila => fila.Id, cancellationToken);
+
+        // Primero los obligatorios por año y orden del plan; los requisitos en texto al final; luego cada grupo de alternativas.
+        List<RequisitoDto> Requisitos(TipoCorrelatividad tipo) => reglas
+            .Where(regla => regla.Tipo == tipo)
+            .Select(regla => (regla, materia: regla.PlanMateriaRequisitoId is Guid id ? requisitos[id] : null))
+            .OrderBy(fila => fila.regla.GrupoAlternativa ?? 0)
+            .ThenBy(fila => fila.materia is null)
+            .ThenBy(fila => fila.materia?.AnioEnPlan)
+            .ThenBy(fila => fila.materia?.Orden)
+            .ThenBy(fila => fila.regla.Descripcion, StringComparer.Ordinal)
+            .Select(fila => new RequisitoDto(
+                fila.regla.Id,
+                fila.regla.Condicion,
+                fila.regla.GrupoAlternativa,
+                fila.materia?.MateriaId,
+                fila.materia?.Codigo,
+                fila.materia?.Nombre,
+                fila.materia?.AnioEnPlan,
+                fila.regla.Descripcion))
+            .ToList();
+
+        return new CorrelatividadesDeMateriaDto(
+            planId,
+            destino.Id,
+            materiaId,
+            destino.Codigo,
+            destino.Nombre,
+            destino.AnioEnPlan,
+            Requisitos(TipoCorrelatividad.Cursar),
+            Requisitos(TipoCorrelatividad.Rendir));
     }
 }

@@ -70,6 +70,65 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.ToTable("carreras", (string)null);
                 });
 
+            modelBuilder.Entity("Astrea.Domain.Academic.Correlatividad", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Condicion")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("condicion");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("descripcion");
+
+                    b.Property<int?>("GrupoAlternativa")
+                        .HasColumnType("integer")
+                        .HasColumnName("grupo_alternativa");
+
+                    b.Property<Guid>("PlanEstudioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_estudio_id");
+
+                    b.Property<Guid>("PlanMateriaDestinoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_materia_destino_id");
+
+                    b.Property<Guid?>("PlanMateriaRequisitoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_materia_requisito_id");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("tipo");
+
+                    b.HasKey("Id")
+                        .HasName("pk_correlatividades");
+
+                    b.HasIndex("PlanEstudioId")
+                        .HasDatabaseName("ix_correlatividades_plan_estudio_id");
+
+                    b.HasIndex("PlanMateriaRequisitoId")
+                        .HasDatabaseName("ix_correlatividades_plan_materia_requisito_id");
+
+                    b.HasIndex("PlanMateriaDestinoId", "Tipo")
+                        .HasDatabaseName("ix_correlatividades_plan_materia_destino_id_tipo");
+
+                    b.HasIndex("PlanMateriaDestinoId", "Tipo", "PlanMateriaRequisitoId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_correlatividades_plan_materia_destino_id_tipo_plan_materia_")
+                        .HasFilter("plan_materia_requisito_id IS NOT NULL");
+
+                    b.ToTable("correlatividades", (string)null);
+                });
+
             modelBuilder.Entity("Astrea.Domain.Academic.Materia", b =>
                 {
                     b.Property<Guid>("Id")
@@ -344,6 +403,29 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.ToTable("usuario_roles", (string)null);
                 });
 
+            modelBuilder.Entity("Astrea.Domain.Academic.Correlatividad", b =>
+                {
+                    b.HasOne("Astrea.Domain.Academic.PlanEstudio", null)
+                        .WithMany("Correlatividades")
+                        .HasForeignKey("PlanEstudioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_correlatividades_planes_estudio_plan_estudio_id");
+
+                    b.HasOne("Astrea.Domain.Academic.PlanMateria", null)
+                        .WithMany()
+                        .HasForeignKey("PlanMateriaDestinoId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("fk_correlatividades_plan_materias_plan_materia_destino_id");
+
+                    b.HasOne("Astrea.Domain.Academic.PlanMateria", null)
+                        .WithMany()
+                        .HasForeignKey("PlanMateriaRequisitoId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .HasConstraintName("fk_correlatividades_plan_materias_plan_materia_requisito_id");
+                });
+
             modelBuilder.Entity("Astrea.Domain.Academic.PlanEstudio", b =>
                 {
                     b.HasOne("Astrea.Domain.Academic.Carrera", null)
@@ -396,6 +478,8 @@ namespace Astrea.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Astrea.Domain.Academic.PlanEstudio", b =>
                 {
+                    b.Navigation("Correlatividades");
+
                     b.Navigation("Materias");
                 });
 
