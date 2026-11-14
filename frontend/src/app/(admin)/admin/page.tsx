@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
@@ -34,6 +35,16 @@ export default function PanelAdministracion() {
         <h1 className="text-3xl font-semibold tracking-tight">Administración</h1>
         <p className="text-zinc-600 dark:text-zinc-400">Panel de Bedelía / Secretaría.</p>
       </div>
+
+      <nav aria-label="Secciones de administración" className="flex flex-wrap gap-3">
+        <Link
+          href="/admin/academico"
+          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+        >
+          Plan de estudios
+          <span className="block text-sm font-normal text-zinc-500">Carreras, planes y materias</span>
+        </Link>
+      </nav>
 
       <section aria-labelledby="usuarios-titulo" className="flex flex-col gap-3">
         <h2 id="usuarios-titulo" className="text-lg font-semibold">

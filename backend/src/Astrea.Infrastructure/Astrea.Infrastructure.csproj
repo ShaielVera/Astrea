@@ -16,4 +16,8 @@
     <InternalsVisibleTo Include="Astrea.Infrastructure.IntegrationTests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Persistence\Seed\catalogo-isp20.json" />
+  </ItemGroup>
+
 </Project>

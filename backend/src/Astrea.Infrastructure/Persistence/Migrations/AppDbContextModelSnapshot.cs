@@ -23,6 +23,184 @@ namespace Astrea.Infrastructure.Persistence.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Astrea.Domain.Academic.Carrera", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("boolean")
+                        .HasColumnName("activa");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("codigo");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("DuracionAnios")
+                        .HasColumnType("integer")
+                        .HasColumnName("duracion_anios");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("nombre");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_carreras");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique()
+                        .HasDatabaseName("ix_carreras_codigo");
+
+                    b.HasIndex("Nombre")
+                        .HasDatabaseName("ix_carreras_nombre");
+
+                    b.ToTable("carreras", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Academic.Materia", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("boolean")
+                        .HasColumnName("activa");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("codigo");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("nombre");
+
+                    b.HasKey("Id")
+                        .HasName("pk_materias");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique()
+                        .HasDatabaseName("ix_materias_codigo");
+
+                    b.ToTable("materias", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Academic.PlanEstudio", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("activo");
+
+                    b.Property<Guid>("CarreraId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("carrera_id");
+
+                    b.Property<string>("CodigoVersion")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("codigo_version");
+
+                    b.Property<int>("DuracionAnios")
+                        .HasColumnType("integer")
+                        .HasColumnName("duracion_anios");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("nombre");
+
+                    b.Property<DateOnly?>("VigenciaDesde")
+                        .HasColumnType("date")
+                        .HasColumnName("vigencia_desde");
+
+                    b.Property<DateOnly?>("VigenciaHasta")
+                        .HasColumnType("date")
+                        .HasColumnName("vigencia_hasta");
+
+                    b.HasKey("Id")
+                        .HasName("pk_planes_estudio");
+
+                    b.HasIndex("CarreraId")
+                        .HasDatabaseName("ix_planes_estudio_carrera_id");
+
+                    b.ToTable("planes_estudio", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Academic.PlanMateria", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("AnioEnPlan")
+                        .HasColumnType("integer")
+                        .HasColumnName("anio_en_plan");
+
+                    b.Property<int?>("CargaHorariaSemanal")
+                        .HasColumnType("integer")
+                        .HasColumnName("carga_horaria_semanal");
+
+                    b.Property<string>("Cuatrimestre")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("cuatrimestre");
+
+                    b.Property<Guid>("MateriaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("materia_id");
+
+                    b.Property<bool>("Obligatoria")
+                        .HasColumnType("boolean")
+                        .HasColumnName("obligatoria");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("integer")
+                        .HasColumnName("orden");
+
+                    b.Property<Guid>("PlanEstudioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_estudio_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_plan_materias");
+
+                    b.HasIndex("MateriaId")
+                        .HasDatabaseName("ix_plan_materias_materia_id");
+
+                    b.HasIndex("PlanEstudioId", "MateriaId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_plan_materias_plan_estudio_id_materia_id");
+
+                    b.HasIndex("PlanEstudioId", "AnioEnPlan", "Orden")
+                        .HasDatabaseName("ix_plan_materias_plan_estudio_id_anio_en_plan_orden");
+
+                    b.ToTable("plan_materias", (string)null);
+                });
+
             modelBuilder.Entity("Astrea.Domain.Users.Rol", b =>
                 {
                     b.Property<Guid>("Id")
@@ -166,6 +344,33 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.ToTable("usuario_roles", (string)null);
                 });
 
+            modelBuilder.Entity("Astrea.Domain.Academic.PlanEstudio", b =>
+                {
+                    b.HasOne("Astrea.Domain.Academic.Carrera", null)
+                        .WithMany()
+                        .HasForeignKey("CarreraId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_planes_estudio_carreras_carrera_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Academic.PlanMateria", b =>
+                {
+                    b.HasOne("Astrea.Domain.Academic.Materia", null)
+                        .WithMany()
+                        .HasForeignKey("MateriaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_plan_materias_materias_materia_id");
+
+                    b.HasOne("Astrea.Domain.Academic.PlanEstudio", null)
+                        .WithMany("Materias")
+                        .HasForeignKey("PlanEstudioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_plan_materias_planes_estudio_plan_estudio_id");
+                });
+
             modelBuilder.Entity("Astrea.Domain.Users.UsuarioRol", b =>
                 {
                     b.HasOne("Astrea.Domain.Users.Usuario", null)
@@ -187,6 +392,11 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_usuario_roles_usuarios_usuario_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Academic.PlanEstudio", b =>
+                {
+                    b.Navigation("Materias");
                 });
 
             modelBuilder.Entity("Astrea.Domain.Users.Usuario", b =>

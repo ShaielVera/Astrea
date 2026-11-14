@@ -51,6 +51,9 @@ public sealed class Result<T>
         ? _valor!
         : throw new InvalidOperationException("No se puede leer el valor de un resultado fallido.");
 
+    /// <summary>Para valores de tipo interfaz, que no admiten la conversión implícita.</summary>
+    public static Result<T> Exito(T valor) => new(valor);
+
     public static implicit operator Result<T>(T valor) => new(valor);
 
     public static implicit operator Result<T>(Error error) => new(error);

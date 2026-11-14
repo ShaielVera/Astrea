@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options => ConfigurarDbContext(options, connectionString));
 
         services.AddScoped<IUserRepository, EfUserRepository>();
+        services.AddScoped<IAcademicRepository, EfAcademicRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddSingleton<IClock, SystemClock>();
 

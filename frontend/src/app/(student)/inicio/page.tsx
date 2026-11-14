@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@/features/auth/AuthProvider";
 
-const modulos = [
+const modulos: { titulo: string; descripcion: string; href?: string }[] = [
+  { titulo: "Plan de estudios", descripcion: "Las materias de cada carrera, año por año.", href: "/plan-de-estudios" },
   { titulo: "Correlatividades", descripcion: "Qué necesitás para cursar y para rendir cada materia." },
   { titulo: "Mesas de examen", descripcion: "Llamados, fechas, horarios y tribunales." },
   { titulo: "Mis trámites", descripcion: "Pedí constancias y seguí su estado." },
@@ -24,10 +26,20 @@ export default function InicioEstudiante() {
         {modulos.map((modulo) => (
           <li key={modulo.titulo} className="flex flex-col gap-2 rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-medium">{modulo.titulo}</h2>
-              <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                Próximamente
-              </span>
+              <h2 className="font-medium">
+                {modulo.href ? (
+                  <Link href={modulo.href} className="text-indigo-600 hover:underline dark:text-indigo-400">
+                    {modulo.titulo}
+                  </Link>
+                ) : (
+                  modulo.titulo
+                )}
+              </h2>
+              {!modulo.href && (
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                  Próximamente
+                </span>
+              )}
             </div>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">{modulo.descripcion}</p>
           </li>

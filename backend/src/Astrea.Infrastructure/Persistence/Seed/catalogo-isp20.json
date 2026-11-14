@@ -1,0 +1,109 @@
+{
+  "fuente": "https://isp20.edu.ar/nuevo/ - páginas 'Plan de Estudio-Diseño Curricular' de cada carrera (consultadas el 14/11/2026)",
+  "nota": "Formato de materia: 'Nombre' (anual) o 'Nombre@1' / 'Nombre@2' (1.º o 2.º cuatrimestre). Cada lista interna es un año.",
+  "carreras": [
+    {
+      "codigo": "PEI",
+      "nombre": "Profesorado de Educación Inicial",
+      "duracionAnios": 4,
+      "resolucion": "Res. Nº 529/09",
+      "anios": [
+        ["Psicología y Educación", "Pedagogía", "Sociología de la Educación", "Historia Argentina y Latinoamericana@1", "Movimiento y Cuerpo I", "Taller de Práctica I", "Problemáticas Contemporáneas de la Educación Inicial I", "Comunicación y Expresión Oral y Escrita", "Resolución de Problemas y Creatividad@1", "Ambiente y Sociedad@2", "Área Estético-Expresiva I", "Itinerarios por el Mundo de la Cultura", "Producción Pedagógica"],
+        ["Didáctica General", "Filosofía de la Educación@1", "Conocimiento y Educación@2", "Movimiento y Cuerpo II", "Taller de Práctica II: Seminario de lo Grupal y los Grupos de Aprendizaje", "Sujeto de la Educación Inicial", "Didáctica de Educación Inicial I", "Matemática y su Didáctica I", "Literatura y su Didáctica", "Ciencias Naturales y su Didáctica", "Itinerarios por el Mundo de la Cultura", "Producción Pedagógica"],
+        ["Tecnologías de la Información y de la Comunicación", "Historia Social de la Educación y Política Educativa Argentina", "Trayecto de Práctica III: Seminario de Instituciones Educativas", "Matemática y su Didáctica II", "Lengua y su Didáctica@1", "Alfabetización Inicial@2", "Ciencias Sociales y su Didáctica", "Área Estético-Expresiva II", "Problemáticas Contemporáneas de la Educación Inicial II@1", "Didáctica de la Educación Inicial II@2", "Espacio de Definición Institucional@1", "Espacio de Definición Institucional@2", "Itinerarios por el Mundo de la Cultura", "Producción Pedagógica"],
+        ["Ética, Trabajo Docente, Derechos Humanos y Ciudadanos", "Taller de Práctica IV", "Ateneo: Matemática - Ambiente y Sociedad (Ciencias Naturales - Ciencias Sociales) - Lengua y Literatura - Formación Ética y Ciudadana", "Sexualidad Humana y Educación@1", "Itinerarios por el Mundo de la Cultura", "Producción Pedagógica"]
+      ]
+    },
+    {
+      "codigo": "PEA",
+      "nombre": "Profesorado de Educación Secundaria en Ciencias de la Administración",
+      "duracionAnios": 4,
+      "resolucion": "Res. Nº 2090/15",
+      "anios": [
+        ["Pedagogía", "UCCV Sociología", "Administración General", "Administración I", "Sistema de Información Contable I", "Construcción de Ciudadanía", "Historia Económica", "Matemática", "Práctica Docente I"],
+        ["Instituciones Educativas", "Didáctica y Curriculum", "Psicología y Educación", "Administración II", "Sistema de Información Contable II", "Derecho I", "Economía", "Estadística Aplicada", "Didáctica de la Administración I", "Práctica Docente II"],
+        ["Historia y Política de la Educación Argentina", "Filosofía", "Metodología de la Investigación", "Administración III", "Sistema de Información Contable III", "Práctica Impositiva y Laboral", "Derecho II", "Didáctica de la Administración II", "Sujetos de la Educación Secundaria", "Práctica Docente III", "Producción de los Recursos Didácticos I"],
+        ["Ética y Trabajo Docente", "Educación Sexual Integral", "UCCV Comunicación Social", "Administración IV", "Gestión Organizacional", "Matemática Financiera", "Prácticas de Investigación", "Práctica Docente IV (Residencia)", "Producción de los Recursos Didácticos II", "Unidad de Definición Institucional"]
+      ]
+    },
+    {
+      "codigo": "PEE",
+      "nombre": "Profesorado de Educación Secundaria en Economía",
+      "duracionAnios": 4,
+      "resolucion": "Res. Nº 2090/15",
+      "anios": [
+        ["Pedagogía", "UCCV Sociología", "Administración General", "Economía I", "Geografía Económica", "Historia Económica", "Construcción de Ciudadanía", "Sistema de Información Contable I", "Matemática", "Práctica Docente I"],
+        ["Instituciones Educativas", "Didáctica y Curriculum", "Psicología y Educación", "Economía II", "Sistema de Información Contable II", "Derecho I", "Economía", "Estadística Aplicada", "Didáctica de la Economía I", "Práctica Docente II"],
+        ["Historia y Política de la Educación Argentina", "Filosofía", "Metodología de la Investigación", "Economía III", "Finanzas Públicas", "Derecho II", "Sujetos de la Educación Secundaria", "Práctica Docente III", "Producción de los Recursos Didácticos I"],
+        ["Ética y Trabajo Docente", "Educación Sexual Integral", "UCCV Comunicación Social", "Economía Social y Sostenible", "Economía Argentina, Latinoamericana e Internacional", "Prácticas de Investigación", "Práctica Docente IV (Residencia)", "Producción de los Recursos Didácticos II", "Unidad de Definición Institucional"]
+      ]
+    },
+    {
+      "codigo": "PET",
+      "nombre": "Profesorado de Educación Tecnológica",
+      "duracionAnios": 4,
+      "resolucion": "Res. 2719/14",
+      "anios": [
+        ["Pedagogía", "Movimiento y Cuerpo", "Práctica Docente I: Escenarios Educativos", "Introducción a la Tecnología", "Historia de la Tecnología", "Diseño y Producción de la Tecnología I", "Matemática", "Física"],
+        ["Psicología de la Educación", "Didáctica y Curriculum", "Instituciones Educativas", "Práctica Docente II: La Institución Escolar", "Sujetos de la Educación I", "TIC para la Enseñanza", "Procesos Productivos", "Diseño y Producción Tecnológica II", "Didáctica Específica I"],
+        ["Filosofía y Educación", "Historia Social de la Educación", "Metodología de la Investigación", "Práctica Docente III: La Clase", "Sujetos de la Educación II", "Materiales", "Química", "Procesos de Control", "Tecnologías Regionales", "Diseño y Producción Tecnológica III", "Didáctica Específica II"],
+        ["Ética y Trabajo Docente", "Educación Sexual Integral", "Unidad de Definición Institucional I", "Unidad de Definición Institucional II", "Prácticas de Investigación", "Práctica Docente IV: El Rol Docente y su Práctica", "Biotecnología", "Procesos de Comunicación", "Problemáticas Sociotécnicas", "Diseño y Producción Tecnológica IV", "Taller de Producción Didáctica"]
+      ]
+    },
+    {
+      "codigo": "TSDS",
+      "nombre": "Tecnicatura Superior en Desarrollo de Software",
+      "duracionAnios": 3,
+      "resolucion": "Res. 2120/16",
+      "anios": [
+        ["Comunicación@1", "Unidad de Definición Institucional@2", "Matemática", "Inglés Técnico I", "Administración", "Tecnología de la Información", "Lógica y Estructura de Datos", "Ingeniería de Software I", "Sistemas Operativos"],
+        ["Problemáticas Socio Contemporáneas@1", "Unidad de Definición Institucional@2", "Inglés Técnico II", "Innovación y Desarrollo Emprendedor", "Estadística", "Programación I", "Ingeniería de Software II", "Base de Datos I", "Práctica Profesionalizante I"],
+        ["Ética y Responsabilidad Social", "Derecho y Legislación Laboral", "Redes y Comunicación", "Programación II", "Gestión de Proyectos de Software", "Base de Datos II", "Práctica Profesionalizante II"]
+      ]
+    },
+    {
+      "codigo": "TSE",
+      "nombre": "Tecnicatura Superior en Enfermería",
+      "duracionAnios": 3,
+      "resolucion": "Res. Nº 2487/17",
+      "anios": [
+        ["Comunicación", "Unidad de Definición Institucional I", "Salud Pública", "Biología Humana I", "Sujeto, Cultura y Sociedad", "Fundamentos del Cuidado en Enfermería", "Cuidados de Enfermería en la Comunidad y en la Familia", "Práctica Profesionalizante"],
+        ["Problemáticas Socio Contemporáneas", "Unidad de Definición Institucional II", "Informática en Salud", "Sujeto, Cultura y Sociedad II", "Biología Humana II", "Bioseguridad y Medio Ambiente en el Trabajo", "Farmacología en Enfermería", "Cuidados de Enfermería a los Adultos y Adultos Mayores", "Práctica Profesionalizante II"],
+        ["Ética y Responsabilidad Social", "Derecho y Legislación Laboral", "Inglés Técnico", "Organización y Gestión en Instituciones de Salud", "Investigación en Enfermería", "Cuidados de Enfermería en Salud Mental", "Cuidados de Enfermería al Niño y al Adolescente", "Práctica Profesionalizante III"]
+      ]
+    },
+    {
+      "codigo": "TSGER",
+      "nombre": "Tecnicatura Superior en Gestión de Energías Renovables",
+      "duracionAnios": 3,
+      "resolucion": "Res. 1631/15",
+      "anios": [
+        ["Comunicación", "Unidad de Definición Institucional I", "Física", "Informática", "Matemática y Estadística", "Química", "Electrotecnia", "Sistemas de Representación", "Inglés Técnico", "Política Energética", "Energía Solar"],
+        ["Problemáticas Socio Contemporáneas", "Unidad de Definición Institucional II", "Innovación y Desarrollo Emprendedor", "Instalaciones Eléctricas Eficientes", "Energía de Biomasa", "Gestión de la Energía", "Instalaciones Térmicas Eficientes", "Inmótica", "Práctica Profesionalizante I"],
+        ["Gestión Ocupacional", "Ética y Responsabilidad Social", "Legislación Laboral", "Arquitectura Bioclimática", "Energía Hidráulica", "Evaluación y Gestión de Proyectos de Inversión", "Energía Eólica", "Mercados Energéticos y Redes Inteligentes", "Práctica Profesionalizante II"]
+      ]
+    },
+    {
+      "codigo": "TSGO",
+      "nombre": "Tecnicatura Superior en Gestión de las Organizaciones",
+      "duracionAnios": 3,
+      "resolucion": "Res. 2120/16",
+      "anios": [
+        ["Comunicación@1", "Unidad de Definición Institucional@2", "Economía", "Matemática y Estadística", "Contabilidad", "Informática", "Administración", "Gestión de la Producción", "Gestión del Talento Humano"],
+        ["Problemáticas Contemporáneas@1", "Unidad de Definición Institucional@2", "Innovación y Desarrollo Emprendedor", "Inglés Técnico", "Legislación Comercial y Tributaria", "Gestión de Comercialización e Investigación Comercial", "Gestión de Costos", "Gestión Contable", "Práctica Profesionalizante I"],
+        ["Gestión de Seguridad, Salud Ocupacional y Medio Ambiente", "Ética y Responsabilidad Social", "Legislación Laboral", "Estrategia Empresarial", "Sistema de Información para la Gestión de las Organizaciones", "Gestión Financiera", "Evaluación y Administración de Proyectos de Inversión", "Control de Gestión", "Práctica Profesionalizante II"]
+      ]
+    },
+    {
+      "codigo": "TSSITI",
+      "nombre": "Tecnicatura Superior en Soporte de Infraestructura de Tecnología de la Información",
+      "duracionAnios": 3,
+      "resolucion": "Res. 2120/16",
+      "anios": [
+        ["Comunicación@1", "Unidad de Definición Institucional@2", "Matemática", "Física Aplicada a las Tecnologías de la Información", "Administración", "Inglés Técnico", "Arquitectura de las Computadoras", "Lógica y Programación", "Infraestructura de Redes I"],
+        ["Problemáticas Socio Contemporáneas@1", "Unidad de Definición Institucional@2", "Innovación y Desarrollo Emprendedor", "Estadística", "Sistemas Operativos", "Algoritmos y Estructuras de Datos", "Base de Datos", "Infraestructura de Datos II", "Práctica Profesionalizante I"],
+        ["Ética y Responsabilidad Social", "Derecho y Legislación Laboral", "Administración de Base de Datos", "Integridad y Migración de Datos", "Seguridad de los Sistemas", "Administración de Sistemas Operativos y Redes", "Práctica Profesionalizante II"]
+      ]
+    }
+  ]
+}

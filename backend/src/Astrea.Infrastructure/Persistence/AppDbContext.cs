@@ -1,3 +1,4 @@
+using Astrea.Domain.Academic;
 using Astrea.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Rol> Roles => Set<Rol>();
 
     public DbSet<UsuarioRol> UsuarioRoles => Set<UsuarioRol>();
+
+    public DbSet<Carrera> Carreras => Set<Carrera>();
+
+    public DbSet<PlanEstudio> PlanesEstudio => Set<PlanEstudio>();
+
+    public DbSet<Materia> Materias => Set<Materia>();
+
+    public DbSet<PlanMateria> PlanMaterias => Set<PlanMateria>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

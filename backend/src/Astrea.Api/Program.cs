@@ -1,10 +1,13 @@
+using System.Text.Json.Serialization;
 using Astrea.Api.Authentication;
 using Astrea.Api.Authorization;
 using Astrea.Api.Endpoints;
+using Astrea.Api.Errors;
 using Astrea.Application;
 using Astrea.Application.Abstractions.Identity;
 using Astrea.Infrastructure;
 using Astrea.Infrastructure.Persistence;
+using Astrea.Infrastructure.Persistence.Seed;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +27,9 @@ builder.Services.AddFirebaseAuthentication(builder.Configuration, builder.Enviro
 builder.Services.AddPoliticasAstrea();
 
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ManejadorReglasDeNegocio>();
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddOpenApi();
 
 builder.Services.AddHealthChecks()
@@ -64,15 +70,17 @@ api.MapGet("/", () => Results.Ok(new { name = "Astrea API", version = "v1" }))
     .AllowAnonymous();
 api.MapAuthEndpoints();
 api.MapAdminEndpoints();
+api.MapAcademicEndpoints();
 
 app.Run();
 
-// Solo para entornos locales: aplica migraciones al iniciar. En E2E además parte de una base vacía.
+// Solo para entornos locales: aplica migraciones y carga el catálogo del instituto. En E2E parte de una base vacía.
 static async Task PrepararBaseDeDatosAsync(WebApplication app)
 {
     var migrar = app.Configuration.GetValue<bool>("Database:MigrarAlIniciar");
     var recrear = app.Configuration.GetValue<bool>("Database:RecrearAlIniciar");
-    if (!migrar && !recrear)
+    var sembrar = app.Configuration.GetValue<bool>("Database:SembrarCatalogoInstitucional");
+    if (!migrar && !recrear && !sembrar)
     {
         return;
     }
@@ -89,5 +97,13 @@ static async Task PrepararBaseDeDatosAsync(WebApplication app)
         await db.Database.EnsureDeletedAsync();
     }
 
-    await db.Database.MigrateAsync();
+    if (migrar || recrear)
+    {
+        await db.Database.MigrateAsync();
+    }
+
+    if (sembrar)
+    {
+        await CatalogoInstitucionalSeeder.SembrarAsync(db, DateTimeOffset.UtcNow);
+    }
 }

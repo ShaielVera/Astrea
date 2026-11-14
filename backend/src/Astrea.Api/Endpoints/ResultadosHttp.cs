@@ -8,6 +8,9 @@ internal static class ResultadosHttp
     public static IResult AHttp<T>(this Result<T> resultado) =>
         resultado.EsExitoso ? Results.Ok(resultado.Valor) : resultado.Error!.AProblema();
 
+    public static IResult ACreado<T>(this Result<T> resultado, Func<T, string> ubicacion) =>
+        resultado.EsExitoso ? Results.Created(ubicacion(resultado.Valor), resultado.Valor) : resultado.Error!.AProblema();
+
     public static IResult AProblema(this Error error)
     {
         var status = error.Tipo switch
