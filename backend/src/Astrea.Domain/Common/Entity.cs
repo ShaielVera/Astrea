@@ -15,7 +15,12 @@ public abstract class Entity : IEquatable<Entity>
         Id = id;
     }
 
-    public Guid Id { get; }
+    /// <summary>Constructor para materialización desde la base de datos (EF Core).</summary>
+    protected Entity()
+    {
+    }
+
+    public Guid Id { get; private set; }
 
     public bool Equals(Entity? other) =>
         other is not null && other.GetType() == GetType() && other.Id == Id;

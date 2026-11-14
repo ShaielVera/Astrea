@@ -1,6 +1,8 @@
 using Astrea.Application.Abstractions.Clock;
+using Astrea.Application.Abstractions.Persistence;
 using Astrea.Infrastructure.Clock;
 using Astrea.Infrastructure.Persistence;
+using Astrea.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,11 +14,18 @@ public static class DependencyInjection
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
 
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()));
+        services.AddDbContext<AppDbContext>(options => ConfigurarDbContext(options, connectionString));
 
+        services.AddScoped<IUserRepository, EfUserRepository>();
+        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddSingleton<IClock, SystemClock>();
 
         return services;
     }
+
+    /// <summary>Configuración única de EF Core, compartida con los tests de integración.</summary>
+    public static DbContextOptionsBuilder ConfigurarDbContext(DbContextOptionsBuilder options, string connectionString) =>
+        options
+            .UseNpgsql(connectionString, npgsql => npgsql.UseVector())
+            .UseSnakeCaseNamingConvention();
 }

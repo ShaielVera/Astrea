@@ -53,9 +53,30 @@ jobs:
         run: npm run typecheck
       - name: Build
         run: npm run build
+
+  e2e:
+    name: E2E (sistema completo)
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: backend/global.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
       - name: Instalar navegador de Playwright
         run: npx playwright install --with-deps chromium
-      - name: Tests E2E
+      - name: Compilar la API
+        run: dotnet build ../backend/src/Astrea.Api --configuration Debug
+      - name: Tests E2E (PostgreSQL + Firebase Auth Emulator en Docker, API y frontend)
         run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()

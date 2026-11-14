@@ -5,14 +5,15 @@ using AwesomeAssertions;
 
 namespace Astrea.Api.IntegrationTests;
 
-public sealed class HealthTests(AstreaApiFactory factory) : IClassFixture<AstreaApiFactory>
+[Collection(ColeccionApi.Nombre)]
+public sealed class HealthTests(AstreaApiFactory factory)
 {
     private readonly HttpClient _client = factory.CreateClient();
 
     [Theory]
     [InlineData("/health/live")]
     [InlineData("/health/ready")]
-    public async Task Los_health_checks_responden_Healthy(string url)
+    public async Task Los_health_checks_responden_Healthy_sin_autenticacion(string url)
     {
         var response = await _client.GetAsync(url);
 
@@ -21,7 +22,7 @@ public sealed class HealthTests(AstreaApiFactory factory) : IClassFixture<Astrea
     }
 
     [Fact]
-    public async Task La_raiz_de_la_api_v1_responde_con_su_version()
+    public async Task La_raiz_de_la_api_v1_responde_con_su_version_sin_autenticacion()
     {
         var info = await _client.GetFromJsonAsync<ApiInfo>("/api/v1/");
 
@@ -31,7 +32,8 @@ public sealed class HealthTests(AstreaApiFactory factory) : IClassFixture<Astrea
     [Fact]
     public async Task Una_ruta_inexistente_devuelve_404_con_problem_details()
     {
-        var response = await _client.GetAsync("/api/v1/no-existe");
+        var response = await factory.CrearClienteCon(TokensDePrueba.Crear("uid-x", "x@astrea.test"))
+            .GetAsync("/api/v1/no-existe");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
