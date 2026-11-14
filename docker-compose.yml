@@ -1,0 +1,22 @@
+# Base de datos local de desarrollo (PostgreSQL + pgvector).
+# Credenciales solo para desarrollo local: nunca usar en otros ambientes.
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: astrea-db
+    environment:
+      POSTGRES_DB: astrea
+      POSTGRES_USER: astrea
+      POSTGRES_PASSWORD: astrea_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - astrea-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U astrea -d astrea"]
+      interval: 10s
+      timeout: 15s
+      retries: 10
+
+volumes:
+  astrea-db-data:

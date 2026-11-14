@@ -1,0 +1,44 @@
+Bien, necesito primero que no me interrumpas. Te quiero contar sobre un proyecto de software para una Práctica Profesionalizante de segundo año en el Instituto Superior de Profesorado N° 20. Queremos que el proyecto se llame "Astrea" y queremos que el backend esté hecho en C# con .NET, estructurado de una manera profesional usando Arquitectura Hexagonal (Ports and Adapters), que sus APIs tengan paginación, y que su frontend esté hecho en Next.js utilizando React y Tailwind CSS.
+
+Queremos que el desarrollo y avance del proyecto se realice mediante Slices Verticales (Vertical Slices) que nos permitan ir chequeando y comprobando su evolución funcional. Quiero también que todo el desarrollo contenga testing estricto: tanto pruebas unitarias para probar individualmente cada funcionalidad como tests de integración y tests end-to-end (E2E). 
+
+La autenticación debe resolverse utilizando Firebase Authentication, validando los JSON Web Tokens (JWT) de Firebase en el backend en C# para proteger los endpoints y gestionar los permisos por roles. Además, para el almacenamiento de imágenes (como las fotos de los objetos perdidos), utilizaremos Firebase Storage. La aplicación debe estar pensada como una PWA (Progressive Web App) instalable tanto en computadoras como en dispositivos móviles.
+
+El sistema contará con dos roles principales: **Estudiante (Usuario)** y **Administrador (Bedelía / Secretaría)**, y girará en torno a los siguientes módulos y funcionalidades:
+
+### 1. Funcionalidades para el Estudiante (Usuario)
+- **Módulo de Correlatividades Inteligente:** El estudiante selecciona su carrera, su año, hace clic en una materia y el sistema le muestra visualmente un árbol o listado de lo que necesita tener aprobado (para rendir final) o regularizado (para cursar).
+- **Calendario y Mesas de Examen:** Un listado filtrable por fecha y cátedra de los llamados a exámenes, horarios y tribunales.
+- **Gestión de Trámites ("Mis Trámites"):**
+  - Solicitud de trámites predefinidos (Constancia de Alumno Regular, Constancia de Examen, Solicitud de Analítico Parcial, Justificación de Inasistencia) completando un formulario breve o pidiéndoselo directamente al chat del agente (ej: *"Necesito un certificado de alumno regular para presentar en el trabajo"*).
+  - Pestaña de seguimiento con estados claros: `Pendiente`, `En Proceso`, `Listo para descargar / retirar`.
+- **Objetos Perdidos ("Hallazgos"):**
+  - *Publicar hallazgo:* Formulario rápido para subir un objeto encontrado (Título, descripción breve, foto opcional subida a Firebase Storage, Aula/Sector, Franja horaria, y Punto de resguardo: Dirección, Secretaría, Biblioteca, Infraestructura, Depósito).
+  - *Explorar / Buscar:* Listado de objetos activos ocultando detalles sensibles para evitar reclamos falsos (se muestra qué es, dónde se encontró y dónde está resguardado, pero se reservan detalles específicos para la validación presencial).
+- **El Chat con el Agente (El centro de todo):** Un panel de conversación lateral o central donde el alumno, en lugar de navegar por los menús, puede interactuar mediante lenguaje natural para consultar correlatividades, fechas de mesas de examen, pedir certificados o preguntar si alguien encontró un objeto que perdió (ej: *"Me olvidé un termo negro hoy a la mañana en el aula 3, ¿alguien lo encontró?"*).
+
+### 2. Funcionalidades para el Administrador (Bedelía / Secretaría)
+- **Gestión del Plan de Estudios y Correlatividades:** Panel CRUD para dar de alta carreras, materias y asociar las reglas de correlatividad (ej: "Para cursar X se necesita Y regular").
+- **Carga y Actualización de Mesas de Examen:** Registrar llamados, fechas, horarios, tribunales y asignaturas.
+- **Bandeja y Generación Automática de Trámites:**
+  - Bandeja de entrada filtrable por carrera, fecha y estado.
+  - Con un clic en **"Aprobar y Generar"**, el backend en C# toma los datos del alumno de la base de datos (Nombre, DNI, Carrera, Año), rellena una plantilla y genera un **PDF oficial** (con código QR o identificador único de validación) que queda disponible para descarga inmediata en el perfil del estudiante.
+  - Asistencia de IA para redactar respuestas personalizadas si un trámite es rechazado por falta de requisitos.
+- **Control y Cierre de Objetos Perdidos:**
+  - Panel de objetos en resguardo.
+  - Cuando el dueño se acerca a retirar el objeto y demuestra que es suyo, el administrador abre el ticket, registra el DNI y Nombre de quien retira, marca una casilla de verificación de identidad y cambia el estado a `Entregado / Cerrado` (sacándolo de la vista pública y dejándolo en auditoría).
+- **Gestión de Documentos e Ingesta para la IA:** Apartado donde el administrador sube PDFs oficiales (reglamento institucional, planes de estudio, comunicados) o sincroniza datos de la web del instituto para que el sistema los procese e indexe automáticamente.
+- **Panel de Monitoreo del Agente:** Historial de las preguntas más frecuentes realizadas por los alumnos en el chat para detectar dudas recurrentes y mejorar la comunicación institucional.
+
+### 3. Arquitectura de Inteligencia Artificial y Agentes (RAG + Tool Calling)
+- **Ingesta y Base Vectorial:** En lugar de web scraping en tiempo real, implementaremos un proceso de indexación (RAG - Retrieval-Augmented Generation). Los reglamentos en PDF, planes de estudio y cronogramas se trocean (chunking), se transforman en embeddings y se almacenan en una base de datos vectorial (como PostgreSQL con extensión `pgvector`).
+- **Consulta y Precisión:** Cuando el alumno consulta en el chat, el backend recupera los fragmentos más relevantes de la base vectorial y le pasa ese contexto estricto al LLM para evitar alucinaciones.
+- **Function Calling / Tools:** El agente debe tener herramientas conectadas al backend en C# para consultar en tiempo real la tabla de correlatividades, los objetos perdidos activos o disparar la creación de una solicitud de trámite.
+
+---
+
+### Entregables que necesito que me generes ahora:
+Como recién estoy comenzando el proyecto y aún no tengo los modelos creados, necesito que me elabores la documentación base completa para arrancar el desarrollo de **Astrea**:
+1. **Documento SDD (Software Design Document):** Especificación funcional y técnica detallada, incluyendo el diseño de los modelos de dominio / entidades (Usuarios, Roles, Carreras, Materias, Correlatividades, MesasExamen, Tramites, ObjetosPerdidos, DocumentosRAG).
+2. **Documento de Arquitectura:** Detalle de la estructura de carpetas y capas para el backend en C# (Arquitectura Hexagonal), la integración con Firebase Auth/Storage, el pipeline RAG con `pgvector` y la arquitectura del frontend PWA en Next.js.
+3. **Roadmap de Desarrollo (Vertical Slices):** Planificación paso a paso dividida en Slices Verticales funcionales, incluyendo la estrategia de testing (unitario, integración y E2E) para cada etapa.
