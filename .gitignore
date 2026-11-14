@@ -490,3 +490,6 @@ test-results/
 .env
 .env.*
 !.env.example
+
+## Guía de desarrollo local (no se publica)
+docs/DESARROLLO.md
