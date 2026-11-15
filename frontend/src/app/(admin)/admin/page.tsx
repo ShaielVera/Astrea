@@ -51,6 +51,13 @@ export default function PanelAdministracion() {
           Mesas de examen
           <span className="block text-sm font-normal text-zinc-500">Llamados, tribunales y publicación</span>
         </Link>
+        <Link
+          href="/admin/tramites"
+          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+        >
+          Trámites
+          <span className="block text-sm font-normal text-zinc-500">Bandeja de pedidos de estudiantes</span>
+        </Link>
       </nav>
 
       <section aria-labelledby="usuarios-titulo" className="flex flex-col gap-3">

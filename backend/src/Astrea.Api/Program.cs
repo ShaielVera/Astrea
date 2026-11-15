@@ -72,6 +72,7 @@ api.MapAuthEndpoints();
 api.MapAdminEndpoints();
 api.MapAcademicEndpoints();
 api.MapExamEndpoints();
+api.MapTramiteEndpoints();
 
 app.Run();
 

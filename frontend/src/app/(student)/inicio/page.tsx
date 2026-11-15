@@ -7,7 +7,7 @@ const modulos: { titulo: string; descripcion: string; href?: string }[] = [
   { titulo: "Plan de estudios", descripcion: "Las materias de cada carrera, año por año.", href: "/plan-de-estudios" },
   { titulo: "Correlatividades", descripcion: "Qué necesitás para cursar y para rendir cada materia.", href: "/correlatividades" },
   { titulo: "Mesas de examen", descripcion: "Llamados, fechas, horarios y tribunales.", href: "/mesas" },
-  { titulo: "Mis trámites", descripcion: "Pedí constancias y seguí su estado." },
+  { titulo: "Mis trámites", descripcion: "Pedí constancias y seguí su estado.", href: "/tramites" },
   { titulo: "Hallazgos", descripcion: "Objetos perdidos encontrados en el instituto." },
   { titulo: "Asistente", descripcion: "Consultá en lenguaje natural." },
 ];

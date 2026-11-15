@@ -1,5 +1,6 @@
 using Astrea.Domain.Academic;
 using Astrea.Domain.Exams;
+using Astrea.Domain.Procedures;
 using Astrea.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,6 +26,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<MesaExamen> MesasExamen => Set<MesaExamen>();
 
+    public DbSet<TramiteTipo> TramiteTipos => Set<TramiteTipo>();
+
+    public DbSet<Tramite> Tramites => Set<Tramite>();
+
+    public DbSet<TramiteEvento> TramiteEventos => Set<TramiteEvento>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Extensión pgvector para guardar los embeddings del pipeline RAG.
@@ -32,6 +39,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
         // Búsquedas sin distinguir tildes (ej. "programacion" encuentra "Programación").
         modelBuilder.HasPostgresExtension("unaccent");
+
+        // Números de trámite correlativos (T-000001, T-000002…).
+        modelBuilder.HasSequence<int>(Configurations.TramiteConfiguration.SecuenciaNumero);
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }

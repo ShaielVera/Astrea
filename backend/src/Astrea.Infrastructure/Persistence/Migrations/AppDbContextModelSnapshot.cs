@@ -24,6 +24,8 @@ namespace Astrea.Infrastructure.Persistence.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.HasSequence<int>("tramite_numero_seq");
+
             modelBuilder.Entity("Astrea.Domain.Academic.Carrera", b =>
                 {
                     b.Property<Guid>("Id")
@@ -351,6 +353,226 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.ToTable("mesas_examen", (string)null);
                 });
 
+            modelBuilder.Entity("Astrea.Domain.Procedures.Tramite", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AdministradorAsignadoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("administrador_asignado_id");
+
+                    b.Property<Guid?>("ClaveIdempotencia")
+                        .HasColumnType("uuid")
+                        .HasColumnName("clave_idempotencia");
+
+                    b.Property<string>("Datos")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("datos");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("estado");
+
+                    b.Property<DateTimeOffset>("FechaSolicitud")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_solicitud");
+
+                    b.Property<int>("Numero")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("numero")
+                        .HasDefaultValueSql("nextval('tramite_numero_seq')");
+
+                    b.Property<string>("ObservacionAdministrativa")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("observacion_administrativa");
+
+                    b.Property<Guid>("TramiteTipoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tramite_tipo_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tramites");
+
+                    b.HasIndex("AdministradorAsignadoId")
+                        .HasDatabaseName("ix_tramites_administrador_asignado_id");
+
+                    b.HasIndex("Numero")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tramites_numero");
+
+                    b.HasIndex("TramiteTipoId")
+                        .HasDatabaseName("ix_tramites_tramite_tipo_id");
+
+                    b.HasIndex("Estado", "FechaSolicitud")
+                        .HasDatabaseName("ix_tramites_estado_fecha_solicitud");
+
+                    b.HasIndex("UsuarioId", "ClaveIdempotencia")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tramites_usuario_id_clave_idempotencia")
+                        .HasFilter("clave_idempotencia IS NOT NULL");
+
+                    b.HasIndex("UsuarioId", "FechaSolicitud")
+                        .HasDatabaseName("ix_tramites_usuario_id_fecha_solicitud");
+
+                    b.ToTable("tramites", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Procedures.TramiteEvento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ActorUsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_usuario_id");
+
+                    b.Property<string>("Comentario")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("comentario");
+
+                    b.Property<string>("EstadoAnterior")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("estado_anterior");
+
+                    b.Property<string>("EstadoNuevo")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("estado_nuevo");
+
+                    b.Property<DateTimeOffset>("Fecha")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha");
+
+                    b.Property<Guid>("TramiteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tramite_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tramite_eventos");
+
+                    b.HasIndex("ActorUsuarioId")
+                        .HasDatabaseName("ix_tramite_eventos_actor_usuario_id");
+
+                    b.HasIndex("TramiteId", "Fecha")
+                        .HasDatabaseName("ix_tramite_eventos_tramite_id_fecha");
+
+                    b.ToTable("tramite_eventos", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Procedures.TramiteTipo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("activo");
+
+                    b.Property<string>("Campos")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("campos");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("codigo");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("descripcion");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("nombre");
+
+                    b.Property<bool>("RequiereAdjunto")
+                        .HasColumnType("boolean")
+                        .HasColumnName("requiere_adjunto");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tramite_tipos");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tramite_tipos_codigo");
+
+                    b.ToTable("tramite_tipos", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0193a5d0-0000-7000-8000-000000000001"),
+                            Activo = true,
+                            Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"presentarAnte\",\"etiqueta\":\"Para presentar ante\",\"tipo\":1,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":\"Ej.: ANSES, empleador, obra social.\"}]",
+                            Codigo = "ALUMNO_REGULAR",
+                            Descripcion = "Certifica que sos estudiante regular del instituto, para presentar en el trabajo, ANSES, obra social u otros organismos.",
+                            Nombre = "Constancia de alumno regular",
+                            RequiereAdjunto = false
+                        },
+                        new
+                        {
+                            Id = new Guid("0193a5d0-0000-7000-8000-000000000002"),
+                            Activo = true,
+                            Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"materia\",\"etiqueta\":\"Materia\",\"tipo\":1,\"obligatorio\":true,\"largoMaximo\":200,\"ayuda\":null},{\"clave\":\"fechaExamen\",\"etiqueta\":\"Fecha del examen\",\"tipo\":3,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"presentarAnte\",\"etiqueta\":\"Para presentar ante\",\"tipo\":1,\"obligatorio\":false,\"largoMaximo\":120,\"ayuda\":null}]",
+                            Codigo = "CONSTANCIA_EXAMEN",
+                            Descripcion = "Certifica que te presentaste a rendir un examen final, para justificar la ausencia en el trabajo.",
+                            Nombre = "Constancia de examen",
+                            RequiereAdjunto = false
+                        },
+                        new
+                        {
+                            Id = new Guid("0193a5d0-0000-7000-8000-000000000003"),
+                            Activo = true,
+                            Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"motivo\",\"etiqueta\":\"\\u00BFPara qu\\u00E9 lo necesit\\u00E1s?\",\"tipo\":1,\"obligatorio\":true,\"largoMaximo\":200,\"ayuda\":\"Ej.: pase a otra instituci\\u00F3n, beca.\"}]",
+                            Codigo = "ANALITICO_PARCIAL",
+                            Descripcion = "Detalle de las materias aprobadas hasta hoy, con nota y fecha.",
+                            Nombre = "Certificado analítico parcial",
+                            RequiereAdjunto = false
+                        },
+                        new
+                        {
+                            Id = new Guid("0193a5d0-0000-7000-8000-000000000004"),
+                            Activo = true,
+                            Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"desde\",\"etiqueta\":\"Desde\",\"tipo\":3,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"hasta\",\"etiqueta\":\"Hasta\",\"tipo\":3,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"motivo\",\"etiqueta\":\"Motivo\",\"tipo\":2,\"obligatorio\":true,\"largoMaximo\":500,\"ayuda\":null}]",
+                            Codigo = "JUSTIFICACION_INASISTENCIA",
+                            Descripcion = "Pedí que se justifiquen tus faltas por un motivo de salud, laboral u otro previsto en el reglamento. Presentá el comprobante original en Bedelía.",
+                            Nombre = "Justificación de inasistencia",
+                            RequiereAdjunto = false
+                        });
+                });
+
             modelBuilder.Entity("Astrea.Domain.Users.Rol", b =>
                 {
                     b.Property<Guid>("Id")
@@ -554,6 +776,46 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_mesas_examen_plan_materias_plan_materia_id");
                 });
 
+            modelBuilder.Entity("Astrea.Domain.Procedures.Tramite", b =>
+                {
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("AdministradorAsignadoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_tramites_usuarios_administrador_asignado_id");
+
+                    b.HasOne("Astrea.Domain.Procedures.TramiteTipo", null)
+                        .WithMany()
+                        .HasForeignKey("TramiteTipoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_tramites_tramite_tipos_tramite_tipo_id");
+
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_tramites_usuarios_usuario_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Procedures.TramiteEvento", b =>
+                {
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("ActorUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_tramite_eventos_usuarios_actor_usuario_id");
+
+                    b.HasOne("Astrea.Domain.Procedures.Tramite", null)
+                        .WithMany("Eventos")
+                        .HasForeignKey("TramiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_tramite_eventos_tramites_tramite_id");
+                });
+
             modelBuilder.Entity("Astrea.Domain.Users.UsuarioRol", b =>
                 {
                     b.HasOne("Astrea.Domain.Users.Usuario", null)
@@ -582,6 +844,11 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.Navigation("Correlatividades");
 
                     b.Navigation("Materias");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Procedures.Tramite", b =>
+                {
+                    b.Navigation("Eventos");
                 });
 
             modelBuilder.Entity("Astrea.Domain.Users.Usuario", b =>
