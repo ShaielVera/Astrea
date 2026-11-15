@@ -17,7 +17,7 @@ namespace Astrea.Api.IntegrationTests.Infrastructure;
 /// </summary>
 public sealed class AstreaApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    public const string AdministradorInicial = "bedelia@astrea.test";
+    public const string AdministradorInicial = "secretaria@astrea.test";
 
     public const string UrlValidacion = "https://astrea.test/validar/{codigo}";
 

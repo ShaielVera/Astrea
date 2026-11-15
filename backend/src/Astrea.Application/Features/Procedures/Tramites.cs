@@ -121,7 +121,7 @@ public sealed class SolicitudesTramite(
 }
 
 /// <summary>
-/// Bandeja de Bedelía/Secretaría (solo Administrador): revisar, tomar, aprobar (emitiendo el PDF), rechazar
+/// Bandeja de Secretaría (solo Administrador): revisar, tomar, aprobar (emitiendo el PDF), rechazar
 /// y anular documentos. Cada transición registra al administrador que la hizo.
 /// </summary>
 public sealed class BandejaTramites(
@@ -298,7 +298,7 @@ public sealed class EmisionDocumentos(
             return Result<string?>.Exito(null);
         }
 
-        // El PDF solo se genera con los datos institucionales confirmados por Bedelía (SDD §9).
+        // El PDF solo se genera con los datos institucionales confirmados por Secretaría (SDD §9).
         var titular = await usuarios.ObtenerPorIdAsync(tramite.UsuarioId, cancellationToken);
         if (titular is not { TieneDatosOficiales: true })
         {
@@ -497,10 +497,10 @@ public sealed class DetalleTramites(ITramiteRepository tramites, IAcademicReposi
             .Select(campo => new DatoTramiteDto(campo.Clave, campo.Etiqueta, valores[campo.Clave]))
             .ToList();
 
-        // El estudiante ve "Vos" o "Bedelía"; la administración ve quién hizo cada cambio.
+        // El estudiante ve "Vos" o "Secretaría"; la administración ve quién hizo cada cambio.
         string Actor(Guid actorId) => vistaAdministracion
             ? personas.GetValueOrDefault(actorId)?.NombreParaMostrar ?? "Usuario eliminado"
-            : actorId == usuarioActualId ? "Vos" : "Bedelía";
+            : actorId == usuarioActualId ? "Vos" : "Secretaría";
 
         var historial = tramite.Eventos
             .OrderBy(evento => evento.Fecha)

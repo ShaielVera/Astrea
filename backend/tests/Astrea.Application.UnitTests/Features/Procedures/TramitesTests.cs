@@ -92,15 +92,15 @@ public class TramitesTests
     }
 
     [Fact]
-    public async Task El_estudiante_ve_a_Bedelia_como_actor_y_no_al_administrador()
+    public async Task El_estudiante_ve_a_Secretaria_como_actor_y_no_al_administrador()
     {
         var tramite = Tramite.Solicitar(Guid.NewGuid(), _estudiante.Id, _tipo, Datos(), null, Ahora);
-        tramite.Rechazar(Guid.NewGuid(), "Faltan datos", Ahora);
+        tramite.Rechazar(Guid.NewGuid(), "Faltan datos", Ahora.AddMinutes(5));
         _tramites.ObtenerAsync(tramite.Id, Arg.Any<CancellationToken>()).Returns(tramite);
 
         var resultado = await Solicitudes().ObtenerMioAsync(tramite.Id, CancellationToken.None);
 
-        resultado.Valor.Historial.Select(evento => evento.Actor).Should().Equal("Vos", "Bedelía");
+        resultado.Valor.Historial.Select(evento => evento.Actor).Should().Equal("Vos", "Secretaría");
         resultado.Valor.AdministradorAsignado.Should().BeNull();
         resultado.Valor.ObservacionAdministrativa.Should().Be("Faltan datos");
     }

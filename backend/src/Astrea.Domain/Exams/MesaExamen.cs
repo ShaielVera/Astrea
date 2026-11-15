@@ -24,7 +24,7 @@ public enum EstadoInscripcion
 
 /// <summary>
 /// Llamado a examen final de una materia de un plan. Fecha y hora se expresan en la hora oficial
-/// del instituto (<see cref="ZonaHorariaInstitucional"/>), que es como las publica Bedelía.
+/// del instituto (<see cref="ZonaHorariaInstitucional"/>), que es como las publica Secretaría.
 /// </summary>
 public sealed class MesaExamen : Entity
 {

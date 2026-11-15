@@ -4,6 +4,7 @@ using Astrea.Api.Authentication;
 using Astrea.Api.Authorization;
 using Astrea.Api.Endpoints;
 using Astrea.Api.Errors;
+using Astrea.Api.Mantenimiento;
 using Astrea.Application;
 using Astrea.Application.Abstractions.Documents;
 using Astrea.Application.Abstractions.Identity;
@@ -42,7 +43,22 @@ builder.Services.AddRateLimiter(options =>
             PermitLimit = builder.Configuration.GetValue("LimitesDeUso:ValidacionesPorMinuto", 30),
             Window = TimeSpan.FromMinutes(1),
         }));
+
+    // Publicar hallazgos y subir fotos: por usuario (uid de Firebase), para evitar abusos de almacenamiento.
+    options.AddPolicy(LimitesDeUso.Publicaciones, contexto => RateLimitPartition.GetFixedWindowLimiter(
+        contexto.User.FindFirst(FirebaseClaims.Uid)?.Value ?? contexto.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = builder.Configuration.GetValue("LimitesDeUso:PublicacionesPorHora", 30),
+            Window = TimeSpan.FromHours(1),
+        }));
 });
+
+// Borra los hallazgos cerrados hace más de 30 días (con su foto y los datos de quien lo retiró).
+if (builder.Configuration.GetValue("Mantenimiento:DepurarHallazgos", true))
+{
+    builder.Services.AddHostedService<DepuracionPeriodicaHallazgos>();
+}
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
@@ -81,9 +97,11 @@ else if (!app.Environment.IsEnvironment(FirebaseAuthentication.AmbienteE2E))
 }
 
 app.UseCors();
-app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Después de la autenticación: algunos límites se cuentan por usuario.
+app.UseRateLimiter();
 
 // live: la API está levantada. ready: además puede hablar con PostgreSQL.
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false }).AllowAnonymous();
@@ -98,6 +116,7 @@ api.MapAdminEndpoints();
 api.MapAcademicEndpoints();
 api.MapExamEndpoints();
 api.MapTramiteEndpoints();
+api.MapHallazgoEndpoints();
 
 app.Run();
 

@@ -54,7 +54,7 @@ public sealed class Tramite : Entity
 
     public EstadoTramite Estado { get; private set; }
 
-    /// <summary>Motivo del rechazo, o indicación al estudiante cuando queda listo (ej. "Retirala en Bedelía").</summary>
+    /// <summary>Motivo del rechazo, o indicación al estudiante cuando queda listo (ej. "Retirala en Secretaría").</summary>
     public string? ObservacionAdministrativa { get; private set; }
 
     public Guid? AdministradorAsignadoId { get; private set; }

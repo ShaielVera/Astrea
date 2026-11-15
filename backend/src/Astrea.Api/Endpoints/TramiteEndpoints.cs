@@ -150,4 +150,6 @@ internal static class TramiteEndpoints
 internal static class LimitesDeUso
 {
     public const string ValidacionPublica = "validacion-publica";
+
+    public const string Publicaciones = "publicaciones";
 }

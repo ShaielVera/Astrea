@@ -34,7 +34,7 @@ public enum EstadoMateria
 /// </para>
 /// <para>
 /// Un requisito sin materia (<see cref="PlanMateriaRequisitoId"/> nulo) es una condición descrita en texto,
-/// por ejemplo "todas las unidades curriculares de primer año aprobadas"; Bedelía la verifica manualmente.
+/// por ejemplo "todas las unidades curriculares de primer año aprobadas"; Secretaría la verifica manualmente.
 /// </para>
 /// </summary>
 public sealed class Correlatividad : Entity
@@ -118,7 +118,7 @@ public enum ResultadoVerificacion
     Cumple = 1,
     NoCumple = 2,
 
-    /// <summary>Se cumplen los requisitos de materias, pero quedan condiciones que verifica Bedelía.</summary>
+    /// <summary>Se cumplen los requisitos de materias, pero quedan condiciones que verifica Secretaría.</summary>
     RequiereVerificacion = 3,
 }
 

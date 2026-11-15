@@ -173,7 +173,7 @@ public class CorrelatividadTests
     }
 
     [Fact]
-    public void Un_requisito_en_texto_queda_para_verificar_por_bedelia()
+    public void Un_requisito_en_texto_queda_para_verificar_por_secretaria()
     {
         _plan.AgregarCorrelatividad(Guid.NewGuid(), _programacionII, TipoCorrelatividad.Cursar, _programacionI, CondicionRequisito.Regularizada, null, null);
         _plan.AgregarCorrelatividad(Guid.NewGuid(), _programacionII, TipoCorrelatividad.Cursar, null, CondicionRequisito.Aprobada, null, "Todas las materias de primer año aprobadas");

@@ -11,7 +11,7 @@ public sealed record ResultadoSiembra(int CarrerasAgregadas, int PlanesConCorrel
 /// Carga las carreras, planes de estudio y correlatividades del ISP N.º 20 desde
 /// catalogo-isp20.json y correlatividades-isp20.json. Es idempotente:
 /// una carrera cuyo código ya existe no se toca y un plan que ya tiene correlatividades tampoco
-/// (Bedelía puede haberlos editado).
+/// (Secretaría puede haberlos editado).
 /// </summary>
 public static class CatalogoInstitucionalSeeder
 {
@@ -75,7 +75,7 @@ public static class CatalogoInstitucionalSeeder
 
     /// <summary>
     /// Carga las correlatividades del plan oficial de la carrera si todavía no tiene ninguna.
-    /// Si algún nombre no coincide con una materia del plan (por ejemplo, porque Bedelía la renombró),
+    /// Si algún nombre no coincide con una materia del plan (por ejemplo, porque Secretaría la renombró),
     /// no carga nada de ese plan y deja una advertencia.
     /// </summary>
     private static async Task<bool> SembrarCorrelatividadesAsync(

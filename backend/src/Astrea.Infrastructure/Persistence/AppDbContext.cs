@@ -1,5 +1,6 @@
 using Astrea.Domain.Academic;
 using Astrea.Domain.Exams;
+using Astrea.Domain.LostAndFound;
 using Astrea.Domain.Procedures;
 using Astrea.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<PlantillaDocumento> PlantillasDocumento => Set<PlantillaDocumento>();
 
     public DbSet<DocumentoEmitido> DocumentosEmitidos => Set<DocumentoEmitido>();
+
+    public DbSet<ObjetoPerdido> ObjetosPerdidos => Set<ObjetoPerdido>();
+
+    public DbSet<EntregaObjeto> EntregasObjeto => Set<EntregaObjeto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

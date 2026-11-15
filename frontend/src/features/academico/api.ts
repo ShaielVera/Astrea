@@ -44,7 +44,7 @@ export type EstadoMateria = "SinCursar" | "Regularizada" | "Aprobada";
 export type ResultadoVerificacion = "Cumple" | "NoCumple" | "RequiereVerificacion";
 
 /**
- * Requisito de correlatividad. Sin `materiaId` es una condición en texto que verifica Bedelía.
+ * Requisito de correlatividad. Sin `materiaId` es una condición en texto que verifica Secretaría.
  * Los requisitos con el mismo `grupoAlternativa` son alternativas (alcanza con uno); sin grupo, obligatorios.
  */
 export type Requisito = {

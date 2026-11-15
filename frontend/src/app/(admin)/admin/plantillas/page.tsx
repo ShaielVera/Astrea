@@ -91,7 +91,7 @@ function EditorPlantilla({ tipo, onGuardar }: { tipo: PlantillaDeTipo; onGuardar
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">{tipo.tipoNombre}</h2>
         <span className="text-sm text-zinc-500">
-          {tipo.vigente ? `Versión ${tipo.vigente.version} vigente` : "No emite PDF: se resuelve en Bedelía"}
+          {tipo.vigente ? `Versión ${tipo.vigente.version} vigente` : "No emite PDF: se resuelve en Secretaría"}
         </span>
       </div>
       <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">

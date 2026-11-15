@@ -110,15 +110,15 @@ public sealed class TramitesTests(AstreaApiFactory factory)
 
         (await admin.PostAsync($"/api/v1/admin/tramites/{tramite.Id}/tomar", null)).StatusCode.Should().Be(HttpStatusCode.OK);
         await CargarDatosOficialesAsync(admin, tramite);
-        var aprobado = await admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramite.Id}/aprobar", new { comentario = "Retirala en Bedelía" });
+        var aprobado = await admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramite.Id}/aprobar", new { comentario = "Retirala en Secretaría" });
         aprobado.StatusCode.Should().Be(HttpStatusCode.OK);
         (await LeerAsync<Detalle>(aprobado)).AdministradorAsignado.Should().Be(AstreaApiFactory.AdministradorInicial);
 
         var visto = await estudiante.GetFromJsonAsync<Detalle>($"/api/v1/tramites/{tramite.Id}", Json);
         visto!.Estado.Should().Be("Listo");
-        visto.ObservacionAdministrativa.Should().Be("Retirala en Bedelía");
+        visto.ObservacionAdministrativa.Should().Be("Retirala en Secretaría");
         visto.AdministradorAsignado.Should().BeNull();
-        visto.Historial.Select(evento => (evento.EstadoNuevo, evento.Actor)).Should().Equal(("Pendiente", "Vos"), ("EnProceso", "Bedelía"), ("Listo", "Bedelía"));
+        visto.Historial.Select(evento => (evento.EstadoNuevo, evento.Actor)).Should().Equal(("Pendiente", "Vos"), ("EnProceso", "Secretaría"), ("Listo", "Secretaría"));
     }
 
     [Fact]

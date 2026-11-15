@@ -1,6 +1,6 @@
 {
   "fuente": "https://isp20.edu.ar/nuevo/ - 'Régimen de correlatividades' publicado por el instituto para cada carrera (wp-content/uploads/2026/04, consultado el 14/11/2026)",
-  "nota": "Por materia destino y tipo (cursar/rendir): 'regularizadas' y 'aprobadas' son nombres de materias del mismo plan, tal como figuran en catalogo-isp20.json. 'A | B' es un grupo de alternativas (alcanza con una). 'otros' son requisitos sin materia asociada, que exigen verificación de Bedelía y se cargan con condición Aprobada.",
+  "nota": "Por materia destino y tipo (cursar/rendir): 'regularizadas' y 'aprobadas' son nombres de materias del mismo plan, tal como figuran en catalogo-isp20.json. 'A | B' es un grupo de alternativas (alcanza con una). 'otros' son requisitos sin materia asociada, que exigen verificación de Secretaría y se cargan con condición Aprobada.",
   "carreras": {
     "PEI": {
       "Didáctica General": { "rendir": { "aprobadas": ["Pedagogía", "Psicología y Educación"] } },

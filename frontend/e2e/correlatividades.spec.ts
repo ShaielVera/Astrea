@@ -37,7 +37,7 @@ test.describe("Correlatividades", () => {
     await expect(simulacion.getByRole("status")).toContainText("Cumplís las correlatividades para rendirla");
   });
 
-  test("muestra regularizadas y aprobadas por separado, alternativas y requisitos que verifica Bedelía", async ({ page }) => {
+  test("muestra regularizadas y aprobadas por separado, alternativas y requisitos que verifica Secretaría", async ({ page }) => {
     await ingresarComoEstudianteNuevo(page);
     await page.goto("/correlatividades");
     await page.getByLabel("Carrera").selectOption({ label: "Profesorado de Educación Tecnológica" });
@@ -48,7 +48,7 @@ test.describe("Correlatividades", () => {
     await expect(paraCursar).toContainText("Al menos una de estas:");
     await expect(paraCursar).toContainText("Procesos Productivos");
     await expect(paraCursar).toContainText("Diseño y Producción Tecnológica II");
-    await expect(paraCursar).toContainText("Lo verifica Bedelía");
+    await expect(paraCursar).toContainText("Lo verifica la Secretaría");
     await expect(paraCursar.getByText("Regularizada").first()).toBeVisible();
     await expect(paraCursar.getByText("Aprobada").first()).toBeVisible();
   });

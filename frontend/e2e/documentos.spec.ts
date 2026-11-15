@@ -39,7 +39,7 @@ test.describe("Documentos oficiales", () => {
     await enBandeja.getByRole("button", { name: "Aprobar" }).click();
     await expect(admin.getByRole("main").getByRole("alert")).toContainText("datos oficiales");
 
-    // 2. Bedelía carga los datos oficiales y aprueba: se emite el PDF.
+    // 2. Secretaría carga los datos oficiales y aprueba: se emite el PDF.
     const datos = enBandeja.getByRole("form", { name: "Datos oficiales del titular" });
     await datos.getByLabel("Nombre").fill("Ana");
     await datos.getByLabel("Apellido").fill("Pérez");

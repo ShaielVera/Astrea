@@ -8,7 +8,7 @@ public class TramiteTests
 {
     private static readonly DateTimeOffset Ahora = new(2026, 11, 15, 12, 0, 0, TimeSpan.Zero);
     private static readonly Guid Estudiante = Guid.NewGuid();
-    private static readonly Guid Bedelia = Guid.NewGuid();
+    private static readonly Guid Secretaria = Guid.NewGuid();
     private static readonly string CarreraId = Guid.NewGuid().ToString();
 
     private static TramiteTipo AlumnoRegular() => CatalogoTramites.Tipos().Single(tipo => tipo.Id == CatalogoTramites.AlumnoRegularId);
@@ -92,24 +92,24 @@ public class TramiteTests
     {
         var tramite = Solicitar();
 
-        tramite.Tomar(Bedelia, Ahora.AddHours(1));
+        tramite.Tomar(Secretaria, Ahora.AddHours(1));
 
         tramite.Estado.Should().Be(EstadoTramite.EnProceso);
-        tramite.AdministradorAsignadoId.Should().Be(Bedelia);
+        tramite.AdministradorAsignadoId.Should().Be(Secretaria);
         tramite.Eventos.Last().Should().Match<TramiteEvento>(evento =>
-            evento.EstadoAnterior == EstadoTramite.Pendiente && evento.EstadoNuevo == EstadoTramite.EnProceso && evento.ActorUsuarioId == Bedelia);
+            evento.EstadoAnterior == EstadoTramite.Pendiente && evento.EstadoNuevo == EstadoTramite.EnProceso && evento.ActorUsuarioId == Secretaria);
     }
 
     [Fact]
     public void Aprobar_lo_deja_listo_con_el_comentario_para_el_estudiante()
     {
         var tramite = Solicitar();
-        tramite.Tomar(Bedelia, Ahora);
+        tramite.Tomar(Secretaria, Ahora);
 
-        tramite.Aprobar(Bedelia, "Retirala en Bedelía de 18 a 21", Ahora);
+        tramite.Aprobar(Secretaria, "Retirala en Secretaría de 18 a 21", Ahora);
 
         tramite.Estado.Should().Be(EstadoTramite.Listo);
-        tramite.ObservacionAdministrativa.Should().Be("Retirala en Bedelía de 18 a 21");
+        tramite.ObservacionAdministrativa.Should().Be("Retirala en Secretaría de 18 a 21");
         tramite.Eventos.Select(evento => evento.EstadoNuevo).Should().Equal(EstadoTramite.Pendiente, EstadoTramite.EnProceso, EstadoTramite.Listo);
     }
 
@@ -119,11 +119,11 @@ public class TramiteTests
         var aprobado = Solicitar();
         var rechazado = Solicitar();
 
-        aprobado.Aprobar(Bedelia, null, Ahora);
-        rechazado.Rechazar(Bedelia, "Faltan materias aprobadas", Ahora);
+        aprobado.Aprobar(Secretaria, null, Ahora);
+        rechazado.Rechazar(Secretaria, "Faltan materias aprobadas", Ahora);
 
         aprobado.Estado.Should().Be(EstadoTramite.Listo);
-        aprobado.AdministradorAsignadoId.Should().Be(Bedelia);
+        aprobado.AdministradorAsignadoId.Should().Be(Secretaria);
         rechazado.Estado.Should().Be(EstadoTramite.Rechazado);
     }
 
@@ -132,7 +132,7 @@ public class TramiteTests
     {
         var tramite = Solicitar();
 
-        var rechazar = () => tramite.Rechazar(Bedelia, "  ", Ahora);
+        var rechazar = () => tramite.Rechazar(Secretaria, "  ", Ahora);
 
         rechazar.Should().Throw<DomainException>().WithMessage("*motivo*");
         tramite.Estado.Should().Be(EstadoTramite.Pendiente);
@@ -143,11 +143,11 @@ public class TramiteTests
     public void Un_tramite_finalizado_no_cambia_mas_de_estado()
     {
         var tramite = Solicitar();
-        tramite.Rechazar(Bedelia, "Datos incorrectos", Ahora);
+        tramite.Rechazar(Secretaria, "Datos incorrectos", Ahora);
 
-        ((Action)(() => tramite.Aprobar(Bedelia, null, Ahora))).Should().Throw<DomainException>().WithMessage("*finalizado*");
-        ((Action)(() => tramite.Rechazar(Bedelia, "otra vez", Ahora))).Should().Throw<DomainException>().WithMessage("*finalizado*");
-        ((Action)(() => tramite.Tomar(Bedelia, Ahora))).Should().Throw<DomainException>().WithMessage("*finalizado*");
+        ((Action)(() => tramite.Aprobar(Secretaria, null, Ahora))).Should().Throw<DomainException>().WithMessage("*finalizado*");
+        ((Action)(() => tramite.Rechazar(Secretaria, "otra vez", Ahora))).Should().Throw<DomainException>().WithMessage("*finalizado*");
+        ((Action)(() => tramite.Tomar(Secretaria, Ahora))).Should().Throw<DomainException>().WithMessage("*finalizado*");
         tramite.Eventos.Should().HaveCount(2);
     }
 
@@ -155,12 +155,12 @@ public class TramiteTests
     public void No_se_toma_dos_veces()
     {
         var tramite = Solicitar();
-        tramite.Tomar(Bedelia, Ahora);
+        tramite.Tomar(Secretaria, Ahora);
 
         var tomar = () => tramite.Tomar(Guid.NewGuid(), Ahora);
 
         tomar.Should().Throw<DomainException>().WithMessage("*ya está en proceso*");
-        tramite.AdministradorAsignadoId.Should().Be(Bedelia);
+        tramite.AdministradorAsignadoId.Should().Be(Secretaria);
     }
 
     [Fact]

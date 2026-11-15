@@ -63,13 +63,13 @@ public sealed class CatalogoInstitucionalSeederTests(BaseDeDatosFixture baseDeDa
     }
 
     [Fact]
-    public async Task Volver_a_sembrar_no_duplica_ni_pisa_lo_que_edito_Bedelia()
+    public async Task Volver_a_sembrar_no_duplica_ni_pisa_lo_que_edito_Secretaria()
     {
         await using (var db = baseDeDatos.CrearContexto())
         {
             await CatalogoInstitucionalSeeder.SembrarAsync(db, Ahora);
             var tsds = await db.Carreras.SingleAsync(carrera => carrera.Codigo == "TSDS");
-            tsds.Actualizar("Nombre editado por Bedelía", 3, true, Ahora);
+            tsds.Actualizar("Nombre editado por Secretaría", 3, true, Ahora);
             await db.SaveChangesAsync();
         }
 
@@ -82,7 +82,7 @@ public sealed class CatalogoInstitucionalSeederTests(BaseDeDatosFixture baseDeDa
 
         await using var consulta = baseDeDatos.CrearContexto();
         (await consulta.Carreras.CountAsync()).Should().Be(9);
-        (await consulta.Carreras.SingleAsync(carrera => carrera.Codigo == "TSDS")).Nombre.Should().Be("Nombre editado por Bedelía");
+        (await consulta.Carreras.SingleAsync(carrera => carrera.Codigo == "TSDS")).Nombre.Should().Be("Nombre editado por Secretaría");
     }
 
     [Fact]
@@ -182,7 +182,7 @@ public sealed class CatalogoInstitucionalSeederTests(BaseDeDatosFixture baseDeDa
     }
 
     [Fact]
-    public async Task Si_Bedelia_renombro_una_materia_avisa_y_no_carga_ese_plan()
+    public async Task Si_Secretaria_renombro_una_materia_avisa_y_no_carga_ese_plan()
     {
         await using (var db = baseDeDatos.CrearContexto())
         {

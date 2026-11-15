@@ -25,7 +25,7 @@ type Props = {
   accionesDocumento?: ReactNode;
 };
 
-/** Detalle de un trámite: estado, datos del formulario, observación de Bedelía e historial. */
+/** Detalle de un trámite: estado, datos del formulario, observación de Secretaría e historial. */
 export function DetalleTramite({ tramite, vistaAdministracion = false, acciones, onDescargar, accionesDocumento }: Props) {
   const rechazado = tramite.estado === "Rechazado";
 
@@ -46,7 +46,7 @@ export function DetalleTramite({ tramite, vistaAdministracion = false, acciones,
             rechazado ? "bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200" : "bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
           }`}
         >
-          <span className="font-medium">{rechazado ? "Motivo del rechazo: " : "Indicación de Bedelía: "}</span>
+          <span className="font-medium">{rechazado ? "Motivo del rechazo: " : "Indicación de la Secretaría: "}</span>
           {tramite.observacionAdministrativa}
         </p>
       )}

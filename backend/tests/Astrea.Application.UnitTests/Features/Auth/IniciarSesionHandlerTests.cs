@@ -18,7 +18,7 @@ public class IniciarSesionHandlerTests
     private readonly IUserRepository _usuarios = Substitute.For<IUserRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IClock _clock = Substitute.For<IClock>();
-    private ConfiguracionIdentidad _configuracion = new() { AdministradoresIniciales = ["bedelia@isp20.edu.ar"] };
+    private ConfiguracionIdentidad _configuracion = new() { AdministradoresIniciales = ["secretaria@isp20.edu.ar"] };
 
     public IniciarSesionHandlerTests()
     {
@@ -82,7 +82,7 @@ public class IniciarSesionHandlerTests
     [Fact]
     public async Task Un_administrador_inicial_con_email_verificado_recibe_el_rol_administrador()
     {
-        ConSesion("uid-admin", "Bedelia@ISP20.edu.ar", emailVerificado: true);
+        ConSesion("uid-admin", "Secretaria@ISP20.edu.ar", emailVerificado: true);
 
         var resultado = await CrearHandler().HandleAsync(CancellationToken.None);
 
@@ -92,7 +92,7 @@ public class IniciarSesionHandlerTests
     [Fact]
     public async Task Un_administrador_inicial_sin_email_verificado_queda_solo_como_estudiante()
     {
-        ConSesion("uid-falso", "bedelia@isp20.edu.ar", emailVerificado: false);
+        ConSesion("uid-falso", "secretaria@isp20.edu.ar", emailVerificado: false);
 
         var resultado = await CrearHandler().HandleAsync(CancellationToken.None);
 
@@ -103,7 +103,7 @@ public class IniciarSesionHandlerTests
     public async Task Un_email_que_no_esta_en_la_lista_no_recibe_rol_administrador()
     {
         _configuracion = new ConfiguracionIdentidad();
-        ConSesion("uid-1", "bedelia@isp20.edu.ar");
+        ConSesion("uid-1", "secretaria@isp20.edu.ar");
 
         var resultado = await CrearHandler().HandleAsync(CancellationToken.None);
 

@@ -33,7 +33,7 @@ export default function PanelAdministracion() {
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-10 sm:px-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-semibold tracking-tight">Administración</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">Panel de Bedelía / Secretaría.</p>
+        <p className="text-zinc-600 dark:text-zinc-400">Panel de Secretaría.</p>
       </div>
 
       <nav aria-label="Secciones de administración" className="flex flex-wrap gap-3">
@@ -64,6 +64,13 @@ export default function PanelAdministracion() {
         >
           Plantillas de documentos
           <span className="block text-sm font-normal text-zinc-500">Texto versionado de las constancias</span>
+        </Link>
+        <Link
+          href="/admin/hallazgos"
+          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+        >
+          Hallazgos
+          <span className="block text-sm font-normal text-zinc-500">Objetos perdidos: entregas y bajas</span>
         </Link>
       </nav>
 

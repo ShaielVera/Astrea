@@ -3,7 +3,7 @@ namespace Astrea.Application.Abstractions.Identity;
 /// <summary>
 /// Configuración de identidad. <see cref="AdministradoresIniciales"/> son los emails que reciben el rol
 /// Administrador al iniciar sesión, siempre que Firebase haya verificado el email.
-/// Sirve para dar de alta al primer personal de Bedelía sin un panel previo.
+/// Sirve para dar de alta al primer personal de Secretaría sin un panel previo.
 /// </summary>
 public sealed class ConfiguracionIdentidad
 {

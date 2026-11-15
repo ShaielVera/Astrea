@@ -18,7 +18,7 @@ public static class CatalogoTramites
 
     /// <summary>
     /// Versión 1 de las plantillas de los trámites que emiten PDF. El analítico parcial y la justificación
-    /// de inasistencia no tienen: Astrea no guarda notas ni comprobantes, así que se resuelven en Bedelía.
+    /// de inasistencia no tienen: Astrea no guarda notas ni comprobantes, así que se resuelven en Secretaría.
     /// </summary>
     public static IReadOnlyList<PlantillaDocumento> PlantillasIniciales()
     {
@@ -78,7 +78,7 @@ public static class CatalogoTramites
             JustificacionInasistenciaId,
             "JUSTIFICACION_INASISTENCIA",
             "Justificación de inasistencia",
-            "Pedí que se justifiquen tus faltas por un motivo de salud, laboral u otro previsto en el reglamento. Presentá el comprobante original en Bedelía.",
+            "Pedí que se justifiquen tus faltas por un motivo de salud, laboral u otro previsto en el reglamento. Presentá el comprobante original en Secretaría.",
             [
                 Carrera,
                 new("desde", "Desde", TipoCampo.Fecha, true),

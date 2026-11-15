@@ -20,7 +20,7 @@ public sealed class EfTramiteRepositoryTests(BaseDeDatosFixture baseDeDatos)
     {
         await using var db = baseDeDatos.CrearContexto();
         var estudiante = Usuario.Registrar(Guid.NewGuid(), $"uid-{Guid.NewGuid():N}", $"ana-{Guid.NewGuid():N}@astrea.test", Ahora);
-        var admin = Usuario.Registrar(Guid.NewGuid(), $"uid-{Guid.NewGuid():N}", $"bedelia-{Guid.NewGuid():N}@astrea.test", Ahora);
+        var admin = Usuario.Registrar(Guid.NewGuid(), $"uid-{Guid.NewGuid():N}", $"secretaria-{Guid.NewGuid():N}@astrea.test", Ahora);
         var carrera = Carrera.Crear(Guid.NewGuid(), $"C{Guid.NewGuid():N}"[..10].ToUpperInvariant(), "Carrera", 3, Ahora);
         var tipo = await db.TramiteTipos.SingleAsync(candidato => candidato.Id == CatalogoTramites.AlumnoRegularId);
         var tramite = Tramite.Solicitar(

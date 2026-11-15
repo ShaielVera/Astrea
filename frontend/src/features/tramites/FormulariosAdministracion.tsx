@@ -13,7 +13,7 @@ type DatosOficiales = { nombre: string; apellido: string; dni: string; legajo: s
 
 /**
  * Datos oficiales del titular (los que se imprimen en el documento). Se piden antes de aprobar
- * un trámite que emite PDF: Bedelía los confirma contra la documentación del estudiante.
+ * un trámite que emite PDF: Secretaría los confirma contra la documentación del estudiante.
  */
 export function FormularioDatosOficiales({ persona, onGuardar }: { persona: Persona; onGuardar: (datos: DatosOficiales) => Promise<void> }) {
   const [nombre, setNombre] = useState(persona.nombre ?? "");

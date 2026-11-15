@@ -28,7 +28,7 @@ public sealed record MateriaDePlanDto(
 
 /// <summary>
 /// Un requisito de correlatividad. Si <see cref="MateriaId"/> es nulo, es una condición en texto
-/// (<see cref="Descripcion"/>) que verifica Bedelía. Los requisitos con el mismo <see cref="GrupoAlternativa"/>
+/// (<see cref="Descripcion"/>) que verifica Secretaría. Los requisitos con el mismo <see cref="GrupoAlternativa"/>
 /// son alternativas entre sí; los que no tienen grupo son todos obligatorios.
 /// </summary>
 public sealed record RequisitoDto(

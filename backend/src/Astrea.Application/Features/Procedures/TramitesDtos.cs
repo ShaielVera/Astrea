@@ -81,7 +81,7 @@ public sealed record TramiteResumenDto(
 public sealed record DatoTramiteDto(string Clave, string Etiqueta, string Valor);
 
 /// <summary>
-/// Un cambio de estado del historial. Para el estudiante, <see cref="Actor"/> es "Vos" o "Bedelía";
+/// Un cambio de estado del historial. Para el estudiante, <see cref="Actor"/> es "Vos" o "Secretaría";
 /// la administración ve quién fue (auditoría).
 /// </summary>
 public sealed record EventoTramiteDto(EstadoTramite? EstadoAnterior, EstadoTramite EstadoNuevo, string? Comentario, string Actor, DateTimeOffset Fecha);

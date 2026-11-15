@@ -4,7 +4,7 @@ namespace Astrea.Domain.Users;
 
 /// <summary>
 /// Identidad institucional vinculada a una cuenta de Firebase Authentication.
-/// Los datos oficiales (nombre, apellido, DNI, legajo) los carga Bedelía; no se toman del cliente.
+/// Los datos oficiales (nombre, apellido, DNI, legajo) los carga Secretaría; no se toman del cliente.
 /// </summary>
 public sealed class Usuario : Entity
 {
@@ -100,7 +100,7 @@ public sealed class Usuario : Entity
     public bool TieneDatosOficiales => Nombre is not null && Apellido is not null && Dni is not null;
 
     /// <summary>
-    /// Bedelía carga los datos oficiales (los que van en constancias). El DNI se guarda solo con dígitos
+    /// Secretaría carga los datos oficiales (los que van en constancias). El DNI se guarda solo con dígitos
     /// ("30.123.456" → "30123456") para poder compararlo y mostrarlo enmascarado.
     /// </summary>
     public void ActualizarDatosOficiales(string nombre, string apellido, string dni, string? legajo, DateTimeOffset ahora)

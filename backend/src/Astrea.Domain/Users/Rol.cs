@@ -21,7 +21,7 @@ public sealed class Rol : Entity
         new Guid("0a6a8f1e-4c5b-4d1e-9b77-2f6c1b9d0e02"),
         CodigoAdministrador,
         "Administrador",
-        "Personal de Bedelía / Secretaría: administra planes, mesas, trámites, hallazgos y documentos.");
+        "Personal de Secretaría: administra planes, mesas, trámites, hallazgos y documentos.");
 
     public static IReadOnlyList<Rol> Catalogo { get; } = [Estudiante, Administrador];
 

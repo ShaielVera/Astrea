@@ -53,6 +53,37 @@ export async function apiFetch<T>(ruta: string, { method = "GET", token, body }:
   return (await respuesta.json()) as T;
 }
 
+/** Envía un archivo como cuerpo de la petición (ej. la foto de un hallazgo), con su tipo como Content-Type. */
+export async function apiEnviarArchivo<T>(ruta: string, token: string, archivo: Blob): Promise<T> {
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(`${API_URL}${ruta}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": archivo.type || "application/octet-stream", Accept: "application/json" },
+      body: archivo,
+    });
+  } catch {
+    throw new ApiError(0, "red", "No se pudo conectar con el servidor de Astrea.");
+  }
+
+  if (!respuesta.ok) {
+    const problema = (await respuesta.json().catch(() => ({}))) as ProblemDetails;
+    throw new ApiError(respuesta.status, problema.code, problema.detail ?? problema.title ?? `Error ${respuesta.status} al subir el archivo.`);
+  }
+
+  return (await respuesta.json()) as T;
+}
+
+/** Lee un archivo protegido (ej. una foto) para mostrarlo; null si no existe o no hay permiso. */
+export async function apiLeerArchivo(ruta: string, token: string): Promise<Blob | null> {
+  try {
+    const respuesta = await fetch(`${API_URL}${ruta}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+    return respuesta.ok ? await respuesta.blob() : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Descarga un archivo protegido (ej. el PDF de un trámite) y lo guarda en el equipo.
  * No se puede usar un enlace común porque el pedido necesita el Bearer token.

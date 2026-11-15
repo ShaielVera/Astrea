@@ -83,7 +83,7 @@ function ItemRequisito({ requisito, onElegirMateria, acciones }: { requisito: Re
         {requisito.materiaId === null ? (
           <>
             <span>{requisito.descripcion}</span>
-            <span className="text-xs text-zinc-500">Lo verifica Bedelía</span>
+            <span className="text-xs text-zinc-500">Lo verifica la Secretaría</span>
           </>
         ) : onElegirMateria ? (
           <button

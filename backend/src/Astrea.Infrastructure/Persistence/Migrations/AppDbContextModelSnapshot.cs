@@ -353,6 +353,156 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.ToTable("mesas_examen", (string)null);
                 });
 
+            modelBuilder.Entity("Astrea.Domain.LostAndFound.EntregaObjeto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("DniRetirante")
+                        .IsRequired()
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)")
+                        .HasColumnName("dni_retirante");
+
+                    b.Property<DateTimeOffset>("FechaEntrega")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_entrega");
+
+                    b.Property<bool>("IdentidadVerificada")
+                        .HasColumnType("boolean")
+                        .HasColumnName("identidad_verificada");
+
+                    b.Property<string>("NombreRetirante")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("nombre_retirante");
+
+                    b.Property<Guid>("ObjetoPerdidoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("objeto_perdido_id");
+
+                    b.Property<string>("ObservacionInterna")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("observacion_interna");
+
+                    b.Property<Guid>("VerificadoPorUsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("verificado_por_usuario_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_entregas_objeto");
+
+                    b.HasIndex("ObjetoPerdidoId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entregas_objeto_objeto_perdido_id");
+
+                    b.HasIndex("VerificadoPorUsuarioId")
+                        .HasDatabaseName("ix_entregas_objeto_verificado_por_usuario_id");
+
+                    b.ToTable("entregas_objeto", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.LostAndFound.ObjetoPerdido", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("categoria");
+
+                    b.Property<Guid?>("DadoDeBajaPorUsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("dado_de_baja_por_usuario_id");
+
+                    b.Property<string>("DescripcionPrivada")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("descripcion_privada");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("estado");
+
+                    b.Property<DateTimeOffset?>("FechaCierre")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_cierre");
+
+                    b.Property<DateOnly>("FechaHallazgo")
+                        .HasColumnType("date")
+                        .HasColumnName("fecha_hallazgo");
+
+                    b.Property<DateTimeOffset>("FechaPublicacion")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_publicacion");
+
+                    b.Property<string>("FotoContentType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("foto_content_type");
+
+                    b.Property<string>("FotoStoragePath")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("foto_storage_path");
+
+                    b.Property<string>("FranjaHoraria")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("franja_horaria");
+
+                    b.Property<string>("MotivoBaja")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("motivo_baja");
+
+                    b.Property<Guid>("PublicadoPorUsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("publicado_por_usuario_id");
+
+                    b.Property<string>("PuntoResguardo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)")
+                        .HasColumnName("punto_resguardo");
+
+                    b.Property<string>("SectorEncontrado")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("sector_encontrado");
+
+                    b.Property<string>("TituloPublico")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("titulo_publico");
+
+                    b.HasKey("Id")
+                        .HasName("pk_objetos_perdidos");
+
+                    b.HasIndex("DadoDeBajaPorUsuarioId")
+                        .HasDatabaseName("ix_objetos_perdidos_dado_de_baja_por_usuario_id");
+
+                    b.HasIndex("Estado", "FechaHallazgo")
+                        .HasDatabaseName("ix_objetos_perdidos_estado_fecha_hallazgo");
+
+                    b.HasIndex("PublicadoPorUsuarioId", "FechaPublicacion")
+                        .HasDatabaseName("ix_objetos_perdidos_publicado_por_usuario_id_fecha_publicacion");
+
+                    b.ToTable("objetos_perdidos", (string)null);
+                });
+
             modelBuilder.Entity("Astrea.Domain.Procedures.DocumentoEmitido", b =>
                 {
                     b.Property<Guid>("Id")
@@ -726,7 +876,7 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                             Activo = true,
                             Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"desde\",\"etiqueta\":\"Desde\",\"tipo\":3,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"hasta\",\"etiqueta\":\"Hasta\",\"tipo\":3,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"motivo\",\"etiqueta\":\"Motivo\",\"tipo\":2,\"obligatorio\":true,\"largoMaximo\":500,\"ayuda\":null}]",
                             Codigo = "JUSTIFICACION_INASISTENCIA",
-                            Descripcion = "Pedí que se justifiquen tus faltas por un motivo de salud, laboral u otro previsto en el reglamento. Presentá el comprobante original en Bedelía.",
+                            Descripcion = "Pedí que se justifiquen tus faltas por un motivo de salud, laboral u otro previsto en el reglamento. Presentá el comprobante original en Secretaría.",
                             Nombre = "Justificación de inasistencia",
                             RequiereAdjunto = false
                         });
@@ -777,7 +927,7 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         {
                             Id = new Guid("0a6a8f1e-4c5b-4d1e-9b77-2f6c1b9d0e02"),
                             Codigo = "ADMINISTRADOR",
-                            Descripcion = "Personal de Bedelía / Secretaría: administra planes, mesas, trámites, hallazgos y documentos.",
+                            Descripcion = "Personal de Secretaría: administra planes, mesas, trámites, hallazgos y documentos.",
                             Nombre = "Administrador"
                         });
                 });
@@ -935,6 +1085,39 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_mesas_examen_plan_materias_plan_materia_id");
                 });
 
+            modelBuilder.Entity("Astrea.Domain.LostAndFound.EntregaObjeto", b =>
+                {
+                    b.HasOne("Astrea.Domain.LostAndFound.ObjetoPerdido", null)
+                        .WithOne("Entrega")
+                        .HasForeignKey("Astrea.Domain.LostAndFound.EntregaObjeto", "ObjetoPerdidoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_entregas_objeto_objetos_perdidos_objeto_perdido_id");
+
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("VerificadoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_entregas_objeto_usuarios_verificado_por_usuario_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.LostAndFound.ObjetoPerdido", b =>
+                {
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("DadoDeBajaPorUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_objetos_perdidos_usuarios_dado_de_baja_por_usuario_id");
+
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("PublicadoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_objetos_perdidos_usuarios_publicado_por_usuario_id");
+                });
+
             modelBuilder.Entity("Astrea.Domain.Procedures.DocumentoEmitido", b =>
                 {
                     b.HasOne("Astrea.Domain.Users.Usuario", null)
@@ -1043,6 +1226,11 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.Navigation("Correlatividades");
 
                     b.Navigation("Materias");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.LostAndFound.ObjetoPerdido", b =>
+                {
+                    b.Navigation("Entrega");
                 });
 
             modelBuilder.Entity("Astrea.Domain.Procedures.Tramite", b =>

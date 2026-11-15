@@ -30,7 +30,7 @@ public class EmisionDocumentosTests
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IClock _clock = Substitute.For<IClock>();
     private readonly Usuario _estudiante = Usuario.Registrar(Guid.NewGuid(), "uid-estudiante", "ana@astrea.test", Ahora);
-    private readonly Usuario _bedelia = Usuario.Registrar(Guid.NewGuid(), "uid-bedelia", "bedelia@astrea.test", Ahora);
+    private readonly Usuario _secretaria = Usuario.Registrar(Guid.NewGuid(), "uid-secretaria", "secretaria@astrea.test", Ahora);
     private readonly Carrera _carrera = Carrera.Crear(Guid.NewGuid(), "TSDS", "Tecnicatura Superior en Desarrollo de Software", 3, Ahora);
     private readonly TramiteTipo _tipo = CatalogoTramites.Tipos().Single(tipo => tipo.Id == CatalogoTramites.AlumnoRegularId);
     private readonly PlantillaDocumento _plantilla = CatalogoTramites.PlantillasIniciales().Single(plantilla => plantilla.Id == CatalogoTramites.PlantillaAlumnoRegularV1Id);
@@ -40,8 +40,8 @@ public class EmisionDocumentosTests
     public EmisionDocumentosTests()
     {
         _clock.UtcNow.Returns(Ahora);
-        _sesion.FirebaseUid.Returns("uid-bedelia");
-        _usuarios.ObtenerPorFirebaseUidAsync("uid-bedelia", Arg.Any<CancellationToken>()).Returns(_bedelia);
+        _sesion.FirebaseUid.Returns("uid-secretaria");
+        _usuarios.ObtenerPorFirebaseUidAsync("uid-secretaria", Arg.Any<CancellationToken>()).Returns(_secretaria);
         _usuarios.ObtenerPorIdAsync(_estudiante.Id, Arg.Any<CancellationToken>()).Returns(_estudiante);
         _academico.ObtenerCarreraAsync(_carrera.Id, Arg.Any<CancellationToken>()).Returns(_carrera);
 
@@ -160,7 +160,7 @@ public class EmisionDocumentosTests
     {
         _tramites.ObtenerPlantillaVigenteAsync(_tipo.Id, Arg.Any<CancellationToken>()).Returns((PlantillaDocumento?)null);
 
-        var resultado = await Bandeja().AprobarAsync(_tramite.Id, new AprobarTramiteCommand("Retiralo en Bedelía"), CancellationToken.None);
+        var resultado = await Bandeja().AprobarAsync(_tramite.Id, new AprobarTramiteCommand("Retiralo en Secretaría"), CancellationToken.None);
 
         resultado.Valor.Estado.Should().Be(EstadoTramite.Listo);
         resultado.Valor.EmiteDocumento.Should().BeFalse();
@@ -172,7 +172,7 @@ public class EmisionDocumentosTests
     public async Task Un_tramite_rechazado_no_se_aprueba_ni_emite()
     {
         CargarDatosOficiales();
-        _tramite.Rechazar(_bedelia.Id, "Datos incorrectos", Ahora);
+        _tramite.Rechazar(_secretaria.Id, "Datos incorrectos", Ahora);
 
         var aprobar = () => Bandeja().AprobarAsync(_tramite.Id, new AprobarTramiteCommand(null), CancellationToken.None);
 

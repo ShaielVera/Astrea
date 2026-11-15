@@ -273,7 +273,7 @@ function AccionesTramite({
       >
         <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
           Indicación para el estudiante (opcional)
-          <input value={comentario} onChange={(e) => setComentario(e.target.value)} maxLength={500} placeholder="Ej.: Retirala en Bedelía de 18 a 21 h" className={campo} />
+          <input value={comentario} onChange={(e) => setComentario(e.target.value)} maxLength={500} placeholder="Ej.: Retirala en Secretaría de 18 a 21 h" className={campo} />
         </label>
         <div>
           <button type="submit" className={botonPrimarioChico} disabled={ocupado}>

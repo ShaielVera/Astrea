@@ -283,7 +283,7 @@ function ResultadoVerificacion({ verificacion }: { verificacion: Verificacion })
   if (verificacion.resultado === "RequiereVerificacion") {
     return (
       <div role="status" className="rounded-md bg-sky-100 px-3 py-2 text-sm text-sky-900 dark:bg-sky-950 dark:text-sky-200">
-        <p>Cumplís las materias pedidas para {accion}. Bedelía tiene que verificar además:</p>
+        <p>Cumplís las materias pedidas para {accion}. La Secretaría tiene que verificar además:</p>
         <ul className="list-disc pl-5">
           {verificacion.aVerificar.map((r) => (
             <li key={r.id}>{nombre(r)}</li>

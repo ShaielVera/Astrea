@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IAcademicRepository, EfAcademicRepository>();
         services.AddScoped<IExamRepository, EfExamRepository>();
         services.AddScoped<ITramiteRepository, EfTramiteRepository>();
+        services.AddScoped<IObjetoPerdidoRepository, EfObjetoPerdidoRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPdfGenerator, QuestPdfGenerator>();
