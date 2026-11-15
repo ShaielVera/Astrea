@@ -60,6 +60,13 @@ test.describe("Trámites", () => {
     await expect(enBandeja).toContainText("ANSES");
     await enBandeja.getByRole("button", { name: "Tomar trámite" }).click();
     await expect(admin.getByRole("status")).toContainText(`${numero} quedó en proceso`);
+    // La constancia de alumno regular emite PDF: Bedelía confirma antes los datos oficiales del titular.
+    const datos = enBandeja.getByRole("form", { name: "Datos oficiales del titular" });
+    await datos.getByLabel("Nombre").fill("Ana");
+    await datos.getByLabel("Apellido").fill("Pérez");
+    await datos.getByLabel("DNI").fill("30123456");
+    await datos.getByRole("button", { name: "Guardar datos oficiales" }).click();
+    await expect(admin.getByRole("status")).toContainText("Datos oficiales guardados");
     await enBandeja.getByRole("textbox", { name: /^Indicación para el estudiante/ }).fill("Retirala en Bedelía de 18 a 21 h");
     await enBandeja.getByRole("button", { name: "Aprobar" }).click();
     await expect(admin.getByRole("status")).toContainText(`${numero} quedó listo`);

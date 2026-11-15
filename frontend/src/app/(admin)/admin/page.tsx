@@ -58,6 +58,13 @@ export default function PanelAdministracion() {
           Trámites
           <span className="block text-sm font-normal text-zinc-500">Bandeja de pedidos de estudiantes</span>
         </Link>
+        <Link
+          href="/admin/plantillas"
+          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+        >
+          Plantillas de documentos
+          <span className="block text-sm font-normal text-zinc-500">Texto versionado de las constancias</span>
+        </Link>
       </nav>
 
       <section aria-labelledby="usuarios-titulo" className="flex flex-col gap-3">

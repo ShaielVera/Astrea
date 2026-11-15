@@ -96,6 +96,28 @@ public sealed class Usuario : Entity
         UpdatedAt = ahora;
     }
 
+    /// <summary>Hay datos suficientes para emitir un documento oficial a su nombre.</summary>
+    public bool TieneDatosOficiales => Nombre is not null && Apellido is not null && Dni is not null;
+
+    /// <summary>
+    /// Bedelía carga los datos oficiales (los que van en constancias). El DNI se guarda solo con dígitos
+    /// ("30.123.456" → "30123456") para poder compararlo y mostrarlo enmascarado.
+    /// </summary>
+    public void ActualizarDatosOficiales(string nombre, string apellido, string dni, string? legajo, DateTimeOffset ahora)
+    {
+        var soloDigitos = new string((dni ?? string.Empty).Where(c => !char.IsWhiteSpace(c) && c != '.' && c != '-').ToArray());
+        if (soloDigitos.Length is < 7 or > 9 || !soloDigitos.All(char.IsAsciiDigit))
+        {
+            throw new DomainException("El DNI debe tener entre 7 y 9 dígitos.");
+        }
+
+        Nombre = Texto.Requerido(nombre, "nombre", 100);
+        Apellido = Texto.Requerido(apellido, "apellido", 100);
+        Dni = soloDigitos;
+        Legajo = Texto.Opcional(legajo, "legajo", 30);
+        UpdatedAt = ahora;
+    }
+
     public void Desactivar(DateTimeOffset ahora)
     {
         Activo = false;

@@ -49,6 +49,23 @@ public class IniciarSesionHandlerTests
     }
 
     [Fact]
+    public async Task Si_otro_inicio_de_sesion_simultaneo_lo_dio_de_alta_primero_reintenta_sobre_el_existente()
+    {
+        ConSesion("uid-1", "alumna@isp20.edu.ar");
+        var creadoPorElOtroPedido = Usuario.Registrar(Guid.NewGuid(), "uid-1", "alumna@isp20.edu.ar", Ahora);
+        _usuarios.ObtenerPorFirebaseUidAsync("uid-1", Arg.Any<CancellationToken>()).Returns(null, creadoPorElOtroPedido);
+        _unitOfWork.GuardarCambiosAsync(Arg.Any<CancellationToken>())
+            .Returns(_ => throw new RegistroDuplicadoException(new InvalidOperationException()), _ => Task.CompletedTask);
+
+        var resultado = await CrearHandler().HandleAsync(CancellationToken.None);
+
+        resultado.Valor.Id.Should().Be(creadoPorElOtroPedido.Id);
+        _unitOfWork.Received(1).DescartarCambios();
+        _usuarios.Received(1).Agregar(Arg.Any<Usuario>());
+        await _unitOfWork.Received(2).GuardarCambiosAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Si_el_usuario_ya_existe_no_lo_vuelve_a_agregar_y_sincroniza_el_email()
     {
         var existente = Usuario.Registrar(Guid.NewGuid(), "uid-1", "viejo@isp20.edu.ar", Ahora.AddDays(-10));

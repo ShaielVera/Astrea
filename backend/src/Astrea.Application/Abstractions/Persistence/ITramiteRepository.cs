@@ -25,4 +25,19 @@ public interface ITramiteRepository
 
     /// <summary>Email, nombre y apellido de los usuarios indicados (titular y actores del historial).</summary>
     Task<IReadOnlyDictionary<Guid, PersonaDto>> ObtenerPersonasAsync(IEnumerable<Guid> usuarioIds, CancellationToken cancellationToken);
+
+    // Plantillas: la vigente de un tipo es la de mayor versión.
+    Task<PlantillaDocumento?> ObtenerPlantillaVigenteAsync(Guid tipoId, CancellationToken cancellationToken);
+
+    void Agregar(PlantillaDocumento plantilla);
+
+    // Documentos emitidos.
+    void Agregar(DocumentoEmitido documento);
+
+    /// <summary>El documento más reciente del trámite (vigente o anulado), o null si no se emitió ninguno.</summary>
+    Task<DocumentoEmitido?> ObtenerDocumentoDeTramiteAsync(Guid tramiteId, CancellationToken cancellationToken);
+
+    Task<DocumentoEmitido?> ObtenerDocumentoPorCodigoAsync(string codigoValidacion, CancellationToken cancellationToken);
+
+    Task<bool> ExisteCodigoValidacionAsync(string codigoValidacion, CancellationToken cancellationToken);
 }

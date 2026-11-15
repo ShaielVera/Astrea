@@ -1,9 +1,11 @@
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Astrea.Api.Authentication;
 using Astrea.Api.Authorization;
 using Astrea.Api.Endpoints;
 using Astrea.Api.Errors;
 using Astrea.Application;
+using Astrea.Application.Abstractions.Documents;
 using Astrea.Application.Abstractions.Identity;
 using Astrea.Infrastructure;
 using Astrea.Infrastructure.Persistence;
@@ -16,10 +18,31 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Astrea")
     ?? throw new InvalidOperationException("Falta la cadena de conexión 'ConnectionStrings:Astrea'.");
 
+// PDFs emitidos: carpeta privada del servidor, fuera de lo que se publica por la web.
+// Una ruta relativa se toma desde la carpeta de la API (no desde donde se lanzó el proceso).
+var carpetaPrivada = Path.Combine(
+    builder.Environment.ContentRootPath,
+    builder.Configuration["Almacenamiento:CarpetaPrivada"] is { Length: > 0 } carpeta ? carpeta : Path.Combine("App_Data", "privado"));
+
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(connectionString);
+builder.Services.AddInfrastructure(connectionString, carpetaPrivada);
 builder.Services.AddSingleton(
     builder.Configuration.GetSection(ConfiguracionIdentidad.Seccion).Get<ConfiguracionIdentidad>() ?? new ConfiguracionIdentidad());
+builder.Services.AddSingleton(
+    builder.Configuration.GetSection(ConfiguracionDocumentos.Seccion).Get<ConfiguracionDocumentos>() ?? new ConfiguracionDocumentos());
+
+// La validación pública de documentos no pide sesión: se limita por IP para que no se pueda barrer códigos.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(LimitesDeUso.ValidacionPublica, contexto => RateLimitPartition.GetFixedWindowLimiter(
+        contexto.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = builder.Configuration.GetValue("LimitesDeUso:ValidacionesPorMinuto", 30),
+            Window = TimeSpan.FromMinutes(1),
+        }));
+});
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
@@ -38,7 +61,8 @@ builder.Services.AddHealthChecks()
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
+        // Content-Disposition expuesto: el frontend lee el nombre del PDF descargado.
+        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("Content-Disposition")));
 
 var app = builder.Build();
 
@@ -57,6 +81,7 @@ else if (!app.Environment.IsEnvironment(FirebaseAuthentication.AmbienteE2E))
 }
 
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

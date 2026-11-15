@@ -19,12 +19,19 @@ public sealed class AstreaApiFactory : WebApplicationFactory<Program>, IAsyncLif
 {
     public const string AdministradorInicial = "bedelia@astrea.test";
 
+    public const string UrlValidacion = "https://astrea.test/validar/{codigo}";
+
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("pgvector/pgvector:pg17").Build();
+
+    /// <summary>Carpeta privada temporal para los PDF emitidos durante los tests.</summary>
+    public string CarpetaArchivos { get; } = Path.Combine(Path.GetTempPath(), $"astrea-tests-{Guid.NewGuid():N}");
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Astrea", _postgres.GetConnectionString());
+        builder.UseSetting("Almacenamiento:CarpetaPrivada", CarpetaArchivos);
+        builder.UseSetting("Documentos:UrlValidacion", UrlValidacion);
         builder.UseSetting("Firebase:ProjectId", TokensDePrueba.ProjectId);
         builder.UseSetting("Identidad:AdministradoresIniciales:0", AdministradorInicial);
 
@@ -49,6 +56,10 @@ public sealed class AstreaApiFactory : WebApplicationFactory<Program>, IAsyncLif
     {
         await base.DisposeAsync();
         await _postgres.DisposeAsync();
+        if (Directory.Exists(CarpetaArchivos))
+        {
+            Directory.Delete(CarpetaArchivos, recursive: true);
+        }
     }
 
     public HttpClient CrearClienteCon(string token)

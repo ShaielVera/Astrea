@@ -8,6 +8,7 @@ import type { Pagina } from "@/features/academico/api";
 import { Paginacion } from "@/features/mesas/Paginacion";
 import { fechaHora, tramitesApi, type EstadoTramite, type TramiteDetalle, type TramiteResumen } from "@/features/tramites/api";
 import { DetalleTramite, EstadoBadge } from "@/features/tramites/DetalleTramite";
+import { FormularioAnulacion, FormularioDatosOficiales } from "@/features/tramites/FormulariosAdministracion";
 
 const campo = "w-full min-w-0 rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-normal dark:border-zinc-700 dark:bg-zinc-900";
 const botonChico =
@@ -71,6 +72,15 @@ export default function BandejaTramites() {
     setAviso(null);
     try {
       setSeleccionado(await tramitesApi.detalleAdmin(await obtenerToken(), id));
+    } catch (e) {
+      setError(mensajeDeError(e));
+    }
+  }
+
+  async function descargar(id: string) {
+    setError(null);
+    try {
+      await tramitesApi.descargarAdmin(await obtenerToken(), id);
     } catch (e) {
       setError(mensajeDeError(e));
     }
@@ -163,18 +173,50 @@ export default function BandejaTramites() {
         <div className="min-w-0">
           {seleccionado ? (
             <DetalleTramite
-              key={`${seleccionado.id}-${seleccionado.estado}`}
+              key={`${seleccionado.id}-${seleccionado.estado}-${seleccionado.documento?.estado ?? "sin-documento"}`}
               tramite={seleccionado}
               vistaAdministracion
+              onDescargar={() => void descargar(seleccionado.id)}
+              accionesDocumento={
+                seleccionado.documento?.estado === "Vigente" && (
+                  <FormularioAnulacion
+                    onAnular={(motivo) =>
+                      cambiar((token) => tramitesApi.anularDocumento(token, seleccionado.id, motivo), (t) => `El documento de ${t.numero} quedó anulado.`)
+                    }
+                  />
+                )
+              }
               acciones={
-                <AccionesTramite
-                  tramite={seleccionado}
-                  onTomar={() => cambiar((token) => tramitesApi.tomar(token, seleccionado.id), (t) => `${t.numero} quedó en proceso.`)}
-                  onAprobar={(comentario) =>
-                    cambiar((token) => tramitesApi.aprobar(token, seleccionado.id, comentario), (t) => `${t.numero} quedó listo.`)
-                  }
-                  onRechazar={(motivo) => cambiar((token) => tramitesApi.rechazar(token, seleccionado.id, motivo), (t) => `${t.numero} fue rechazado.`)}
-                />
+                <>
+                  {seleccionado.emiteDocumento && (seleccionado.estado === "Pendiente" || seleccionado.estado === "EnProceso") && (
+                    <FormularioDatosOficiales
+                      key={seleccionado.solicitante.id + (seleccionado.solicitante.dni ?? "")}
+                      persona={seleccionado.solicitante}
+                      onGuardar={async (datos) => {
+                        setError(null);
+                        try {
+                          const token = await obtenerToken();
+                          await tramitesApi.datosOficiales(token, seleccionado.solicitante.id, datos);
+                          setSeleccionado(await tramitesApi.detalleAdmin(token, seleccionado.id));
+                          setAviso("Datos oficiales guardados.");
+                        } catch (e) {
+                          setError(mensajeDeError(e));
+                        }
+                      }}
+                    />
+                  )}
+                  <AccionesTramite
+                    tramite={seleccionado}
+                    onTomar={() => cambiar((token) => tramitesApi.tomar(token, seleccionado.id), (t) => `${t.numero} quedó en proceso.`)}
+                    onAprobar={(comentario) =>
+                      cambiar(
+                        (token) => tramitesApi.aprobar(token, seleccionado.id, comentario),
+                        (t) => (t.documento ? `${t.numero} quedó listo y se emitió el PDF.` : `${t.numero} quedó listo.`),
+                      )
+                    }
+                    onRechazar={(motivo) => cambiar((token) => tramitesApi.rechazar(token, seleccionado.id, motivo), (t) => `${t.numero} fue rechazado.`)}
+                  />
+                </>
               }
             />
           ) : (

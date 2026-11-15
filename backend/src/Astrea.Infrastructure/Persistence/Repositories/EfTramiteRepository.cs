@@ -113,9 +113,32 @@ internal sealed class EfTramiteRepository(AppDbContext db) : ITramiteRepository
         var ids = usuarioIds.ToList();
         return await db.Usuarios.AsNoTracking()
             .Where(usuario => ids.Contains(usuario.Id))
-            .Select(usuario => new PersonaDto(usuario.Id, usuario.Email, usuario.Nombre, usuario.Apellido, usuario.Legajo))
+            .Select(usuario => new PersonaDto(usuario.Id, usuario.Email, usuario.Nombre, usuario.Apellido, usuario.Legajo, usuario.Dni))
             .ToDictionaryAsync(persona => persona.Id, cancellationToken);
     }
+
+    public Task<PlantillaDocumento?> ObtenerPlantillaVigenteAsync(Guid tipoId, CancellationToken cancellationToken) =>
+        db.PlantillasDocumento
+            .Where(plantilla => plantilla.TramiteTipoId == tipoId)
+            .OrderByDescending(plantilla => plantilla.Version)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    public void Agregar(PlantillaDocumento plantilla) => db.PlantillasDocumento.Add(plantilla);
+
+    public void Agregar(DocumentoEmitido documento) => db.DocumentosEmitidos.Add(documento);
+
+    public Task<DocumentoEmitido?> ObtenerDocumentoDeTramiteAsync(Guid tramiteId, CancellationToken cancellationToken) =>
+        db.DocumentosEmitidos
+            .Where(documento => documento.TramiteId == tramiteId)
+            .OrderByDescending(documento => documento.FechaEmision)
+            .ThenByDescending(documento => documento.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    public Task<DocumentoEmitido?> ObtenerDocumentoPorCodigoAsync(string codigoValidacion, CancellationToken cancellationToken) =>
+        db.DocumentosEmitidos.SingleOrDefaultAsync(documento => documento.CodigoValidacion == codigoValidacion, cancellationToken);
+
+    public Task<bool> ExisteCodigoValidacionAsync(string codigoValidacion, CancellationToken cancellationToken) =>
+        db.DocumentosEmitidos.AnyAsync(documento => documento.CodigoValidacion == codigoValidacion, cancellationToken);
 
     private static string EscaparLike(string texto) =>
         texto.Replace(@"\", @"\\", StringComparison.Ordinal)

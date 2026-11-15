@@ -21,6 +21,24 @@ public sealed class SesionYRolesTests(AstreaApiFactory factory)
     }
 
     [Fact]
+    public async Task Varios_inicios_de_sesion_simultaneos_de_un_usuario_nuevo_crean_uno_solo()
+    {
+        // Ej. el administrador abre varias pestañas a la vez la primera vez que entra.
+        var uid = UidUnico();
+        var token = TokensDePrueba.Crear(uid, AstreaApiFactory.AdministradorInicial);
+
+        var respuestas = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => factory.CrearClienteCon(token).PostAsync("/api/v1/auth/sesion", content: null)));
+
+        respuestas.Select(respuesta => respuesta.StatusCode).Should().AllBeEquivalentTo(HttpStatusCode.OK);
+        await factory.EjecutarEnBaseAsync(async db =>
+        {
+            (await db.Usuarios.CountAsync(usuario => usuario.FirebaseUid == uid)).Should().Be(1);
+            var usuario = await db.Usuarios.SingleAsync(candidato => candidato.FirebaseUid == uid);
+            usuario.Roles.Should().HaveCount(2);
+        });
+    }
+
+    [Fact]
     public async Task Antes_de_iniciar_sesion_en_Astrea_el_perfil_devuelve_404()
     {
         var client = factory.CrearClienteCon(TokensDePrueba.Crear(UidUnico(), "nueva@astrea.test"));

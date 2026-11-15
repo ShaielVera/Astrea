@@ -1,3 +1,4 @@
+using Astrea.Application.Abstractions.Persistence;
 using Astrea.Domain.Users;
 using Astrea.Infrastructure.Persistence;
 using Astrea.Infrastructure.Persistence.Repositories;
@@ -61,7 +62,7 @@ public sealed class EfUserRepositoryTests(BaseDeDatosFixture baseDeDatos)
 
         var guardarDuplicado = () => GuardarAsync(Usuario.Registrar(Guid.NewGuid(), uid, "otra@isp20.edu.ar", Ahora));
 
-        await guardarDuplicado.Should().ThrowAsync<DbUpdateException>();
+        await guardarDuplicado.Should().ThrowAsync<RegistroDuplicadoException>();
     }
 
     [Fact]

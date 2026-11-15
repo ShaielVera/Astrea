@@ -17,6 +17,7 @@ internal sealed class ManejadorReglasDeNegocio(IProblemDetailsService problemDet
         {
             DomainException => (StatusCodes.Status400BadRequest, "La solicitud no cumple una regla de negocio.", "regla_de_negocio"),
             ConflictoDeConcurrenciaException => (StatusCodes.Status409Conflict, "Conflicto de concurrencia.", "conflicto_concurrencia"),
+            RegistroDuplicadoException => (StatusCodes.Status409Conflict, "Registro duplicado.", "registro_duplicado"),
             _ => (0, string.Empty, string.Empty),
         };
 

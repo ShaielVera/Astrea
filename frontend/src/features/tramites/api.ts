@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api-client";
+import { apiDescargar, apiFetch } from "@/lib/api-client";
 import type { Pagina } from "@/features/academico/api";
 
 export type EstadoTramite = "Pendiente" | "EnProceso" | "Rechazado" | "Listo";
@@ -28,7 +28,47 @@ export type TramiteResumen = {
   solicitanteNombre: string | null;
 };
 
-export type Persona = { id: string; email: string; nombre: string | null; apellido: string | null; legajo: string | null };
+export type Persona = {
+  id: string;
+  email: string;
+  nombre: string | null;
+  apellido: string | null;
+  legajo: string | null;
+  dni: string | null;
+};
+
+export type EstadoDocumento = "Vigente" | "Anulado";
+
+/** PDF oficial emitido al aprobar el trámite. */
+export type Documento = {
+  id: string;
+  tipoDocumento: string;
+  codigoValidacion: string;
+  urlValidacion: string;
+  fechaEmision: string;
+  estado: EstadoDocumento;
+  versionPlantilla: number;
+  hashSha256: string;
+  motivoAnulacion: string | null;
+};
+
+/** Lo que muestra la validación pública del QR. */
+export type ValidacionDocumento = {
+  codigoValidacion: string;
+  tipoDocumento: string;
+  numeroTramite: string;
+  fechaEmision: string;
+  estado: EstadoDocumento;
+  dniParcial: string | null;
+  hashSha256: string;
+};
+
+export type PlantillaDeTipo = {
+  tipoId: string;
+  tipoNombre: string;
+  vigente: { id: string; version: number; titulo: string; cuerpo: string; creadaAt: string } | null;
+  marcadoresDisponibles: string[];
+};
 
 export type EventoTramite = {
   estadoAnterior: EstadoTramite | null;
@@ -51,6 +91,9 @@ export type TramiteDetalle = {
   administradorAsignado: string | null;
   datos: { clave: string; etiqueta: string; valor: string }[];
   historial: EventoTramite[];
+  /** El tipo emite un PDF al aprobarse (tiene plantilla). */
+  emiteDocumento: boolean;
+  documento: Documento | null;
 };
 
 export const ETIQUETA_ESTADO: Record<EstadoTramite, string> = {
@@ -94,6 +137,24 @@ export const tramitesApi = {
 
   rechazar: (token: string, id: string, motivo: string) =>
     apiFetch<TramiteDetalle>(`/admin/tramites/${id}/rechazar`, { method: "POST", token, body: { motivo } }),
+
+  descargar: (token: string, id: string) => apiDescargar(`/tramites/${id}/documento`, token, "documento.pdf"),
+
+  descargarAdmin: (token: string, id: string) => apiDescargar(`/admin/tramites/${id}/documento`, token, "documento.pdf"),
+
+  anularDocumento: (token: string, id: string, motivo: string) =>
+    apiFetch<TramiteDetalle>(`/admin/tramites/${id}/documento/anulacion`, { method: "POST", token, body: { motivo } }),
+
+  datosOficiales: (token: string, usuarioId: string, datos: { nombre: string; apellido: string; dni: string; legajo: string | null }) =>
+    apiFetch<Persona>(`/admin/usuarios/${usuarioId}/datos-oficiales`, { method: "PUT", token, body: datos }),
+
+  plantillas: (token: string) => apiFetch<PlantillaDeTipo[]>("/admin/plantillas", { token }),
+
+  nuevaVersionPlantilla: (token: string, tipoId: string, datos: { titulo: string; cuerpo: string }) =>
+    apiFetch<unknown>(`/admin/tramites/tipos/${tipoId}/plantillas`, { method: "POST", token, body: datos }),
+
+  /** Pública: no requiere sesión. */
+  validar: (codigo: string) => apiFetch<ValidacionDocumento>(`/documentos/validar/${encodeURIComponent(codigo)}`),
 };
 
 /** "15/11/2026 14:30", en hora del instituto. */

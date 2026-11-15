@@ -353,6 +353,165 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.ToTable("mesas_examen", (string)null);
                 });
 
+            modelBuilder.Entity("Astrea.Domain.Procedures.DocumentoEmitido", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AnuladoAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("anulado_at");
+
+                    b.Property<Guid?>("AnuladoPorUsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("anulado_por_usuario_id");
+
+                    b.Property<string>("CodigoValidacion")
+                        .IsRequired()
+                        .HasMaxLength(14)
+                        .HasColumnType("character varying(14)")
+                        .HasColumnName("codigo_validacion");
+
+                    b.Property<string>("DniUltimosDigitos")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("dni_ultimos_digitos");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("estado");
+
+                    b.Property<DateTimeOffset>("FechaEmision")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_emision");
+
+                    b.Property<string>("HashSha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("hash_sha256")
+                        .IsFixedLength();
+
+                    b.Property<string>("MotivoAnulacion")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("motivo_anulacion");
+
+                    b.Property<Guid>("PlantillaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plantilla_id");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("storage_path");
+
+                    b.Property<string>("TipoDocumento")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("tipo_documento");
+
+                    b.Property<Guid>("TramiteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tramite_id");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<int>("VersionPlantilla")
+                        .HasColumnType("integer")
+                        .HasColumnName("version_plantilla");
+
+                    b.HasKey("Id")
+                        .HasName("pk_documentos_emitidos");
+
+                    b.HasIndex("AnuladoPorUsuarioId")
+                        .HasDatabaseName("ix_documentos_emitidos_anulado_por_usuario_id");
+
+                    b.HasIndex("CodigoValidacion")
+                        .IsUnique()
+                        .HasDatabaseName("ix_documentos_emitidos_codigo_validacion");
+
+                    b.HasIndex("PlantillaId")
+                        .HasDatabaseName("ix_documentos_emitidos_plantilla_id");
+
+                    b.HasIndex("TramiteId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_documentos_emitidos_tramite_id")
+                        .HasFilter("estado = 'Vigente'");
+
+                    b.HasIndex("UsuarioId")
+                        .HasDatabaseName("ix_documentos_emitidos_usuario_id");
+
+                    b.ToTable("documentos_emitidos", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Procedures.PlantillaDocumento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreadaAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creada_at");
+
+                    b.Property<string>("Cuerpo")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("cuerpo");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("titulo");
+
+                    b.Property<Guid>("TramiteTipoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tramite_tipo_id");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_plantillas_documento");
+
+                    b.HasIndex("TramiteTipoId", "Version")
+                        .IsUnique()
+                        .HasDatabaseName("ix_plantillas_documento_tramite_tipo_id_version");
+
+                    b.ToTable("plantillas_documento", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0193a5d0-0000-7000-8000-000000000101"),
+                            CreadaAt = new DateTimeOffset(new DateTime(2026, 11, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Cuerpo = "Se deja constancia de que {{nombreCompleto}}, DNI {{dni}}, es estudiante regular de la carrera {{carrera}} en este Instituto durante el ciclo lectivo en curso.\n\nA pedido del interesado o la interesada, y para ser presentada ante {{presentarAnte}}, se extiende la presente el {{fechaEmision}}.",
+                            Titulo = "Constancia de alumno regular",
+                            TramiteTipoId = new Guid("0193a5d0-0000-7000-8000-000000000001"),
+                            Version = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("0193a5d0-0000-7000-8000-000000000102"),
+                            CreadaAt = new DateTimeOffset(new DateTime(2026, 11, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Cuerpo = "Se deja constancia de que {{nombreCompleto}}, DNI {{dni}}, estudiante de la carrera {{carrera}}, se presentó a rendir el examen final de {{materia}} el día {{fechaExamen}} en este Instituto.\n\nA pedido del interesado o la interesada, y para ser presentada ante {{presentarAnte|quien corresponda}}, se extiende la presente el {{fechaEmision}}.",
+                            Titulo = "Constancia de examen",
+                            TramiteTipoId = new Guid("0193a5d0-0000-7000-8000-000000000002"),
+                            Version = 1
+                        });
+                });
+
             modelBuilder.Entity("Astrea.Domain.Procedures.Tramite", b =>
                 {
                     b.Property<Guid>("Id")
@@ -774,6 +933,46 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_mesas_examen_plan_materias_plan_materia_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Procedures.DocumentoEmitido", b =>
+                {
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("AnuladoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_documentos_emitidos_usuarios_anulado_por_usuario_id");
+
+                    b.HasOne("Astrea.Domain.Procedures.PlantillaDocumento", null)
+                        .WithMany()
+                        .HasForeignKey("PlantillaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_documentos_emitidos_plantillas_documento_plantilla_id");
+
+                    b.HasOne("Astrea.Domain.Procedures.Tramite", null)
+                        .WithMany()
+                        .HasForeignKey("TramiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_documentos_emitidos_tramites_tramite_id");
+
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_documentos_emitidos_usuarios_usuario_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Procedures.PlantillaDocumento", b =>
+                {
+                    b.HasOne("Astrea.Domain.Procedures.TramiteTipo", null)
+                        .WithMany()
+                        .HasForeignKey("TramiteTipoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_plantillas_documento_tramite_tipos_tramite_tipo_id");
                 });
 
             modelBuilder.Entity("Astrea.Domain.Procedures.Tramite", b =>

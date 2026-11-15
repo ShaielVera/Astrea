@@ -1,4 +1,5 @@
 using Astrea.Application.Abstractions.Clock;
+using Astrea.Application.Abstractions.Documents;
 using Astrea.Application.Abstractions.Identity;
 using Astrea.Application.Abstractions.Persistence;
 using Astrea.Application.Contracts.Results;
@@ -39,7 +40,7 @@ public class TramitesTests
     }
 
     private SolicitudesTramite Solicitudes() =>
-        new(new UsuarioActual(_sesion, _usuarios), _tramites, new DetalleTramites(_tramites, _academico), _unitOfWork, _clock);
+        new(new UsuarioActual(_sesion, _usuarios), _tramites, new DetalleTramites(_tramites, _academico, new ConfiguracionDocumentos()), Substitute.For<IFileStorage>(), _unitOfWork, _clock);
 
     private Dictionary<string, string?> Datos(Guid? carreraId = null) =>
         new() { ["carrera"] = (carreraId ?? _carrera.Id).ToString(), ["presentarAnte"] = "ANSES" };
@@ -62,7 +63,7 @@ public class TramitesTests
         var resultado = await Solicitudes().SolicitarAsync(new SolicitarTramiteCommand(_tipo.Id, Datos(Guid.NewGuid()), null), CancellationToken.None);
 
         resultado.Error.Should().Be(ErroresTramites.CarreraInvalida);
-        _tramites.DidNotReceiveWithAnyArgs().Agregar(default!);
+        _tramites.DidNotReceiveWithAnyArgs().Agregar(default(Tramite)!);
     }
 
     [Fact]
@@ -75,7 +76,7 @@ public class TramitesTests
         var resultado = await Solicitudes().SolicitarAsync(new SolicitarTramiteCommand(_tipo.Id, Datos(), clave), CancellationToken.None);
 
         resultado.Valor.Id.Should().Be(existente.Id);
-        _tramites.DidNotReceiveWithAnyArgs().Agregar(default!);
+        _tramites.DidNotReceiveWithAnyArgs().Agregar(default(Tramite)!);
         await _unitOfWork.DidNotReceive().GuardarCambiosAsync(Arg.Any<CancellationToken>());
     }
 

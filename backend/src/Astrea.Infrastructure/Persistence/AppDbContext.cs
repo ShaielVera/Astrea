@@ -32,6 +32,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<TramiteEvento> TramiteEventos => Set<TramiteEvento>();
 
+    public DbSet<PlantillaDocumento> PlantillasDocumento => Set<PlantillaDocumento>();
+
+    public DbSet<DocumentoEmitido> DocumentosEmitidos => Set<DocumentoEmitido>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Extensión pgvector para guardar los embeddings del pipeline RAG.

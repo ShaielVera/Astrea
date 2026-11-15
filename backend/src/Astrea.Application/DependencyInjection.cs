@@ -25,6 +25,10 @@ public static class DependencyInjection
         services.AddScoped<DetalleTramites>();
         services.AddScoped<SolicitudesTramite>();
         services.AddScoped<BandejaTramites>();
+        services.AddScoped<EmisionDocumentos>();
+        services.AddScoped<ValidacionDocumentos>();
+        services.AddScoped<DatosOficiales>();
+        services.AddScoped<PlantillasDocumento>();
 
         return services;
     }

@@ -95,6 +95,54 @@ internal sealed class TramiteEventoConfiguration : IEntityTypeConfiguration<Tram
     }
 }
 
+internal sealed class PlantillaDocumentoConfiguration : IEntityTypeConfiguration<PlantillaDocumento>
+{
+    public void Configure(EntityTypeBuilder<PlantillaDocumento> builder)
+    {
+        builder.ToTable("plantillas_documento");
+        builder.HasKey(plantilla => plantilla.Id);
+        builder.Property(plantilla => plantilla.Id).ValueGeneratedNever();
+        builder.Property(plantilla => plantilla.Titulo).HasMaxLength(120).IsRequired();
+        builder.Property(plantilla => plantilla.Cuerpo).HasMaxLength(4000).IsRequired();
+        builder.HasOne<TramiteTipo>().WithMany().HasForeignKey(plantilla => plantilla.TramiteTipoId).OnDelete(DeleteBehavior.Restrict);
+
+        // Una sola versión con cada número por tipo; la vigente es la de número más alto.
+        builder.HasIndex(plantilla => new { plantilla.TramiteTipoId, plantilla.Version }).IsUnique();
+
+        builder.HasData(CatalogoTramites.PlantillasIniciales());
+    }
+}
+
+internal sealed class DocumentoEmitidoConfiguration : IEntityTypeConfiguration<DocumentoEmitido>
+{
+    public void Configure(EntityTypeBuilder<DocumentoEmitido> builder)
+    {
+        builder.ToTable("documentos_emitidos");
+        builder.HasKey(documento => documento.Id);
+        builder.Property(documento => documento.Id).ValueGeneratedNever();
+        builder.Property(documento => documento.TipoDocumento).HasMaxLength(120).IsRequired();
+        builder.Property(documento => documento.CodigoValidacion).HasMaxLength(14).IsRequired();
+        builder.Property(documento => documento.StoragePath).HasMaxLength(300).IsRequired();
+        builder.Property(documento => documento.HashSha256).HasMaxLength(64).IsFixedLength().IsRequired();
+        builder.Property(documento => documento.DniUltimosDigitos).HasMaxLength(3);
+        builder.Property(documento => documento.Estado).HasConversion<string>().HasMaxLength(10);
+        builder.Property(documento => documento.MotivoAnulacion).HasMaxLength(300);
+
+        builder.HasOne<Tramite>().WithMany().HasForeignKey(documento => documento.TramiteId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Usuario>().WithMany().HasForeignKey(documento => documento.UsuarioId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Usuario>().WithMany().HasForeignKey(documento => documento.AnuladoPorUsuarioId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<PlantillaDocumento>().WithMany().HasForeignKey(documento => documento.PlantillaId).OnDelete(DeleteBehavior.Restrict);
+
+        // El código del QR identifica al documento en la validación pública.
+        builder.HasIndex(documento => documento.CodigoValidacion).IsUnique();
+
+        // Respaldo de la idempotencia: un trámite tiene a lo sumo un documento vigente.
+        builder.HasIndex(documento => documento.TramiteId)
+            .IsUnique()
+            .HasFilter("estado = 'Vigente'");
+    }
+}
+
 /// <summary>Conversión a JSON para columnas jsonb con tipos de solo lectura del dominio.</summary>
 internal static class Json
 {

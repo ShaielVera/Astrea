@@ -1,6 +1,8 @@
 using Astrea.Application.Abstractions.Clock;
+using Astrea.Application.Abstractions.Documents;
 using Astrea.Application.Abstractions.Persistence;
 using Astrea.Infrastructure.Clock;
+using Astrea.Infrastructure.Documents;
 using Astrea.Infrastructure.Persistence;
 using Astrea.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -10,9 +12,11 @@ namespace Astrea.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
+    /// <param name="carpetaArchivosPrivados">Carpeta del servidor donde se guardan los PDF emitidos (nunca publicada por la web).</param>
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, string carpetaArchivosPrivados)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+        ArgumentException.ThrowIfNullOrWhiteSpace(carpetaArchivosPrivados);
 
         services.AddDbContext<AppDbContext>(options => ConfigurarDbContext(options, connectionString));
 
@@ -22,6 +26,8 @@ public static class DependencyInjection
         services.AddScoped<ITramiteRepository, EfTramiteRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<IPdfGenerator, QuestPdfGenerator>();
+        services.AddSingleton<IFileStorage>(new CarpetaPrivadaStorage(carpetaArchivosPrivados));
 
         return services;
     }

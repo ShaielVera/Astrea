@@ -56,6 +56,15 @@ export default function TramitesPage() {
     }
   }
 
+  async function descargar(id: string) {
+    setError(null);
+    try {
+      await tramitesApi.descargar(await obtenerToken(), id);
+    } catch (e) {
+      setError(mensajeDeError(e));
+    }
+  }
+
   async function solicitar(datos: Record<string, string>) {
     setError(null);
     setAviso(null);
@@ -150,7 +159,10 @@ export default function TramitesPage() {
 
         <div className="min-w-0">
           {seleccionado ? (
-            <DetalleTramite tramite={seleccionado} />
+            <DetalleTramite
+              tramite={seleccionado}
+              onDescargar={() => void descargar(seleccionado.id)}
+            />
           ) : (
             mios && mios.totalItems > 0 && <p className="text-sm text-zinc-500">Elegí un pedido para ver su detalle e historial.</p>
           )}

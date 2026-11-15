@@ -493,3 +493,6 @@ test-results/
 
 ## Guía de desarrollo local (no se publica)
 docs/DESARROLLO.md
+
+# PDFs emitidos (carpeta privada del servidor)
+App_Data/

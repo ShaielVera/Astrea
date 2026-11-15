@@ -30,17 +30,32 @@ public sealed class IniciarSesionHandler(
             return ErroresAuth.SinEmail;
         }
 
+        try
+        {
+            return await SincronizarAsync(currentUser.FirebaseUid, currentUser.Email, cancellationToken);
+        }
+        catch (RegistroDuplicadoException)
+        {
+            // Otro inicio de sesión simultáneo del mismo usuario lo dio de alta (o le asignó el rol) primero:
+            // se descarta lo pendiente y se repite sobre lo que ya quedó guardado.
+            unitOfWork.DescartarCambios();
+            return await SincronizarAsync(currentUser.FirebaseUid, currentUser.Email, cancellationToken);
+        }
+    }
+
+    private async Task<Result<PerfilDto>> SincronizarAsync(string firebaseUid, string email, CancellationToken cancellationToken)
+    {
         var ahora = clock.UtcNow;
-        var usuario = await usuarios.ObtenerPorFirebaseUidAsync(currentUser.FirebaseUid, cancellationToken);
+        var usuario = await usuarios.ObtenerPorFirebaseUidAsync(firebaseUid, cancellationToken);
 
         if (usuario is null)
         {
-            usuario = Usuario.Registrar(Guid.CreateVersion7(), currentUser.FirebaseUid, currentUser.Email, ahora);
+            usuario = Usuario.Registrar(Guid.CreateVersion7(), firebaseUid, email, ahora);
             usuarios.Agregar(usuario);
         }
         else
         {
-            usuario.ActualizarEmail(currentUser.Email, ahora);
+            usuario.ActualizarEmail(email, ahora);
         }
 
         if (!usuario.Activo)

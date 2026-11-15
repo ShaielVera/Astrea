@@ -107,9 +107,17 @@ public sealed class Tramite : Entity
         Registrar(Estado, EstadoTramite.EnProceso, null, administradorId, ahora);
     }
 
-    /// <summary>Lo aprueba: queda "Listo" para retirar (o descargar, cuando haya PDF). El comentario lo ve el estudiante.</summary>
+    /// <summary>
+    /// Lo aprueba: queda "Listo" para retirar o descargar. El comentario lo ve el estudiante.
+    /// Es idempotente: aprobar un trámite que ya está listo (un reintento) no hace nada.
+    /// </summary>
     public void Aprobar(Guid administradorId, string? comentario, DateTimeOffset ahora)
     {
+        if (Estado == EstadoTramite.Listo)
+        {
+            return;
+        }
+
         ValidarAbierto();
         ObservacionAdministrativa = Texto.Opcional(comentario, "comentario", 500);
         AdministradorAsignadoId ??= administradorId;

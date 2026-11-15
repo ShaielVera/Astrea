@@ -42,6 +42,11 @@ public sealed class TramitesTests(AstreaApiFactory factory)
             claveIdempotencia = clave,
         });
 
+    /// <summary>La constancia de alumno regular emite PDF: para aprobarla, el titular necesita datos oficiales.</summary>
+    private static async Task CargarDatosOficialesAsync(HttpClient admin, Detalle tramite) =>
+        (await admin.PutAsJsonAsync($"/api/v1/admin/usuarios/{tramite.Solicitante.Id}/datos-oficiales", new { nombre = "Ana", apellido = "Pérez", dni = "30123456" }))
+            .EnsureSuccessStatusCode();
+
     private static async Task<Detalle> SolicitarOkAsync(HttpClient estudiante, Guid carreraId)
     {
         var response = await SolicitarAsync(estudiante, carreraId);
@@ -104,6 +109,7 @@ public sealed class TramitesTests(AstreaApiFactory factory)
         bandeja!.Items.Should().ContainSingle().Which.Id.Should().Be(tramite.Id);
 
         (await admin.PostAsync($"/api/v1/admin/tramites/{tramite.Id}/tomar", null)).StatusCode.Should().Be(HttpStatusCode.OK);
+        await CargarDatosOficialesAsync(admin, tramite);
         var aprobado = await admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramite.Id}/aprobar", new { comentario = "Retirala en Bedelía" });
         aprobado.StatusCode.Should().Be(HttpStatusCode.OK);
         (await LeerAsync<Detalle>(aprobado)).AdministradorAsignado.Should().Be(AstreaApiFactory.AdministradorInicial);
@@ -137,6 +143,7 @@ public sealed class TramitesTests(AstreaApiFactory factory)
         var admin = await AdminAsync();
         var otroAdmin = await AdminAsync();
         var tramite = await SolicitarOkAsync(await EstudianteAsync(), await CrearCarreraAsync(admin));
+        await CargarDatosOficialesAsync(admin, tramite);
 
         var respuestas = await Task.WhenAll(
             admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramite.Id}/aprobar", new { comentario = "Listo" }),
@@ -204,7 +211,10 @@ public sealed class TramitesTests(AstreaApiFactory factory)
         string? ObservacionAdministrativa,
         string? AdministradorAsignado,
         List<Dato> Datos,
-        List<Evento> Historial);
+        List<Evento> Historial,
+        SolicitanteDto Solicitante);
+
+    private sealed record SolicitanteDto(Guid Id);
 
     private sealed record Resumen(Guid Id, string Numero, string Estado, string TipoNombre, string SolicitanteEmail);
 

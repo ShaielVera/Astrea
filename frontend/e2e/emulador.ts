@@ -33,3 +33,13 @@ export async function crearCuenta(email: string, password: string, emailVerifica
     });
   }
 }
+
+/** Inicia sesión en el emulador y devuelve el ID Token, para llamar a la API directamente desde un test. */
+export async function obtenerIdToken(email: string, password: string): Promise<string> {
+  const { idToken } = await pedir<{ idToken: string }>(`${base}/accounts:signInWithPassword?key=demo-api-key`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, returnSecureToken: true }),
+  });
+  return idToken;
+}
