@@ -1,6 +1,7 @@
 using Astrea.Application.Features.Academic;
 using Astrea.Application.Features.Auth.IniciarSesion;
 using Astrea.Application.Features.Auth.ObtenerPerfil;
+using Astrea.Application.Features.Exams;
 using Astrea.Application.Features.Users.ObtenerResumenUsuarios;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +17,8 @@ public static class DependencyInjection
         services.AddScoped<ConsultasCatalogo>();
         services.AddScoped<AdministracionCatalogo>();
         services.AddScoped<Correlatividades>();
+        services.AddScoped<ConsultasMesas>();
+        services.AddScoped<AdministracionMesas>();
 
         return services;
     }

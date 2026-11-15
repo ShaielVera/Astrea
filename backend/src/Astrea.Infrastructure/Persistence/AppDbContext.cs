@@ -1,4 +1,5 @@
 using Astrea.Domain.Academic;
+using Astrea.Domain.Exams;
 using Astrea.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,10 +23,15 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<Correlatividad> Correlatividades => Set<Correlatividad>();
 
+    public DbSet<MesaExamen> MesasExamen => Set<MesaExamen>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Extensión pgvector para guardar los embeddings del pipeline RAG.
         modelBuilder.HasPostgresExtension("vector");
+
+        // Búsquedas sin distinguir tildes (ej. "programacion" encuentra "Programación").
+        modelBuilder.HasPostgresExtension("unaccent");
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }

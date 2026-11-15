@@ -18,6 +18,7 @@ public static class DependencyInjection
 
         services.AddScoped<IUserRepository, EfUserRepository>();
         services.AddScoped<IAcademicRepository, EfAcademicRepository>();
+        services.AddScoped<IExamRepository, EfExamRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddSingleton<IClock, SystemClock>();
 

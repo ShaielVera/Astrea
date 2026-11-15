@@ -71,6 +71,7 @@ api.MapGet("/", () => Results.Ok(new { name = "Astrea API", version = "v1" }))
 api.MapAuthEndpoints();
 api.MapAdminEndpoints();
 api.MapAcademicEndpoints();
+api.MapExamEndpoints();
 
 app.Run();
 

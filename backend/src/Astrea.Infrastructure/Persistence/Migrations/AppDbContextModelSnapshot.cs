@@ -20,6 +20,7 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                 .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "unaccent");
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
@@ -260,6 +261,96 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.ToTable("plan_materias", (string)null);
                 });
 
+            modelBuilder.Entity("Astrea.Domain.Exams.MesaExamen", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Aula")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("aula");
+
+                    b.Property<DateTimeOffset?>("CanceladaAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelada_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("estado");
+
+                    b.Property<DateOnly>("Fecha")
+                        .HasColumnType("date")
+                        .HasColumnName("fecha");
+
+                    b.Property<TimeOnly>("Hora")
+                        .HasColumnType("time without time zone")
+                        .HasColumnName("hora");
+
+                    b.Property<DateOnly?>("InscripcionDesde")
+                        .HasColumnType("date")
+                        .HasColumnName("inscripcion_desde");
+
+                    b.Property<DateOnly?>("InscripcionHasta")
+                        .HasColumnType("date")
+                        .HasColumnName("inscripcion_hasta");
+
+                    b.Property<int>("Llamado")
+                        .HasColumnType("integer")
+                        .HasColumnName("llamado");
+
+                    b.Property<string>("MotivoCancelacion")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("motivo_cancelacion");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("observaciones");
+
+                    b.Property<Guid>("PlanMateriaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_materia_id");
+
+                    b.Property<DateTimeOffset?>("PublicadaAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("publicada_at");
+
+                    b.PrimitiveCollection<string[]>("Tribunal")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("tribunal");
+
+                    b.Property<string>("Turno")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("turno");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_mesas_examen");
+
+                    b.HasIndex("PlanMateriaId", "Fecha")
+                        .HasDatabaseName("ix_mesas_examen_plan_materia_id_fecha");
+
+                    b.HasIndex("Estado", "Fecha", "Hora")
+                        .HasDatabaseName("ix_mesas_examen_estado_fecha_hora");
+
+                    b.ToTable("mesas_examen", (string)null);
+                });
+
             modelBuilder.Entity("Astrea.Domain.Users.Rol", b =>
                 {
                     b.Property<Guid>("Id")
@@ -451,6 +542,16 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_plan_materias_planes_estudio_plan_estudio_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Exams.MesaExamen", b =>
+                {
+                    b.HasOne("Astrea.Domain.Academic.PlanMateria", null)
+                        .WithMany()
+                        .HasForeignKey("PlanMateriaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_mesas_examen_plan_materias_plan_materia_id");
                 });
 
             modelBuilder.Entity("Astrea.Domain.Users.UsuarioRol", b =>

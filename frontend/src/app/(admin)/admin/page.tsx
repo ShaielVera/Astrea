@@ -44,6 +44,13 @@ export default function PanelAdministracion() {
           Plan de estudios
           <span className="block text-sm font-normal text-zinc-500">Carreras, planes y materias</span>
         </Link>
+        <Link
+          href="/admin/mesas"
+          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+        >
+          Mesas de examen
+          <span className="block text-sm font-normal text-zinc-500">Llamados, tribunales y publicación</span>
+        </Link>
       </nav>
 
       <section aria-labelledby="usuarios-titulo" className="flex flex-col gap-3">

@@ -38,6 +38,11 @@ export function Encabezado() {
                 Correlatividades
               </Link>
             )}
+            {tieneRol(perfil, ROLES.estudiante) && (
+              <Link href="/mesas" className="hover:underline">
+                Mesas de examen
+              </Link>
+            )}
             {tieneRol(perfil, ROLES.administrador) && (
               <Link href="/admin" className="hover:underline">
                 Administración
