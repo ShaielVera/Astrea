@@ -26,6 +26,6 @@ public sealed class MigracionesTests(BaseDeDatosFixture baseDeDatos)
 
         var codigos = await db.Roles.Select(rol => rol.Codigo).ToListAsync();
 
-        codigos.Should().BeEquivalentTo(Rol.CodigoEstudiante, Rol.CodigoAdministrador);
+        codigos.Should().BeEquivalentTo(Rol.CodigoEstudiante, Rol.CodigoAdministrador, Rol.CodigoDocente);
     }
 }

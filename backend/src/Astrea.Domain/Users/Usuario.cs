@@ -74,6 +74,24 @@ public sealed class Usuario : Entity
         UpdatedAt = ahora;
     }
 
+    /// <summary>Quita un rol. El de estudiante no se quita: es la base de toda cuenta. Si no lo tiene, no hace nada.</summary>
+    public void QuitarRol(Rol rol, DateTimeOffset ahora)
+    {
+        ArgumentNullException.ThrowIfNull(rol);
+        if (rol.Id == Rol.Estudiante.Id)
+        {
+            throw new DomainException("El rol de estudiante no se puede quitar.");
+        }
+
+        if (_roles.RemoveAll(asignacion => asignacion.RolId == rol.Id) > 0)
+        {
+            UpdatedAt = ahora;
+        }
+    }
+
+    /// <summary>"Pérez, Ana" si Secretaría cargó los datos oficiales; si no, el email.</summary>
+    public string NombreParaMostrar => Apellido is not null && Nombre is not null ? $"{Apellido}, {Nombre}" : Email;
+
     public bool TieneRol(Rol rol) => _roles.Any(asignacion => asignacion.RolId == rol.Id);
 
     public IReadOnlyList<string> CodigosDeRol() =>

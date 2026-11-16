@@ -1,6 +1,7 @@
 export const ROLES = {
   estudiante: "ESTUDIANTE",
   administrador: "ADMINISTRADOR",
+  docente: "DOCENTE",
 } as const;
 
 export type CodigoRol = (typeof ROLES)[keyof typeof ROLES];
@@ -19,5 +20,6 @@ export function tieneRol(perfil: Perfil | null, rol: CodigoRol): boolean {
 
 /** Área a la que se redirige al iniciar sesión según los roles. */
 export function areaInicial(perfil: Perfil): string {
-  return tieneRol(perfil, ROLES.administrador) ? "/admin" : "/inicio";
+  if (tieneRol(perfil, ROLES.administrador)) return "/admin";
+  return tieneRol(perfil, ROLES.docente) ? "/docente" : "/inicio";
 }

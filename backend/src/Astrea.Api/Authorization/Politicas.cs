@@ -8,6 +8,7 @@ public static class Politicas
 {
     public const string Estudiante = nameof(Estudiante);
     public const string Administrador = nameof(Administrador);
+    public const string Docente = nameof(Docente);
 
     public static IServiceCollection AddPoliticasAstrea(this IServiceCollection services)
     {
@@ -16,6 +17,7 @@ public static class Politicas
         services.AddAuthorizationBuilder()
             .AddPolicy(Estudiante, policy => policy.RequireAuthenticatedUser().RequireClaim(FirebaseClaims.Rol, Rol.CodigoEstudiante))
             .AddPolicy(Administrador, policy => policy.RequireAuthenticatedUser().RequireClaim(FirebaseClaims.Rol, Rol.CodigoAdministrador))
+            .AddPolicy(Docente, policy => policy.RequireAuthenticatedUser().RequireClaim(FirebaseClaims.Rol, Rol.CodigoDocente))
             // Seguro por defecto: todo endpoint exige sesión salvo que se marque AllowAnonymous.
             .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 

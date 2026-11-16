@@ -10,6 +10,7 @@ public sealed class Rol : Entity
 {
     public const string CodigoEstudiante = "ESTUDIANTE";
     public const string CodigoAdministrador = "ADMINISTRADOR";
+    public const string CodigoDocente = "DOCENTE";
 
     public static readonly Rol Estudiante = new(
         new Guid("0a6a8f1e-4c5b-4d1e-9b77-2f6c1b9d0e01"),
@@ -23,7 +24,13 @@ public sealed class Rol : Entity
         "Administrador",
         "Personal de Secretaría: administra planes, mesas, trámites, hallazgos y documentos.");
 
-    public static IReadOnlyList<Rol> Catalogo { get; } = [Estudiante, Administrador];
+    public static readonly Rol Docente = new(
+        new Guid("0a6a8f1e-4c5b-4d1e-9b77-2f6c1b9d0e03"),
+        CodigoDocente,
+        "Docente",
+        "Profesor: confirma la asistencia de los estudiantes de las materias que tiene asignadas.");
+
+    public static IReadOnlyList<Rol> Catalogo { get; } = [Estudiante, Administrador, Docente];
 
     private Rol()
     {

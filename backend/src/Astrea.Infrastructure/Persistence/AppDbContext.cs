@@ -1,5 +1,6 @@
 using Astrea.Domain.Academic;
 using Astrea.Domain.Agent;
+using Astrea.Domain.Attendance;
 using Astrea.Domain.Exams;
 using Astrea.Domain.Knowledge;
 using Astrea.Domain.LostAndFound;
@@ -52,6 +53,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<MensajeChat> MensajesChat => Set<MensajeChat>();
 
     public DbSet<ConsultaRegistrada> ConsultasRegistradas => Set<ConsultaRegistrada>();
+
+    public DbSet<AsignacionDocente> AsignacionesDocentes => Set<AsignacionDocente>();
+
+    public DbSet<InscripcionCursada> InscripcionesCursada => Set<InscripcionCursada>();
+
+    public DbSet<RelevamientoAsistencia> RelevamientosAsistencia => Set<RelevamientoAsistencia>();
+
+    public DbSet<ConfirmacionAsistencia> ConfirmacionesAsistencia => Set<ConfirmacionAsistencia>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -54,8 +54,18 @@ export function Encabezado() {
               </Link>
             )}
             {tieneRol(perfil, ROLES.estudiante) && (
+              <Link href="/mi-cursada" className="hover:underline">
+                Mi cursada
+              </Link>
+            )}
+            {tieneRol(perfil, ROLES.estudiante) && (
               <Link href="/asistente" className="hover:underline">
                 Asistente
+              </Link>
+            )}
+            {tieneRol(perfil, ROLES.docente) && (
+              <Link href="/docente" className="hover:underline">
+                Confirmar asistencia
               </Link>
             )}
             {tieneRol(perfil, ROLES.administrador) && (

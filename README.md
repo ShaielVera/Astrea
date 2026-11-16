@@ -56,6 +56,12 @@ Desarrollar una aplicación web moderna (con soporte PWA instalable) basada en S
 - **4.4** Herramientas de solo lectura (correlatividades, mesas, hallazgos y mis trámites) y propuestas de trámite que solo se envían cuando el estudiante confirma.
 - **4.5** Panel de métricas para Secretaría: frecuencia de preguntas, temas sin respuesta y errores de la IA, con datos anónimos.
 
+**5. Confirmación de asistencia (por ejemplo, para la beca Progresar)**
+- **5.1** Rol Docente: Secretaría asigna a cada profesor las materias que dicta, y solo ve a los estudiantes de esas materias.
+- **5.2** El estudiante anota las materias que cursa en el año y ve lo que confirmaron sus profesores.
+- **5.3** La dirección pide una confirmación con fecha de cierre y cada profesor marca si el estudiante asiste regularmente, de forma irregular o no asiste. La dirección sigue el avance por materia.
+- **5.4** El informe se filtra con la lista de DNI de la beca, que Astrea no guarda, y se descarga en CSV. El sistema informa; la decisión es de la dirección.
+
 ---
 
 ## 🏗️ Criterios de calidad y arquitectura
@@ -83,7 +89,7 @@ Desarrollar una aplicación web moderna (con soporte PWA instalable) basada en S
 ---
 
 ## 📦 Estado del proyecto
-Desarrollado en 12 slices verticales, cada uno con sus tests unitarios, de integración y E2E:
+Desarrollado en 13 slices verticales, cada uno con sus tests unitarios, de integración y E2E:
 
 | Slice | Contenido |
 |---|---|
@@ -94,6 +100,7 @@ Desarrollado en 12 slices verticales, cada uno con sus tests unitarios, de integ
 | 7 | Hallazgos (objetos perdidos) |
 | 8–10 | Asistente con IA: ingesta de documentos, respuestas con fuentes y herramientas con datos de Astrea |
 | 11 | Panel de métricas, endurecimiento de seguridad, PWA, accesibilidad y respaldo |
+| 12 | Confirmación de asistencia: rol docente, inscripción a cursada, relevamientos e informe para la dirección |
 
 ---
 

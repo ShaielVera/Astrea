@@ -424,6 +424,176 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.ToTable("mensajes_chat", (string)null);
                 });
 
+            modelBuilder.Entity("Astrea.Domain.Attendance.AsignacionDocente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AsignadaPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("asignada_por");
+
+                    b.Property<Guid>("DocenteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("docente_id");
+
+                    b.Property<DateTimeOffset>("FechaAsignacion")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_asignacion");
+
+                    b.Property<Guid>("PlanMateriaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_materia_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_asignaciones_docentes");
+
+                    b.HasIndex("PlanMateriaId")
+                        .HasDatabaseName("ix_asignaciones_docentes_plan_materia_id");
+
+                    b.HasIndex("DocenteId", "PlanMateriaId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_asignaciones_docentes_docente_id_plan_materia_id");
+
+                    b.ToTable("asignaciones_docentes", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Attendance.ConfirmacionAsistencia", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("ConfirmadaEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmada_en");
+
+                    b.Property<Guid>("DocenteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("docente_id");
+
+                    b.Property<Guid>("EstudianteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("estudiante_id");
+
+                    b.Property<string>("Observacion")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("observacion");
+
+                    b.Property<Guid>("PlanMateriaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_materia_id");
+
+                    b.Property<Guid>("RelevamientoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("relevamiento_id");
+
+                    b.Property<string>("Valor")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("valor");
+
+                    b.HasKey("Id")
+                        .HasName("pk_confirmaciones_asistencia");
+
+                    b.HasIndex("DocenteId")
+                        .HasDatabaseName("ix_confirmaciones_asistencia_docente_id");
+
+                    b.HasIndex("EstudianteId")
+                        .HasDatabaseName("ix_confirmaciones_asistencia_estudiante_id");
+
+                    b.HasIndex("PlanMateriaId")
+                        .HasDatabaseName("ix_confirmaciones_asistencia_plan_materia_id");
+
+                    b.HasIndex("RelevamientoId", "PlanMateriaId", "EstudianteId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_confirmaciones_asistencia_relevamiento_id_plan_materia_id_e");
+
+                    b.ToTable("confirmaciones_asistencia", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Attendance.InscripcionCursada", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("CicloLectivo")
+                        .HasColumnType("integer")
+                        .HasColumnName("ciclo_lectivo");
+
+                    b.Property<Guid>("EstudianteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("estudiante_id");
+
+                    b.Property<DateTimeOffset>("FechaInscripcion")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_inscripcion");
+
+                    b.Property<Guid>("PlanMateriaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_materia_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_inscripciones_cursada");
+
+                    b.HasIndex("PlanMateriaId", "CicloLectivo")
+                        .HasDatabaseName("ix_inscripciones_cursada_plan_materia_id_ciclo_lectivo");
+
+                    b.HasIndex("EstudianteId", "PlanMateriaId", "CicloLectivo")
+                        .IsUnique()
+                        .HasDatabaseName("ix_inscripciones_cursada_estudiante_id_plan_materia_id_ciclo_l");
+
+                    b.ToTable("inscripciones_cursada", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Attendance.RelevamientoAsistencia", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CerradoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cerrado_en");
+
+                    b.Property<int>("CicloLectivo")
+                        .HasColumnType("integer")
+                        .HasColumnName("ciclo_lectivo");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<Guid>("CreadoPor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("creado_por");
+
+                    b.Property<DateOnly>("FechaCierre")
+                        .HasColumnType("date")
+                        .HasColumnName("fecha_cierre");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("titulo");
+
+                    b.HasKey("Id")
+                        .HasName("pk_relevamientos_asistencia");
+
+                    b.HasIndex("CreadoEn")
+                        .HasDatabaseName("ix_relevamientos_asistencia_creado_en");
+
+                    b.HasIndex("CreadoPor")
+                        .HasDatabaseName("ix_relevamientos_asistencia_creado_por");
+
+                    b.ToTable("relevamientos_asistencia", (string)null);
+                });
+
             modelBuilder.Entity("Astrea.Domain.Exams.MesaExamen", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1258,6 +1428,13 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                             Codigo = "ADMINISTRADOR",
                             Descripcion = "Personal de Secretaría: administra planes, mesas, trámites, hallazgos y documentos.",
                             Nombre = "Administrador"
+                        },
+                        new
+                        {
+                            Id = new Guid("0a6a8f1e-4c5b-4d1e-9b77-2f6c1b9d0e03"),
+                            Codigo = "DOCENTE",
+                            Descripcion = "Profesor: confirma la asistencia de los estudiantes de las materias que tiene asignadas.",
+                            Nombre = "Docente"
                         });
                 });
 
@@ -1422,6 +1599,81 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_mensajes_chat_conversaciones_conversacion_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Attendance.AsignacionDocente", b =>
+                {
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("DocenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_asignaciones_docentes_usuarios_docente_id");
+
+                    b.HasOne("Astrea.Domain.Academic.PlanMateria", null)
+                        .WithMany()
+                        .HasForeignKey("PlanMateriaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_asignaciones_docentes_plan_materias_plan_materia_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Attendance.ConfirmacionAsistencia", b =>
+                {
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("DocenteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_confirmaciones_asistencia_usuarios_docente_id");
+
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("EstudianteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_confirmaciones_asistencia_usuarios_estudiante_id");
+
+                    b.HasOne("Astrea.Domain.Academic.PlanMateria", null)
+                        .WithMany()
+                        .HasForeignKey("PlanMateriaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_confirmaciones_asistencia_plan_materias_plan_materia_id");
+
+                    b.HasOne("Astrea.Domain.Attendance.RelevamientoAsistencia", null)
+                        .WithMany()
+                        .HasForeignKey("RelevamientoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_confirmaciones_asistencia_relevamientos_asistencia_relevami");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Attendance.InscripcionCursada", b =>
+                {
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("EstudianteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_inscripciones_cursada_usuarios_estudiante_id");
+
+                    b.HasOne("Astrea.Domain.Academic.PlanMateria", null)
+                        .WithMany()
+                        .HasForeignKey("PlanMateriaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_inscripciones_cursada_plan_materias_plan_materia_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Attendance.RelevamientoAsistencia", b =>
+                {
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("CreadoPor")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_relevamientos_asistencia_usuarios_creado_por");
                 });
 
             modelBuilder.Entity("Astrea.Domain.Exams.MesaExamen", b =>

@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IDocumentoRagRepository, EfDocumentoRagRepository>();
         services.AddScoped<IConversacionRepository, EfConversacionRepository>();
         services.AddScoped<ITelemetriaAsistente, EfTelemetriaAsistente>();
+        services.AddScoped<IAsistenciaRepository, EfAsistenciaRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPdfGenerator, QuestPdfGenerator>();

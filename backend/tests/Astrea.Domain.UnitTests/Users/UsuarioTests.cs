@@ -99,9 +99,10 @@ public class UsuarioTests
     }
 
     [Fact]
-    public void El_catalogo_de_roles_tiene_estudiante_y_administrador_con_ids_fijos()
+    public void El_catalogo_de_roles_tiene_estudiante_administrador_y_docente_con_ids_fijos()
     {
-        Rol.Catalogo.Select(rol => rol.Codigo).Should().BeEquivalentTo(Rol.CodigoEstudiante, Rol.CodigoAdministrador);
+        Rol.Catalogo.Select(rol => rol.Codigo).Should().BeEquivalentTo(Rol.CodigoEstudiante, Rol.CodigoAdministrador, Rol.CodigoDocente);
+        Rol.Catalogo.Select(rol => rol.Id).Should().OnlyHaveUniqueItems();
         Rol.PorId(Rol.Administrador.Id).Should().BeSameAs(Rol.Administrador);
         Rol.PorId(Guid.NewGuid()).Should().BeNull();
     }

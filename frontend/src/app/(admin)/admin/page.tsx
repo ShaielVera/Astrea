@@ -86,6 +86,20 @@ export default function PanelAdministracion() {
           Métricas del asistente
           <span className="block text-sm font-normal text-zinc-500">Uso, temas frecuentes y sin respuesta</span>
         </Link>
+        <Link
+          href="/admin/docentes"
+          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+        >
+          Docentes
+          <span className="block text-sm font-normal text-zinc-500">Profesores y las materias que dictan</span>
+        </Link>
+        <Link
+          href="/admin/asistencia"
+          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+        >
+          Confirmación de asistencia
+          <span className="block text-sm font-normal text-zinc-500">Relevamientos e informe (beca Progresar)</span>
+        </Link>
       </nav>
 
       <section aria-labelledby="usuarios-titulo" className="flex flex-col gap-3">

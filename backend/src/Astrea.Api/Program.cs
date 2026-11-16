@@ -196,6 +196,7 @@ api.MapTramiteEndpoints();
 api.MapHallazgoEndpoints();
 api.MapDocumentoRagEndpoints();
 api.MapAsistenteEndpoints();
+api.MapAsistenciaEndpoints();
 
 app.Run();
 
