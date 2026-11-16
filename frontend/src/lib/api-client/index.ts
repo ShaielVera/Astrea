@@ -74,6 +74,27 @@ export async function apiEnviarArchivo<T>(ruta: string, token: string, archivo: 
   return (await respuesta.json()) as T;
 }
 
+/** Envía un formulario multipart (ej. un PDF con sus datos). El navegador arma el Content-Type con el boundary. */
+export async function apiEnviarFormulario<T>(ruta: string, token: string, formulario: FormData): Promise<T> {
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(`${API_URL}${ruta}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      body: formulario,
+    });
+  } catch {
+    throw new ApiError(0, "red", "No se pudo conectar con el servidor de Astrea.");
+  }
+
+  if (!respuesta.ok) {
+    const problema = (await respuesta.json().catch(() => ({}))) as ProblemDetails;
+    throw new ApiError(respuesta.status, problema.code, problema.detail ?? problema.title ?? `Error ${respuesta.status} al enviar el formulario.`);
+  }
+
+  return (await respuesta.json()) as T;
+}
+
 /** Lee un archivo protegido (ej. una foto) para mostrarlo; null si no existe o no hay permiso. */
 export async function apiLeerArchivo(ruta: string, token: string): Promise<Blob | null> {
   try {

@@ -1,5 +1,6 @@
 using Astrea.Domain.Academic;
 using Astrea.Domain.Exams;
+using Astrea.Domain.Knowledge;
 using Astrea.Domain.LostAndFound;
 using Astrea.Domain.Procedures;
 using Astrea.Domain.Users;
@@ -40,6 +41,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<ObjetoPerdido> ObjetosPerdidos => Set<ObjetoPerdido>();
 
     public DbSet<EntregaObjeto> EntregasObjeto => Set<EntregaObjeto>();
+
+    public DbSet<DocumentoRag> DocumentosRag => Set<DocumentoRag>();
+
+    public DbSet<FragmentoRag> FragmentosRag => Set<FragmentoRag>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

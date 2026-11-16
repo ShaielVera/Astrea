@@ -3,6 +3,7 @@ using Astrea.Application.Features.Auth;
 using Astrea.Application.Features.Auth.IniciarSesion;
 using Astrea.Application.Features.Auth.ObtenerPerfil;
 using Astrea.Application.Features.Exams;
+using Astrea.Application.Features.Knowledge;
 using Astrea.Application.Features.LostAndFound;
 using Astrea.Application.Features.Procedures;
 using Astrea.Application.Features.Users.ObtenerResumenUsuarios;
@@ -33,6 +34,8 @@ public static class DependencyInjection
         services.AddScoped<Hallazgos>();
         services.AddScoped<AdministracionHallazgos>();
         services.AddScoped<DepuracionHallazgos>();
+        services.AddScoped<AdministracionDocumentosRag>();
+        services.AddScoped<IngestaDocumentos>();
 
         return services;
     }

@@ -6,8 +6,10 @@ using Astrea.Api.Endpoints;
 using Astrea.Api.Errors;
 using Astrea.Api.Mantenimiento;
 using Astrea.Application;
+using Astrea.Application.Abstractions.Ai;
 using Astrea.Application.Abstractions.Documents;
 using Astrea.Application.Abstractions.Identity;
+using Astrea.Application.Features.Knowledge;
 using Astrea.Infrastructure;
 using Astrea.Infrastructure.Persistence;
 using Astrea.Infrastructure.Persistence.Seed;
@@ -25,8 +27,15 @@ var carpetaPrivada = Path.Combine(
     builder.Environment.ContentRootPath,
     builder.Configuration["Almacenamiento:CarpetaPrivada"] is { Length: > 0 } carpeta ? carpeta : Path.Combine("App_Data", "privado"));
 
+// IA: proveedor de embeddings. La API key de Gemini va en user-secrets (Ia:Gemini:ApiKey), nunca en el repositorio.
+var ia = builder.Configuration.GetSection(ConfiguracionIa.Seccion).Get<ConfiguracionIa>() ?? new ConfiguracionIa();
+if (builder.Environment.IsProduction() && string.Equals(ia.Proveedor, ConfiguracionIa.ProveedorPrueba, StringComparison.OrdinalIgnoreCase))
+{
+    throw new InvalidOperationException("Los embeddings de prueba no se pueden usar en producción.");
+}
+
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(connectionString, carpetaPrivada);
+builder.Services.AddInfrastructure(connectionString, carpetaPrivada, ia);
 builder.Services.AddSingleton(
     builder.Configuration.GetSection(ConfiguracionIdentidad.Seccion).Get<ConfiguracionIdentidad>() ?? new ConfiguracionIdentidad());
 builder.Services.AddSingleton(
@@ -53,6 +62,14 @@ builder.Services.AddRateLimiter(options =>
             Window = TimeSpan.FromHours(1),
         }));
 });
+
+// Indexa en segundo plano los documentos que carga la Secretaría para el asistente.
+builder.Services.AddSingleton<AvisoIngesta>();
+builder.Services.AddSingleton<IAvisoIngesta>(servicios => servicios.GetRequiredService<AvisoIngesta>());
+if (builder.Configuration.GetValue("Ingesta:ProcesarEnSegundoPlano", true))
+{
+    builder.Services.AddHostedService<ProcesadorIngesta>();
+}
 
 // Borra los hallazgos cerrados hace más de 30 días (con su foto y los datos de quien lo retiró).
 if (builder.Configuration.GetValue("Mantenimiento:DepurarHallazgos", true))
@@ -117,6 +134,7 @@ api.MapAcademicEndpoints();
 api.MapExamEndpoints();
 api.MapTramiteEndpoints();
 api.MapHallazgoEndpoints();
+api.MapDocumentoRagEndpoints();
 
 app.Run();
 

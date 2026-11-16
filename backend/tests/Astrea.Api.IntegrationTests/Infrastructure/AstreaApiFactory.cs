@@ -34,6 +34,10 @@ public sealed class AstreaApiFactory : WebApplicationFactory<Program>, IAsyncLif
         builder.UseSetting("Documentos:UrlValidacion", UrlValidacion);
         builder.UseSetting("Firebase:ProjectId", TokensDePrueba.ProjectId);
         builder.UseSetting("Identidad:AdministradoresIniciales:0", AdministradorInicial);
+        builder.UseSetting("Ia:Proveedor", "Prueba");
+
+        // Los tests procesan la cola de documentos a mano (IngestaDocumentos), para que el resultado sea determinista.
+        builder.UseSetting("Ingesta:ProcesarEnSegundoPlano", "false");
 
         builder.ConfigureTestServices(services =>
             services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>

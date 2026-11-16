@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using Pgvector;
 
 #nullable disable
 
@@ -351,6 +352,174 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_mesas_examen_estado_fecha_hora");
 
                     b.ToTable("mesas_examen", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Knowledge.DocumentoRag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int?>("CantidadFragmentos")
+                        .HasColumnType("integer")
+                        .HasColumnName("cantidad_fragmentos");
+
+                    b.Property<int?>("CantidadPaginas")
+                        .HasColumnType("integer")
+                        .HasColumnName("cantidad_paginas");
+
+                    b.Property<Guid>("CargadoPorUsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cargado_por_usuario_id");
+
+                    b.Property<uint>("Concurrencia")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<string>("ErrorProcesamiento")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("error_procesamiento");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("estado");
+
+                    b.Property<DateTimeOffset>("FechaCarga")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_carga");
+
+                    b.Property<DateOnly?>("FechaDocumento")
+                        .HasColumnType("date")
+                        .HasColumnName("fecha_documento");
+
+                    b.Property<DateTimeOffset?>("FechaIndexacion")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_indexacion");
+
+                    b.Property<string>("Fuente")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("fuente");
+
+                    b.Property<string>("HashSha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("hash_sha256")
+                        .IsFixedLength();
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("integer")
+                        .HasColumnName("intentos");
+
+                    b.Property<Guid?>("RetiradoPorUsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("retirado_por_usuario_id");
+
+                    b.Property<Guid>("SerieId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("serie_id");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("storage_path");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tipo");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("titulo");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_documentos_rag");
+
+                    b.HasIndex("CargadoPorUsuarioId")
+                        .HasDatabaseName("ix_documentos_rag_cargado_por_usuario_id");
+
+                    b.HasIndex("HashSha256")
+                        .HasDatabaseName("ix_documentos_rag_hash_sha256");
+
+                    b.HasIndex("RetiradoPorUsuarioId")
+                        .HasDatabaseName("ix_documentos_rag_retirado_por_usuario_id");
+
+                    b.HasIndex("Estado", "FechaCarga")
+                        .HasDatabaseName("ix_documentos_rag_estado_fecha_carga");
+
+                    b.HasIndex("SerieId", "Version")
+                        .IsUnique()
+                        .HasDatabaseName("ix_documentos_rag_serie_id_version");
+
+                    b.ToTable("documentos_rag", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Knowledge.FragmentoRag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Contenido")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("contenido");
+
+                    b.Property<Guid>("DocumentoRagId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("documento_rag_id");
+
+                    b.Property<Vector>("Embedding")
+                        .IsRequired()
+                        .HasColumnType("vector(768)")
+                        .HasColumnName("embedding");
+
+                    b.Property<string>("Metadata")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("metadata_json");
+
+                    b.Property<int>("NumeroFragmento")
+                        .HasColumnType("integer")
+                        .HasColumnName("numero_fragmento");
+
+                    b.Property<int>("PaginaDesde")
+                        .HasColumnType("integer")
+                        .HasColumnName("pagina_desde");
+
+                    b.Property<int>("PaginaHasta")
+                        .HasColumnType("integer")
+                        .HasColumnName("pagina_hasta");
+
+                    b.HasKey("Id")
+                        .HasName("pk_fragmentos_rag");
+
+                    b.HasIndex("Embedding")
+                        .HasDatabaseName("ix_fragmentos_rag_embedding");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Embedding"), "hnsw");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Embedding"), new[] { "vector_cosine_ops" });
+
+                    b.HasIndex("DocumentoRagId", "NumeroFragmento")
+                        .IsUnique()
+                        .HasDatabaseName("ix_fragmentos_rag_documento_rag_id_numero_fragmento");
+
+                    b.ToTable("fragmentos_rag", (string)null);
                 });
 
             modelBuilder.Entity("Astrea.Domain.LostAndFound.EntregaObjeto", b =>
@@ -1083,6 +1252,32 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_mesas_examen_plan_materias_plan_materia_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Knowledge.DocumentoRag", b =>
+                {
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("CargadoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_documentos_rag_usuarios_cargado_por_usuario_id");
+
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("RetiradoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_documentos_rag_usuarios_retirado_por_usuario_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Knowledge.FragmentoRag", b =>
+                {
+                    b.HasOne("Astrea.Domain.Knowledge.DocumentoRag", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentoRagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_fragmentos_rag_documentos_rag_documento_rag_id");
                 });
 
             modelBuilder.Entity("Astrea.Domain.LostAndFound.EntregaObjeto", b =>

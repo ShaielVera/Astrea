@@ -9,6 +9,7 @@
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="PdfPig" />
     <PackageReference Include="Pgvector.EntityFrameworkCore" />
     <PackageReference Include="QRCoder" />
     <PackageReference Include="QuestPDF" />
