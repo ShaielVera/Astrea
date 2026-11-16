@@ -499,3 +499,5 @@ App_Data/
 
 # Respaldos de la base y archivos privados (datos personales): nunca al repositorio.
 backups/
+# Los scripts de respaldo sí van al repositorio (la plantilla de Visual Studio ignora Backup*/).
+!infra/backup/
