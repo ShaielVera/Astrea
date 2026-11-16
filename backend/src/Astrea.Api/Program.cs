@@ -5,6 +5,7 @@ using Astrea.Api.Authorization;
 using Astrea.Api.Endpoints;
 using Astrea.Api.Errors;
 using Astrea.Api.Mantenimiento;
+using Astrea.Api.Seguridad;
 using Astrea.Application;
 using Astrea.Application.Abstractions.Ai;
 using Astrea.Application.Abstractions.Documents;
@@ -17,6 +18,17 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Fuera de desarrollo, logs en JSON con el id de correlación de cada pedido (para buscarlos en un agregador de logs).
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Logging.ClearProviders();
+    builder.Logging.AddJsonConsole(options =>
+    {
+        options.IncludeScopes = true;
+        options.UseUtcTimestamp = true;
+    });
+}
 
 var connectionString = builder.Configuration.GetConnectionString("Astrea")
     ?? throw new InvalidOperationException("Falta la cadena de conexión 'ConnectionStrings:Astrea'.");
@@ -46,6 +58,35 @@ builder.Services.AddSingleton(
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (contexto, cancellationToken) =>
+    {
+        if (contexto.Lease.TryGetMetadata(MetadataName.RetryAfter, out var espera))
+        {
+            contexto.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(espera.TotalSeconds)).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        await contexto.HttpContext.RequestServices.GetRequiredService<IProblemDetailsService>().WriteAsync(new ProblemDetailsContext
+        {
+            HttpContext = contexto.HttpContext,
+            ProblemDetails =
+            {
+                Status = StatusCodes.Status429TooManyRequests,
+                Title = "Demasiados pedidos",
+                Detail = "Hiciste demasiados pedidos seguidos. Esperá un momento y volvé a intentar.",
+                Extensions = { ["code"] = "demasiados_pedidos" },
+            },
+        });
+    };
+
+    // Inicio de sesión en Astrea: por usuario. Evita que un token robado se use para martillar el alta de usuarios.
+    options.AddPolicy(LimitesDeUso.Sesion, contexto => RateLimitPartition.GetFixedWindowLimiter(
+        contexto.User.FindFirst(FirebaseClaims.Uid)?.Value ?? contexto.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = builder.Configuration.GetValue("LimitesDeUso:SesionesPorMinuto", 20),
+            Window = TimeSpan.FromMinutes(1),
+        }));
+
     options.AddPolicy(LimitesDeUso.ValidacionPublica, contexto => RateLimitPartition.GetFixedWindowLimiter(
         contexto.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
         _ => new FixedWindowRateLimiterOptions
@@ -92,7 +133,14 @@ builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddFirebaseAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddPoliticasAstrea();
 
-builder.Services.AddProblemDetails();
+// Todo error lleva el id de correlación: el usuario lo puede pasar a Secretaría sin dar datos personales.
+builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = contexto =>
+{
+    if (contexto.HttpContext.Items[CabecerasDeSeguridad.ClaveCorrelacion] is string correlacion)
+    {
+        contexto.ProblemDetails.Extensions["correlationId"] = correlacion;
+    }
+});
 builder.Services.AddExceptionHandler<ManejadorReglasDeNegocio>();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -111,6 +159,7 @@ var app = builder.Build();
 
 await PrepararBaseDeDatosAsync(app);
 
+app.UseMiddleware<CabecerasDeSeguridad>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
@@ -120,6 +169,7 @@ if (app.Environment.IsDevelopment())
 }
 else if (!app.Environment.IsEnvironment(FirebaseAuthentication.AmbienteE2E))
 {
+    app.UseHsts();
     app.UseHttpsRedirection();
 }
 

@@ -5,7 +5,8 @@ namespace Astrea.Api.Mantenimiento;
 
 /// <summary>
 /// Al iniciar y después cada <see cref="Intervalo"/>, borra lo que ya no corresponde conservar: los hallazgos cerrados
-/// hace más de 30 días y las conversaciones con el asistente sin actividad hace más de 30 días.
+/// hace más de 30 días, las conversaciones con el asistente sin actividad hace más de 30 días y la telemetría
+/// anónima del asistente con más de un año.
 /// Si una pasada falla, lo registra y lo vuelve a intentar en la siguiente: nunca tira abajo la API.
 /// </summary>
 internal sealed class DepuracionPeriodica(IServiceScopeFactory scopes, ILogger<DepuracionPeriodica> logger) : BackgroundService
@@ -19,6 +20,7 @@ internal sealed class DepuracionPeriodica(IServiceScopeFactory scopes, ILogger<D
         {
             await DepurarAsync<DepuracionHallazgos>((servicio, ct) => servicio.DepurarAsync(ct), "hallazgos cerrados", stoppingToken);
             await DepurarAsync<DepuracionConversaciones>((servicio, ct) => servicio.DepurarAsync(ct), "conversaciones con el asistente", stoppingToken);
+            await DepurarAsync<DepuracionTelemetria>((servicio, ct) => servicio.DepurarAsync(ct), "registros de métricas del asistente", stoppingToken);
         }
         while (await timer.WaitForNextTickAsync(stoppingToken));
     }
@@ -32,7 +34,7 @@ internal sealed class DepuracionPeriodica(IServiceScopeFactory scopes, ILogger<D
             var borrados = await depurar(scope.ServiceProvider.GetRequiredService<TServicio>(), stoppingToken);
             if (borrados > 0)
             {
-                logger.LogInformation("Se borraron {Cantidad} {Que} con más de 30 días.", borrados, que);
+                logger.LogInformation("Se borraron {Cantidad} {Que} vencidos.", borrados, que);
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

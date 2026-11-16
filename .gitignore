@@ -496,3 +496,6 @@ docs/DESARROLLO.md
 
 # PDFs emitidos (carpeta privada del servidor)
 App_Data/
+
+# Respaldos de la base y archivos privados (datos personales): nunca al repositorio.
+backups/

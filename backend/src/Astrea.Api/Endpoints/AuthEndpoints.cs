@@ -11,6 +11,7 @@ internal static class AuthEndpoints
         // Se llama después de iniciar sesión en Firebase: da de alta o sincroniza al usuario.
         api.MapPost("/auth/sesion", async (IniciarSesionHandler handler, CancellationToken ct) =>
                 (await handler.HandleAsync(ct)).AHttp())
+            .RequireRateLimiting(LimitesDeUso.Sesion)
             .WithName("IniciarSesion")
             .WithTags("Auth")
             .Produces<PerfilDto>()

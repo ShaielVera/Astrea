@@ -154,4 +154,6 @@ internal static class LimitesDeUso
     public const string Publicaciones = "publicaciones";
 
     public const string Asistente = "asistente";
+
+    public const string Sesion = "sesion";
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Astrea.Application.Abstractions.Ai;
 using Astrea.Application.Abstractions.Clock;
@@ -32,6 +33,7 @@ public sealed class Asistente(
     IFileStorage archivos,
     IUnitOfWork unitOfWork,
     IClock clock,
+    ITelemetriaAsistente telemetria,
     ConfiguracionIa configuracion,
     ILogger<Asistente> logger)
 {
@@ -92,14 +94,19 @@ public sealed class Asistente(
             conversacion = existente;
         }
 
+        var inicio = clock.UtcNow;
+        var cronometro = Stopwatch.StartNew();
+        var contexto = new ContextoHerramientas(usuario.Valor);
         RespuestaValidada respuesta;
+        MotivoConsulta motivo;
         try
         {
-            respuesta = await ResponderAsync(conversacion, pregunta, new ContextoHerramientas(usuario.Valor), cancellationToken);
+            (respuesta, motivo) = await ResponderAsync(conversacion, pregunta, contexto, cancellationToken);
         }
         catch (Exception ex) when (ex is EmbeddingNoDisponibleException or ModeloNoDisponibleException)
         {
             logger.LogError(ex, "El asistente no pudo responder: {Motivo}", ex.Message);
+            await RegistrarFallaAsync(pregunta, inicio, cronometro.Elapsed, contexto, cancellationToken);
             return ErroresAsistente.NoDisponible;
         }
 
@@ -108,6 +115,23 @@ public sealed class Asistente(
         {
             conversaciones.Agregar(conversacion);
         }
+
+        telemetria.Agregar(ConsultaRegistrada.Registrar(
+            Guid.CreateVersion7(),
+            pregunta,
+            respuesta.Tipo switch
+            {
+                TipoRespuesta.Respuesta => ResultadoConsulta.Respondida,
+                TipoRespuesta.Aclaracion => ResultadoConsulta.Aclaracion,
+                _ => ResultadoConsulta.SinEvidencia,
+            },
+            motivo,
+            inicio,
+            cronometro.Elapsed,
+            contexto.HerramientasPedidas,
+            respuesta.Fuentes.Count(fuente => fuente.Tipo == TipoFuente.Documento),
+            respuesta.Fuentes.Count(fuente => fuente.Tipo == TipoFuente.DatosDeAstrea),
+            respuesta.Propuesta is not null));
 
         await unitOfWork.GuardarCambiosAsync(cancellationToken);
         return new IntercambioDto(conversacion.Id, conversacion.Titulo, MensajeDto.Desde(mensajePregunta), MensajeDto.Desde(mensajeRespuesta));
@@ -231,7 +255,7 @@ public sealed class Asistente(
             : new ArchivoDto(AdministracionDocumentosRag.NombreArchivo(documento), "application/pdf", contenido);
     }
 
-    private async Task<RespuestaValidada> ResponderAsync(Conversacion conversacion, string pregunta, ContextoHerramientas contexto, CancellationToken cancellationToken)
+    private async Task<(RespuestaValidada Respuesta, MotivoConsulta Motivo)> ResponderAsync(Conversacion conversacion, string pregunta, ContextoHerramientas contexto, CancellationToken cancellationToken)
     {
         // Una repregunta ("¿y en diciembre?") se entiende mejor buscando junto con la pregunta anterior.
         var busqueda = conversacion.UltimaPregunta is { } anterior ? $"{anterior}\n{pregunta}" : pregunta;
@@ -253,14 +277,23 @@ public sealed class Asistente(
             var llamadas = await modelo.SiguientePasoAsync(new ConsultaAgente(PoliticaRag.Instrucciones, definiciones, turnos.ToList()), cancellationToken);
             if (llamadas.Llamadas.Count == 0)
             {
-                return PoliticaRag.Abstencion();
+                return (PoliticaRag.Abstencion(), MotivoConsulta.RespuestaVacia);
             }
 
             if (llamadas.Llamadas.FirstOrDefault(llamada => llamada.Nombre == HerramientasAsistente.Responder) is { } final)
             {
-                return final.Argumentos.ValueKind == JsonValueKind.Object
-                    ? PoliticaRag.Validar(LeerRespuesta(final.Argumentos), evidencias, contexto.Datos, contexto.Propuesta)
-                    : PoliticaRag.Abstencion();
+                if (final.Argumentos.ValueKind != JsonValueKind.Object)
+                {
+                    return (PoliticaRag.Abstencion(), MotivoConsulta.RespuestaVacia);
+                }
+
+                var propuesta = LeerRespuesta(final.Argumentos);
+                var validada = PoliticaRag.Validar(propuesta, evidencias, contexto.Datos, contexto.Propuesta);
+                var motivo = validada.Tipo != TipoRespuesta.SinEvidencia ? MotivoConsulta.Ninguno
+                    : propuesta.SinEvidencia ? MotivoConsulta.SinInformacion
+                    : string.IsNullOrWhiteSpace(propuesta.Respuesta) ? MotivoConsulta.RespuestaVacia
+                    : MotivoConsulta.CitasInvalidas;
+                return (validada, motivo);
             }
 
             // Cada llamada recibe un resultado (algunos proveedores lo exigen); las que pasan del tope no se ejecutan.
@@ -268,6 +301,7 @@ public sealed class Asistente(
             foreach (var (llamada, i) in llamadas.Llamadas.Select((llamada, i) => (llamada, i)))
             {
                 logger.LogInformation("El asistente pide la herramienta {Herramienta}.", llamada.Nombre);
+                contexto.HerramientasPedidas.Add(definiciones.Any(definicion => definicion.Nombre == llamada.Nombre) ? llamada.Nombre : ContextoHerramientas.HerramientaNoPermitida);
                 var resultado = i < LlamadasPorPaso
                     ? await herramientas.EjecutarAsync(llamada, contexto, cancellationToken)
                     : new { error = $"Se ejecutan como máximo {LlamadasPorPaso} herramientas por paso." };
@@ -279,7 +313,22 @@ public sealed class Asistente(
         }
 
         logger.LogWarning("El asistente no terminó de responder en {Pasos} pasos.", PasosMaximos);
-        return PoliticaRag.Abstencion();
+        return (PoliticaRag.Abstencion(), MotivoConsulta.PasosAgotados);
+    }
+
+    /// <summary>La IA no respondió: se registra igual en las métricas. Si eso también falla, solo se loguea.</summary>
+    private async Task RegistrarFallaAsync(string pregunta, DateTimeOffset inicio, TimeSpan duracion, ContextoHerramientas contexto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            telemetria.Agregar(ConsultaRegistrada.Registrar(
+                Guid.CreateVersion7(), pregunta, ResultadoConsulta.Error, MotivoConsulta.ProveedorNoDisponible, inicio, duracion, contexto.HerramientasPedidas));
+            await unitOfWork.GuardarCambiosAsync(cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "No se pudo registrar la falla del asistente en las métricas.");
+        }
     }
 
     private static RespuestaPropuesta LeerRespuesta(JsonElement argumentos)

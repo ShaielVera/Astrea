@@ -25,6 +25,8 @@ public sealed record DatoConsultado(string Id, string Titulo, string Resumen, st
 /// <summary>Lo que se acumula mientras el asistente arma una respuesta: los datos consultados y la propuesta de trámite.</summary>
 public sealed class ContextoHerramientas(Usuario usuario)
 {
+    public const string HerramientaNoPermitida = "(no permitida)";
+
     private readonly List<DatoConsultado> _datos = [];
 
     /// <summary>Siempre el usuario de la sesión: el modelo no puede elegir sobre quién consulta.</summary>
@@ -33,6 +35,9 @@ public sealed class ContextoHerramientas(Usuario usuario)
     public IReadOnlyList<DatoConsultado> Datos => _datos;
 
     public PropuestaTramite? Propuesta { get; set; }
+
+    /// <summary>Las herramientas que pidió el modelo (para las métricas); una que no existe figura como <see cref="HerramientaNoPermitida"/>.</summary>
+    public SortedSet<string> HerramientasPedidas { get; } = new(StringComparer.Ordinal);
 
     public string Registrar(string titulo, string resumen, string enlace)
     {

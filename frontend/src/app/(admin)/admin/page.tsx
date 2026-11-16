@@ -79,6 +79,13 @@ export default function PanelAdministracion() {
           Documentos del asistente
           <span className="block text-sm font-normal text-zinc-500">Reglamentos y planes en PDF para consultar</span>
         </Link>
+        <Link
+          href="/admin/metricas"
+          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+        >
+          Métricas del asistente
+          <span className="block text-sm font-normal text-zinc-500">Uso, temas frecuentes y sin respuesta</span>
+        </Link>
       </nav>
 
       <section aria-labelledby="usuarios-titulo" className="flex flex-col gap-3">

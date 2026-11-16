@@ -40,6 +40,8 @@ public static class DependencyInjection
         services.AddScoped<HerramientasAsistente>();
         services.AddScoped<Asistente>();
         services.AddScoped<DepuracionConversaciones>();
+        services.AddScoped<MetricasAsistente>();
+        services.AddScoped<DepuracionTelemetria>();
 
         return services;
     }

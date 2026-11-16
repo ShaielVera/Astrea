@@ -62,6 +62,8 @@ internal sealed class EntornoAsistente
 
     public IClock Clock { get; } = Substitute.For<IClock>();
 
+    public ITelemetriaAsistente Telemetria { get; } = Substitute.For<ITelemetriaAsistente>();
+
     public ICurrentUser Sesion { get; } = Substitute.For<ICurrentUser>();
 
     public IUserRepository Usuarios { get; } = Substitute.For<IUserRepository>();
@@ -93,6 +95,7 @@ internal sealed class EntornoAsistente
         Archivos,
         UnitOfWork,
         Clock,
+        Telemetria,
         new ConfiguracionIa { Asistente = new ConfiguracionAsistente { SimilitudMinima = similitudMinima } },
         NullLogger<Asistente>.Instance);
 

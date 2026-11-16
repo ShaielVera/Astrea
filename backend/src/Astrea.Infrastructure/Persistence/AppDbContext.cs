@@ -51,6 +51,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<MensajeChat> MensajesChat => Set<MensajeChat>();
 
+    public DbSet<ConsultaRegistrada> ConsultasRegistradas => Set<ConsultaRegistrada>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Extensión pgvector para guardar los embeddings del pipeline RAG.

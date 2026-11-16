@@ -270,7 +270,7 @@ public class AsistenteTests
     }
 
     [Fact]
-    public async Task Si_la_ia_no_responde_devuelve_no_disponible_y_no_guarda_nada()
+    public async Task Si_la_ia_no_responde_devuelve_no_disponible_y_no_guarda_la_conversacion()
     {
         _entorno.Modelo.SiguientePasoAsync(default!, default).ThrowsAsyncForAnyArgs(new ModeloNoDisponibleException("Gemini no respondió"));
 
@@ -279,7 +279,7 @@ public class AsistenteTests
         resultado.Error!.Tipo.Should().Be(TipoError.NoDisponible);
         resultado.Error.Mensaje.Should().Contain("Secretaría").And.NotContain("Gemini");
         _entorno.Conversaciones.DidNotReceiveWithAnyArgs().Agregar(default!);
-        await _entorno.UnitOfWork.DidNotReceiveWithAnyArgs().GuardarCambiosAsync(default);
+        _entorno.Telemetria.Received(1).Agregar(Arg.Is<ConsultaRegistrada>(consulta => consulta.Resultado == ResultadoConsulta.Error));
     }
 
     [Fact]
