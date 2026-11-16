@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 import { E2E } from "./e2e/entorno";
 
+// Sin esto, el modo sin conexión de Playwright no corta la red del service worker (lo necesita pwa.spec.ts).
+process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = "1";
+
 /**
  * Los E2E levantan el sistema completo:
  *  - PostgreSQL y Firebase Auth Emulator en Docker (los inicia global-setup.ts),

@@ -70,7 +70,7 @@ function ItemMesa({ mesa, mostrarEstado, acciones }: { mesa: MesaExamen } & Omit
         </p>
         <p className="text-sm">
           <span className="text-zinc-500">Tribunal: </span>
-          {mesa.tribunal.join(", ")}
+          {mesa.tribunal.join(" · ")}
         </p>
         {cancelada && mesa.motivoCancelacion && (
           <p className="text-sm font-medium text-red-800 dark:text-red-300">Motivo: {mesa.motivoCancelacion}</p>

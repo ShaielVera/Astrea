@@ -63,7 +63,7 @@ test.describe("Mesas de examen", () => {
     await expect(estudiante.getByRole("status")).toContainText("1 mesa encontrada");
     const mesa = estudiante.getByRole("listitem", { name: "Programación II, 18:30" });
     await expect(mesa).toContainText("Laboratorio 2");
-    await expect(mesa).toContainText(`${presidente}, Prof. Ana Gómez`);
+    await expect(mesa).toContainText(`${presidente} · Prof. Ana Gómez`);
     await expect(mesa).toContainText("Diciembre E2E, 1.º llamado");
 
     // 5. Si se cancela, sigue visible con el motivo.

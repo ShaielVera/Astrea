@@ -205,7 +205,8 @@ static async Task PrepararBaseDeDatosAsync(WebApplication app)
     var migrar = app.Configuration.GetValue<bool>("Database:MigrarAlIniciar");
     var recrear = app.Configuration.GetValue<bool>("Database:RecrearAlIniciar");
     var sembrar = app.Configuration.GetValue<bool>("Database:SembrarCatalogoInstitucional");
-    if (!migrar && !recrear && !sembrar)
+    var sembrarMesas = app.Configuration.GetValue<bool>("Database:SembrarMesasInstitucionales");
+    if (!migrar && !recrear && !sembrar && !sembrarMesas)
     {
         return;
     }
@@ -233,6 +234,21 @@ static async Task PrepararBaseDeDatosAsync(WebApplication app)
         foreach (var advertencia in resultado.Advertencias)
         {
             app.Logger.LogWarning("Catálogo institucional: {Advertencia}", advertencia);
+        }
+    }
+
+    // Mesas publicadas por el instituto (necesitan el catálogo). Solo para mostrar el sistema con datos reales.
+    if (sembrarMesas)
+    {
+        var mesas = await MesasInstitucionalesSeeder.SembrarAsync(db, DateTimeOffset.UtcNow);
+        if (mesas.MesasCreadas > 0)
+        {
+            app.Logger.LogInformation("Se cargaron {Cantidad} mesas de examen publicadas por el instituto.", mesas.MesasCreadas);
+        }
+
+        foreach (var advertencia in mesas.Advertencias)
+        {
+            app.Logger.LogWarning("Mesas del instituto: {Advertencia}", advertencia);
         }
     }
 }
