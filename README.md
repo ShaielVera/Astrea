@@ -19,14 +19,14 @@
 ---
 
 ## 🎯 Objetivo
-Desarrollar una aplicación web moderna (con soporte PWA instalable) basada en Slices Verticales, utilizando **C# (.NET) con Arquitectura Hexagonal** en el backend y **Next.js** en el frontend, integrada con **Firebase Auth** y **Firebase Storage**, asistida por un Agente de IA con RAG para resolver consultas institucionales en lenguaje natural.
+Desarrollar una aplicación web moderna (con soporte PWA instalable) basada en Slices Verticales, utilizando **C# (.NET) con Arquitectura Hexagonal** en el backend y **Next.js** en el frontend, integrada con **Firebase Auth** y **PostgreSQL + pgvector**, asistida por un Agente de IA (Gemini) con RAG para resolver consultas institucionales en lenguaje natural.
 
 ---
 
 ## 🧩 Alcance (visión general)
 - **Módulo Académico:** Consulta interactiva de planes de estudio y árboles de correlatividades para cursar y rendir.
-- **Calendario y Mesas de Examen:** Fechas, horarios y tribunales filtrables por cátedra.
-- **Gestión de Trámites:** Solicitud estudiantil de constancias y generación automática de PDFs oficiales firmados/con QR por la administración.
+- **Mesas de Examen:** Llamados con fecha, horario, aula y tribunal, filtrables por fecha, carrera y materia.
+- **Gestión de Trámites:** Solicitud estudiantil de constancias y generación automática de PDFs oficiales con código QR verificable, al aprobarlas la administración.
 - **Objetos Perdidos ("Hallazgos"):** Sistema comunitario de reportes con punto de resguardo y validación presencial de identidad para su cierre.
 - **Asistente Inteligente (RAG):** Chat con IA basado en la indexación vectorial de normativas, reglamentos y planes de estudio oficiales.
 
@@ -37,21 +37,21 @@ Desarrollar una aplicación web moderna (con soporte PWA instalable) basada en S
 **1. Módulo de Correlatividades y Consultas**
 - **1.1** Selección dinámica de carrera y año.
 - **1.2** Visualización clara de requisitos aprobados (para final) y regularizados (para cursada).
-- **1.3** Calendario de mesas de examen.
+- **1.3** Listado de mesas de examen con filtros por fecha, carrera y materia.
 
 **2. Gestión de Trámites**
-- **2.1** Solicitud digital de certificados (alumno regular, examen, etc.).
-- **2.2** Bandeja de entrada para el Administrador (Bedelía/Secretaría) con aprobación y generación instantánea de PDFs.
+- **2.1** Solicitud digital de constancias (de alumno regular y de examen), también desde el asistente.
+- **2.2** Bandeja de entrada para la Secretaría con aprobación y generación instantánea del PDF, con un código QR que cualquiera puede validar y una huella SHA-256 que detecta adulteraciones.
 - **2.3** Seguimiento de estados (`Pendiente`, `En Proceso`, `Rechazado`, `Listo`). Un trámite rechazado muestra el motivo al estudiante.
 
 **3. Objetos Perdidos ("Hallazgos")**
-- **3.1** Formulario de reporte con carga de imagen (vía Firebase Storage), aula, horario y sector de resguardo.
+- **3.1** Formulario de reporte con foto (validada en el servidor y guardada en almacenamiento privado), lugar, fecha y punto de resguardo.
 - **3.2** Listado público seguro (ocultando datos sensibles).
-- **3.3** Cierre de caso por el administrador con registro de DNI de quien retira.
+- **3.3** Cierre de caso por la Secretaría con registro de quién retira (nombre y DNI), quién verificó y cuándo. Los datos de quien retira se borran a los 30 días.
 
 **4. Asistente con Inteligencia Artificial (Agente RAG)**
-- **4.1** Ingesta de documentos oficiales en PDF y sincronización institucional.
-- **4.2** Base de datos vectorial (`pgvector`) para consultas semánticas precisas sin alucinaciones.
+- **4.1** Ingesta de documentos oficiales en PDF (reglamentos, planes, cronogramas) cargados por la Secretaría, con versiones.
+- **4.2** Base de datos vectorial (`pgvector`) para búsquedas semánticas: el asistente responde solo con lo que encuentra en los documentos y datos oficiales.
 - **4.3** Respuestas con fuentes citadas (documento, versión y página, o datos actuales de Astrea); si no hay evidencia, lo reconoce y deriva a Secretaría.
 - **4.4** Herramientas de solo lectura (correlatividades, mesas, hallazgos y mis trámites) y propuestas de trámite que solo se envían cuando el estudiante confirma.
 - **4.5** Panel de métricas para Secretaría: frecuencia de preguntas, temas sin respuesta y errores de la IA, con datos anónimos.
@@ -59,11 +59,14 @@ Desarrollar una aplicación web moderna (con soporte PWA instalable) basada en S
 ---
 
 ## 🏗️ Criterios de calidad y arquitectura
-- **Backend:** C# con .NET 10 LTS bajo **Arquitectura Hexagonal (Ports and Adapters)**, APIs paginadas y testing estricto (unitario, integración y end-to-end con Playwright).
-- **Frontend:** Next.js (React) con Tailwind CSS, estructurado por Slices Verticales.
-- **Seguridad:** Autenticación mediante Firebase Auth y validación de JWT en el backend.
-- **Almacenamiento:** Firebase Storage para archivos multimedia.
-- **Escalabilidad y Trazabilidad:** Diseño modular preparado para auditorías de acciones críticas.
+- **Backend:** C# con .NET 10 LTS bajo **Arquitectura Hexagonal (Ports and Adapters)**, APIs versionadas (`/api/v1`) y paginadas. Un test de arquitectura verifica que el dominio no dependa de nada externo.
+- **Frontend:** Next.js (React) con Tailwind CSS, organizado por funcionalidad. Es responsive e instalable como PWA.
+- **Base de datos:** PostgreSQL con `pgvector` y migraciones de Entity Framework Core.
+- **Seguridad:** autenticación con Firebase Auth. El backend valida cada token y toma los roles de su propia base, nunca del cliente.
+- **Almacenamiento de archivos:** PDFs emitidos, fotos de hallazgos y documentos del asistente se guardan en una carpeta privada del servidor, fuera de la web pública. Solo se descargan a través de la API, con permiso.
+- **Inteligencia Artificial:** Google Gemini para embeddings y respuestas, detrás de una interfaz propia, por lo que se puede cambiar de proveedor. Para los tests hay un modelo local determinista, sin red.
+- **Trazabilidad:** cada cambio de estado de un trámite queda registrado con quién lo hizo y cuándo, y cada entrega de un hallazgo registra quién verificó la identidad.
+- **Testing:** unitarios (xUnit), integración contra PostgreSQL real en Docker (Testcontainers) y end-to-end con Playwright en escritorio y celular. Se ejecutan en GitHub Actions en cada push a `main`.
 
 ---
 
@@ -79,16 +82,33 @@ Desarrollar una aplicación web moderna (con soporte PWA instalable) basada en S
 
 ---
 
+## 📦 Estado del proyecto
+Desarrollado en 12 slices verticales, cada uno con sus tests unitarios, de integración y E2E:
+
+| Slice | Contenido |
+|---|---|
+| 0–1 | Base del proyecto, CI, inicio de sesión con Firebase y roles |
+| 2–3 | Plan de estudios y correlatividades |
+| 4 | Mesas de examen |
+| 5–6 | Trámites y documentos PDF con QR de validación |
+| 7 | Hallazgos (objetos perdidos) |
+| 8–10 | Asistente con IA: ingesta de documentos, respuestas con fuentes y herramientas con datos de Astrea |
+| 11 | Panel de métricas, endurecimiento de seguridad, PWA, accesibilidad y respaldo |
+
+---
+
 ## 🔖 Convenciones del repositorio
-- **Ramas:** `main` (estable) · `feature/<nombre>` por funcionalidad. Se integra frecuentemente a `main` mediante pull requests pequeños.
-- **Commits:** Mensajes claros y en imperativo (ej.: `feat: implementa modulo de tramites`).
+- **Ramas:** cada slice se desarrolló completo, con sus tests, y se integró a `main` en su propio commit. Para trabajo futuro se recomienda una rama `feature/<nombre>` y un pull request a `main`.
+- **Commits:** mensajes en español que nombran el slice y lo que agrega (ej.: `feat: slice 4 - mesas de examen` o `Slice 7: hallazgos (objetos perdidos)`).
+- **Integración continua:** GitHub Actions verifica el formato, compila y corre todos los tests en cada push y pull request a `main`.
 
 ---
 
 ## 🚀 Cómo contribuir
 1. Crear una rama de trabajo `feature/<nombre-corto>`.
-2. Desarrollar el Slice Vertical correspondiente junto a sus pruebas de testing.
-3. Enviar Pull Request a `main` con breve resumen funcional.
+2. Desarrollar el Slice Vertical correspondiente junto a sus pruebas (unitarias, de integración y E2E).
+3. Enviar un Pull Request a `main` con un breve resumen funcional; la CI tiene que pasar.
+
 
 ---
 
