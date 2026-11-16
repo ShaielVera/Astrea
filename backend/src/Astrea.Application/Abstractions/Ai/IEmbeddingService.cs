@@ -31,6 +31,24 @@ public sealed class ConfiguracionIa
     public string Proveedor { get; init; } = ProveedorGemini;
 
     public ConfiguracionGemini Gemini { get; init; } = new();
+
+    public ConfiguracionAsistente Asistente { get; init; } = new();
+}
+
+/// <summary>Política de recuperación del asistente (sección "Ia:Asistente").</summary>
+public sealed class ConfiguracionAsistente
+{
+    /// <summary>
+    /// Similitud coseno mínima para considerar que un fragmento habla de la pregunta. Por debajo no se consulta al modelo
+    /// y el asistente reconoce que no tiene información. Depende del proveedor de embeddings.
+    /// </summary>
+    public double SimilitudMinima { get; init; } = 0.5;
+
+    /// <summary>Cuántos fragmentos como máximo se le pasan al modelo.</summary>
+    public int FragmentosMaximos { get; init; } = 6;
+
+    /// <summary>Tope de texto de las evidencias (controla costo y latencia).</summary>
+    public int CaracteresMaximosContexto { get; init; } = 12_000;
 }
 
 public sealed class ConfiguracionGemini
@@ -38,6 +56,15 @@ public sealed class ConfiguracionGemini
     public string? ApiKey { get; init; }
 
     public string ModeloEmbeddings { get; init; } = "gemini-embedding-001";
+
+    /// <summary>
+    /// Modelo que redacta las respuestas del asistente. Flash-Lite alcanza para redactar a partir de fragmentos dados
+    /// y responde en ~1 s (los Flash completos tardaban 10-20 s en el plan gratuito).
+    /// </summary>
+    public string ModeloChat { get; init; } = "gemini-3.5-flash-lite";
+
+    /// <summary>Cuánto "piensa" el modelo antes de responder: más bajo es más rápido. Vacío usa el del modelo.</summary>
+    public string? NivelRazonamiento { get; init; } = "low";
 
     public string UrlBase { get; init; } = "https://generativelanguage.googleapis.com/v1beta/";
 }

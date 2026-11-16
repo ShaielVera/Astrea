@@ -20,6 +20,10 @@ export function RequiereRol({ rol, children }: { rol: CodigoRol; children: React
     if (sinSesion) router.replace("/login");
   }, [sinSesion, router]);
 
+  if (sesion.estado === "sinServidor") {
+    return <ServidorNoDisponible mensaje={sesion.mensaje} />;
+  }
+
   if (sesion.estado === "cargando" || sinSesion) {
     return (
       <p role="status" className="px-4 py-12 text-center text-zinc-500">
@@ -41,4 +45,24 @@ export function RequiereRol({ rol, children }: { rol: CodigoRol; children: React
   }
 
   return children;
+}
+
+/** La sesión sigue abierta pero el servidor no respondió: se avisa y se reintenta solo (o con el botón). */
+export function ServidorNoDisponible({ mensaje }: { mensaje: string }) {
+  const { reintentar } = useAuth();
+  return (
+    <section role="alert" className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-16 text-center">
+      <h1 className="text-2xl font-semibold">No se pudo conectar con Astrea</h1>
+      <p className="text-zinc-600 dark:text-zinc-400">
+        {mensaje} Tu sesión sigue abierta: vuelvo a intentar en unos segundos.
+      </p>
+      <button
+        type="button"
+        onClick={reintentar}
+        className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+      >
+        Reintentar ahora
+      </button>
+    </section>
+  );
 }

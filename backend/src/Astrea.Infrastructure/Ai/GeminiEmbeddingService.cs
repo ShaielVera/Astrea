@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using Astrea.Application.Abstractions.Ai;
 using Astrea.Domain.Knowledge;
 
@@ -17,8 +16,6 @@ internal sealed class GeminiEmbeddingService(HttpClient http, ConfiguracionGemin
     public const int TandaMaxima = 100;
 
     private const int Intentos = 4;
-
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     /// <summary>Espera antes de reintentar; se puede acortar en los tests.</summary>
     internal Func<int, TimeSpan> Espera { get; init; } = intento => TimeSpan.FromSeconds(Math.Pow(2, intento));
@@ -57,49 +54,30 @@ internal sealed class GeminiEmbeddingService(HttpClient http, ConfiguracionGemin
             .ToList());
         var url = new Uri(new Uri(configuracion.UrlBase), $"{modelo}:batchEmbedContents");
 
-        for (var intento = 1; ; intento++)
+        HttpResponseMessage respuesta;
+        try
         {
-            using var mensaje = new HttpRequestMessage(HttpMethod.Post, url) { Content = JsonContent.Create(pedido, options: Json) };
-            mensaje.Headers.Add("x-goog-api-key", configuracion.ApiKey);
+            respuesta = await GeminiHttp.EnviarAsync(http, url, configuracion.ApiKey!, pedido, Intentos, Espera, TimeSpan.FromMinutes(1), cancellationToken);
+        }
+        catch (Exception ex) when (GeminiHttp.EsFallaDeRed(ex, cancellationToken))
+        {
+            throw new EmbeddingNoDisponibleException("No se pudo conectar con Gemini. Revisá la conexión a internet y reindexá el documento.", ex);
+        }
 
-            HttpResponseMessage respuesta;
-            try
+        using (respuesta)
+        {
+            if (respuesta.IsSuccessStatusCode)
             {
-                respuesta = await http.SendAsync(mensaje, cancellationToken);
-            }
-            catch (Exception ex) when (ex is HttpRequestException || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
-            {
-                if (intento < Intentos)
-                {
-                    await Task.Delay(Espera(intento), cancellationToken);
-                    continue;
-                }
-
-                throw new EmbeddingNoDisponibleException("No se pudo conectar con Gemini. Revisá la conexión a internet y reindexá el documento.", ex);
+                return await LeerVectoresAsync(respuesta, textos.Count, cancellationToken);
             }
 
-            using (respuesta)
-            {
-                if (respuesta.IsSuccessStatusCode)
-                {
-                    return await LeerVectoresAsync(respuesta, textos.Count, cancellationToken);
-                }
-
-                var temporal = respuesta.StatusCode is HttpStatusCode.TooManyRequests or >= HttpStatusCode.InternalServerError;
-                if (temporal && intento < Intentos)
-                {
-                    await Task.Delay(respuesta.Headers.RetryAfter?.Delta ?? Espera(intento), cancellationToken);
-                    continue;
-                }
-
-                throw new EmbeddingNoDisponibleException(await MensajeDeErrorAsync(respuesta, cancellationToken));
-            }
+            throw new EmbeddingNoDisponibleException(await MensajeDeErrorAsync(respuesta, cancellationToken));
         }
     }
 
     private static async Task<IReadOnlyList<float[]>> LeerVectoresAsync(HttpResponseMessage respuesta, int esperados, CancellationToken cancellationToken)
     {
-        var lote = await respuesta.Content.ReadFromJsonAsync<RespuestaLote>(Json, cancellationToken);
+        var lote = await respuesta.Content.ReadFromJsonAsync<RespuestaLote>(GeminiHttp.Json, cancellationToken);
         var vectores = lote?.Embeddings?.Select(embedding => embedding.Values).ToList() ?? [];
         if (vectores.Count != esperados || vectores.Any(valores => valores?.Length != FragmentoRag.DimensionesEmbedding))
         {
@@ -111,17 +89,8 @@ internal sealed class GeminiEmbeddingService(HttpClient http, ConfiguracionGemin
 
     private static async Task<string> MensajeDeErrorAsync(HttpResponseMessage respuesta, CancellationToken cancellationToken)
     {
-        string? detalle = null;
-        try
-        {
-            detalle = (await respuesta.Content.ReadFromJsonAsync<RespuestaError>(Json, cancellationToken))?.Error?.Message;
-        }
-        catch (JsonException)
-        {
-        }
-
-        if (respuesta.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden
-            || detalle?.Contains("API key", StringComparison.OrdinalIgnoreCase) == true)
+        var detalle = await GeminiHttp.DetalleDeErrorAsync(respuesta, cancellationToken);
+        if (GeminiHttp.RechazoLaApiKey(respuesta, detalle))
         {
             return "Gemini rechazó la API key configurada (Ia:Gemini:ApiKey). Revisala y reindexá el documento.";
         }
@@ -131,8 +100,7 @@ internal sealed class GeminiEmbeddingService(HttpClient http, ConfiguracionGemin
             return "Se alcanzó el límite de uso de Gemini. Esperá unos minutos y reindexá el documento.";
         }
 
-        var texto = detalle is null ? string.Empty : $": {(detalle.Length > 200 ? detalle[..200] : detalle)}";
-        return $"Gemini no pudo generar los embeddings (código {(int)respuesta.StatusCode}){texto}";
+        return $"Gemini no pudo generar los embeddings (código {(int)respuesta.StatusCode}){GeminiHttp.Recortar(detalle)}";
     }
 
     private sealed record PedidoLote(IReadOnlyList<PedidoEmbedding> Requests);
@@ -146,10 +114,6 @@ internal sealed class GeminiEmbeddingService(HttpClient http, ConfiguracionGemin
     private sealed record RespuestaLote(IReadOnlyList<ValoresEmbedding>? Embeddings);
 
     private sealed record ValoresEmbedding(float[] Values);
-
-    private sealed record RespuestaError(DetalleError? Error);
-
-    private sealed record DetalleError(int Code, string? Message, string? Status);
 }
 
 /// <summary>Operaciones de vectores compartidas por los adaptadores de embeddings.</summary>

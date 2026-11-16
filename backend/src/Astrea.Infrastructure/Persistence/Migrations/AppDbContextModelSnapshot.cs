@@ -264,6 +264,92 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.ToTable("plan_materias", (string)null);
                 });
 
+            modelBuilder.Entity("Astrea.Domain.Agent.Conversacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<uint>("Concurrencia")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<DateTimeOffset>("FechaCreacion")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_creacion");
+
+                    b.Property<DateTimeOffset>("FechaUltimoMensaje")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_ultimo_mensaje");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("titulo");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_conversaciones");
+
+                    b.HasIndex("FechaUltimoMensaje")
+                        .HasDatabaseName("ix_conversaciones_fecha_ultimo_mensaje");
+
+                    b.HasIndex("UsuarioId", "FechaUltimoMensaje")
+                        .HasDatabaseName("ix_conversaciones_usuario_id_fecha_ultimo_mensaje");
+
+                    b.ToTable("conversaciones", (string)null);
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Agent.MensajeChat", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Contenido")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("contenido");
+
+                    b.Property<Guid>("ConversacionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conversacion_id");
+
+                    b.Property<DateTimeOffset>("Fecha")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha");
+
+                    b.Property<string>("Fuentes")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("fuentes_json");
+
+                    b.Property<string>("Rol")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("rol");
+
+                    b.Property<bool>("SinEvidencia")
+                        .HasColumnType("boolean")
+                        .HasColumnName("sin_evidencia");
+
+                    b.HasKey("Id")
+                        .HasName("pk_mensajes_chat");
+
+                    b.HasIndex("ConversacionId", "Fecha")
+                        .HasDatabaseName("ix_mensajes_chat_conversacion_id_fecha");
+
+                    b.ToTable("mensajes_chat", (string)null);
+                });
+
             modelBuilder.Entity("Astrea.Domain.Exams.MesaExamen", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1244,6 +1330,26 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_plan_materias_planes_estudio_plan_estudio_id");
                 });
 
+            modelBuilder.Entity("Astrea.Domain.Agent.Conversacion", b =>
+                {
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_conversaciones_usuarios_usuario_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Agent.MensajeChat", b =>
+                {
+                    b.HasOne("Astrea.Domain.Agent.Conversacion", null)
+                        .WithMany("Mensajes")
+                        .HasForeignKey("ConversacionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_mensajes_chat_conversaciones_conversacion_id");
+                });
+
             modelBuilder.Entity("Astrea.Domain.Exams.MesaExamen", b =>
                 {
                     b.HasOne("Astrea.Domain.Academic.PlanMateria", null)
@@ -1421,6 +1527,11 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.Navigation("Correlatividades");
 
                     b.Navigation("Materias");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Agent.Conversacion", b =>
+                {
+                    b.Navigation("Mensajes");
                 });
 
             modelBuilder.Entity("Astrea.Domain.LostAndFound.ObjetoPerdido", b =>

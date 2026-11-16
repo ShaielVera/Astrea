@@ -7,6 +7,9 @@ public enum TipoError
     Prohibido,
     NoEncontrado,
     Conflicto,
+
+    /// <summary>Un servicio externo (por ejemplo, la IA) no respondió: se puede reintentar más tarde.</summary>
+    NoDisponible,
 }
 
 /// <summary>
@@ -23,6 +26,8 @@ public sealed record Error(TipoError Tipo, string Codigo, string Mensaje)
     public static Error NoEncontrado(string codigo, string mensaje) => new(TipoError.NoEncontrado, codigo, mensaje);
 
     public static Error Conflicto(string codigo, string mensaje) => new(TipoError.Conflicto, codigo, mensaje);
+
+    public static Error NoDisponible(string codigo, string mensaje) => new(TipoError.NoDisponible, codigo, mensaje);
 }
 
 /// <summary>

@@ -9,7 +9,7 @@ const modulos: { titulo: string; descripcion: string; href?: string }[] = [
   { titulo: "Mesas de examen", descripcion: "Llamados, fechas, horarios y tribunales.", href: "/mesas" },
   { titulo: "Mis trámites", descripcion: "Pedí constancias y seguí su estado.", href: "/tramites" },
   { titulo: "Hallazgos", descripcion: "Objetos perdidos encontrados en el instituto.", href: "/hallazgos" },
-  { titulo: "Asistente", descripcion: "Consultá en lenguaje natural." },
+  { titulo: "Asistente", descripcion: "Preguntá sobre reglamentos y calendarios, con fuentes oficiales.", href: "/asistente" },
 ];
 
 export default function InicioEstudiante() {

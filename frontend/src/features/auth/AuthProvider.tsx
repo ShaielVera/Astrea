@@ -10,7 +10,7 @@ import {
   type User,
 } from "firebase/auth";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { apiFetch } from "@/lib/api-client";
+import { ApiError, apiFetch } from "@/lib/api-client";
 import { obtenerAuth } from "@/lib/firebase/client";
 import { mensajeDeError } from "./mensajes-error";
 import type { Perfil } from "./tipos";
@@ -18,7 +18,9 @@ import type { Perfil } from "./tipos";
 type EstadoSesion =
   | { estado: "cargando" }
   | { estado: "anonimo" }
-  | { estado: "autenticado"; usuario: User; perfil: Perfil };
+  | { estado: "autenticado"; usuario: User; perfil: Perfil }
+  /** La cuenta de Firebase sigue abierta pero la API no respondió: se reintenta sola, sin cerrar la sesión. */
+  | { estado: "sinServidor"; usuario: User; mensaje: string };
 
 type AuthContextValue = {
   sesion: EstadoSesion;
@@ -29,6 +31,8 @@ type AuthContextValue = {
   crearCuenta: (email: string, password: string) => Promise<void>;
   ingresarConGoogle: () => Promise<void>;
   cerrarSesion: () => Promise<void>;
+  /** Vuelve a conectar con la API cuando no respondió. */
+  reintentar: () => void;
   /** ID Token vigente para llamar a la API. Firebase lo renueva solo cuando vence. */
   obtenerToken: () => Promise<string>;
 };
@@ -39,30 +43,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sesion, setSesion] = useState<EstadoSesion>({ estado: "cargando" });
   const [errorSesion, setErrorSesion] = useState<string | null>(null);
 
+  /** Vincula la cuenta de Firebase con el usuario institucional de Astrea. */
+  const vincular = useCallback(async (usuario: User) => {
+    try {
+      const perfil = await apiFetch<Perfil>("/auth/sesion", {
+        method: "POST",
+        token: await usuario.getIdToken(),
+      });
+      setErrorSesion(null);
+      setSesion({ estado: "autenticado", usuario, perfil });
+    } catch (error) {
+      if (esRechazoDeLaCuenta(error)) {
+        // Firebase aceptó la cuenta pero Astrea no (por ejemplo, está desactivada): se cierra la sesión y se informa el motivo.
+        setErrorSesion(mensajeDeError(error));
+        await signOut(obtenerAuth());
+        return;
+      }
+
+      // El servidor no respondió (reinicio, sin conexión): la sesión sigue abierta y se reintenta.
+      setSesion({ estado: "sinServidor", usuario, mensaje: mensajeDeError(error) });
+    }
+  }, []);
+
   useEffect(() => {
-    const auth = obtenerAuth();
-    return onAuthStateChanged(auth, async (usuario) => {
+    return onAuthStateChanged(obtenerAuth(), async (usuario) => {
       if (!usuario) {
         setSesion({ estado: "anonimo" });
         return;
       }
 
       setSesion({ estado: "cargando" });
-      try {
-        // Vincula la cuenta de Firebase con el usuario institucional de Astrea.
-        const perfil = await apiFetch<Perfil>("/auth/sesion", {
-          method: "POST",
-          token: await usuario.getIdToken(),
-        });
-        setErrorSesion(null);
-        setSesion({ estado: "autenticado", usuario, perfil });
-      } catch (error) {
-        // Firebase aceptó la cuenta pero Astrea no: se cierra la sesión y se informa el motivo.
-        setErrorSesion(mensajeDeError(error));
-        await signOut(auth);
-      }
+      await vincular(usuario);
     });
-  }, []);
+  }, [vincular]);
+
+  // Reintento automático mientras el servidor no responde.
+  useEffect(() => {
+    if (sesion.estado !== "sinServidor") return;
+    const espera = setTimeout(() => void vincular(sesion.usuario), REINTENTO_MS);
+    return () => clearTimeout(espera);
+  }, [sesion, vincular]);
+
+  const reintentar = useCallback(() => {
+    const usuario = obtenerAuth().currentUser;
+    if (!usuario) return;
+    setSesion({ estado: "cargando" });
+    void vincular(usuario);
+  }, [vincular]);
 
   const ingresarConEmail = useCallback(async (email: string, password: string) => {
     setErrorSesion(null);
@@ -98,12 +125,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       crearCuenta,
       ingresarConGoogle,
       cerrarSesion,
+      reintentar,
       obtenerToken,
     }),
-    [sesion, errorSesion, ingresarConEmail, crearCuenta, ingresarConGoogle, cerrarSesion, obtenerToken],
+    [sesion, errorSesion, ingresarConEmail, crearCuenta, ingresarConGoogle, cerrarSesion, reintentar, obtenerToken],
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
+}
+
+const REINTENTO_MS = 5000;
+
+/**
+ * La API rechazó la cuenta de forma definitiva (401, 403 o 404: token inválido, cuenta desactivada…).
+ * Los errores de red, los 5xx y los límites de uso (429) son pasajeros: no cierran la sesión.
+ */
+function esRechazoDeLaCuenta(error: unknown): boolean {
+  return error instanceof ApiError && error.status >= 400 && error.status < 500 && error.status !== 408 && error.status !== 429;
 }
 
 export function useAuth(): AuthContextValue {

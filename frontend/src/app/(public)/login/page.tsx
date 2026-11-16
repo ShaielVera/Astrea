@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
+import { ServidorNoDisponible } from "@/features/auth/RequiereRol";
 import { areaInicial } from "@/features/auth/tipos";
 
 type Modo = "ingresar" | "crear";
@@ -40,6 +41,11 @@ export default function LoginPage() {
 
   const ocupado = enviando || sesion.estado === "cargando" || sesion.estado === "autenticado";
   const mensaje = error ?? errorSesion;
+
+  // Ya hay una cuenta abierta: no se pide ingresar de nuevo, solo esperar a que vuelva el servidor.
+  if (sesion.estado === "sinServidor") {
+    return <ServidorNoDisponible mensaje={sesion.mensaje} />;
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col gap-6 px-4 py-12">

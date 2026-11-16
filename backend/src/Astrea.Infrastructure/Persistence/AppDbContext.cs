@@ -1,4 +1,5 @@
 using Astrea.Domain.Academic;
+using Astrea.Domain.Agent;
 using Astrea.Domain.Exams;
 using Astrea.Domain.Knowledge;
 using Astrea.Domain.LostAndFound;
@@ -45,6 +46,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<DocumentoRag> DocumentosRag => Set<DocumentoRag>();
 
     public DbSet<FragmentoRag> FragmentosRag => Set<FragmentoRag>();
+
+    public DbSet<Conversacion> Conversaciones => Set<Conversacion>();
+
+    public DbSet<MensajeChat> MensajesChat => Set<MensajeChat>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

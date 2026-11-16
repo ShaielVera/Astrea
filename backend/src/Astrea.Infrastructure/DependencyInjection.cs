@@ -15,7 +15,7 @@ namespace Astrea.Infrastructure;
 public static class DependencyInjection
 {
     /// <param name="carpetaArchivosPrivados">Carpeta del servidor donde se guardan los PDF emitidos (nunca publicada por la web).</param>
-    /// <param name="ia">Proveedor de embeddings: Gemini (real) o Prueba (local, para tests).</param>
+    /// <param name="ia">Proveedor de IA (embeddings y modelo del asistente): Gemini (real) o Prueba (local, para tests).</param>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, string carpetaArchivosPrivados, ConfiguracionIa ia)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<ITramiteRepository, EfTramiteRepository>();
         services.AddScoped<IObjetoPerdidoRepository, EfObjetoPerdidoRepository>();
         services.AddScoped<IDocumentoRagRepository, EfDocumentoRagRepository>();
+        services.AddScoped<IConversacionRepository, EfConversacionRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPdfGenerator, QuestPdfGenerator>();
@@ -38,10 +39,12 @@ public static class DependencyInjection
         if (string.Equals(ia.Proveedor, ConfiguracionIa.ProveedorPrueba, StringComparison.OrdinalIgnoreCase))
         {
             services.AddSingleton<IEmbeddingService, EmbeddingsDePrueba>();
+            services.AddSingleton<IModeloLenguaje, ModeloDePrueba>();
         }
         else if (string.Equals(ia.Proveedor, ConfiguracionIa.ProveedorGemini, StringComparison.OrdinalIgnoreCase))
         {
             services.AddSingleton<IEmbeddingService>(new GeminiEmbeddingService(new HttpClient { Timeout = TimeSpan.FromSeconds(60) }, ia.Gemini));
+            services.AddSingleton<IModeloLenguaje>(new GeminiModeloLenguaje(new HttpClient { Timeout = TimeSpan.FromSeconds(45) }, ia.Gemini));
         }
         else
         {

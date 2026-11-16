@@ -178,7 +178,7 @@ public sealed class AdministracionDocumentosRag(
     }
 
     /// <summary>"Reglamento académico (v2).pdf", sin caracteres que no admiten los nombres de archivo.</summary>
-    private static string NombreArchivo(DocumentoRag documento)
+    internal static string NombreArchivo(DocumentoRag documento)
     {
         var invalidos = Path.GetInvalidFileNameChars().Concat(['"', '/', '\\', ':', '*', '?', '<', '>', '|']).ToHashSet();
         var titulo = new string(documento.Titulo.Select(c => invalidos.Contains(c) ? '-' : c).ToArray());

@@ -20,6 +20,8 @@ export function mensajeDeError(error: unknown): string {
     return MENSAJES_FIREBASE[error.code] ?? "No se pudo iniciar sesión. Intentá de nuevo.";
   }
   if (error instanceof ApiError) {
+    // El límite de uso responde sin cuerpo: se explica acá.
+    if (error.status === 429) return "Hiciste muchos pedidos seguidos. Esperá un minuto y volvé a probar.";
     return error.message;
   }
   return "Ocurrió un error inesperado. Intentá de nuevo.";

@@ -36,6 +36,7 @@ if (builder.Environment.IsProduction() && string.Equals(ia.Proveedor, Configurac
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString, carpetaPrivada, ia);
+builder.Services.AddSingleton(ia);
 builder.Services.AddSingleton(
     builder.Configuration.GetSection(ConfiguracionIdentidad.Seccion).Get<ConfiguracionIdentidad>() ?? new ConfiguracionIdentidad());
 builder.Services.AddSingleton(
@@ -61,6 +62,15 @@ builder.Services.AddRateLimiter(options =>
             PermitLimit = builder.Configuration.GetValue("LimitesDeUso:PublicacionesPorHora", 30),
             Window = TimeSpan.FromHours(1),
         }));
+
+    // Preguntas al asistente: por usuario. Cada una consume cuota del proveedor de IA.
+    options.AddPolicy(LimitesDeUso.Asistente, contexto => RateLimitPartition.GetFixedWindowLimiter(
+        contexto.User.FindFirst(FirebaseClaims.Uid)?.Value ?? contexto.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = builder.Configuration.GetValue("LimitesDeUso:PreguntasPorMinuto", 10),
+            Window = TimeSpan.FromMinutes(1),
+        }));
 });
 
 // Indexa en segundo plano los documentos que carga la Secretaría para el asistente.
@@ -71,10 +81,10 @@ if (builder.Configuration.GetValue("Ingesta:ProcesarEnSegundoPlano", true))
     builder.Services.AddHostedService<ProcesadorIngesta>();
 }
 
-// Borra los hallazgos cerrados hace más de 30 días (con su foto y los datos de quien lo retiró).
-if (builder.Configuration.GetValue("Mantenimiento:DepurarHallazgos", true))
+// Borra los hallazgos cerrados (con su foto y los datos de quien lo retiró) y las conversaciones inactivas, a los 30 días.
+if (builder.Configuration.GetValue("Mantenimiento:DepuracionPeriodica", true))
 {
-    builder.Services.AddHostedService<DepuracionPeriodicaHallazgos>();
+    builder.Services.AddHostedService<DepuracionPeriodica>();
 }
 
 builder.Services.AddHttpContextAccessor();
@@ -135,6 +145,7 @@ api.MapExamEndpoints();
 api.MapTramiteEndpoints();
 api.MapHallazgoEndpoints();
 api.MapDocumentoRagEndpoints();
+api.MapAsistenteEndpoints();
 
 app.Run();
 

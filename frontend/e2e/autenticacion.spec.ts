@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { E2E, emailUnico } from "./entorno";
+import { ingresarComoEstudianteNuevo } from "./sesiones";
 
 async function completarFormulario(page: Page, email: string, password: string) {
   await page.getByLabel("Email").fill(email);
@@ -64,6 +65,21 @@ test.describe("Identidad y acceso", () => {
     // Se busca dentro de <main>: Next agrega otro role="alert" oculto para anunciar navegaciones.
     await expect(page.getByRole("main").getByRole("alert")).toHaveText("El email o la contraseña no son correctos.");
     await expect(page).toHaveURL(/\/login$/);
+  });
+
+  test("si el servidor no responde, la sesión sigue abierta y se recupera sola", async ({ page }) => {
+    const email = await ingresarComoEstudianteNuevo(page);
+
+    // La API se cae (por ejemplo, un reinicio) y el estudiante recarga la página.
+    await page.route("**/api/v1/auth/sesion", (ruta) => ruta.abort("connectionrefused"));
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "No se pudo conectar con Astrea" })).toBeVisible();
+    await expect(page).toHaveURL(/\/inicio$/);
+
+    // Vuelve la API: reintenta sola y sigue en su área, sin tener que ingresar de nuevo.
+    await page.unroute("**/api/v1/auth/sesion");
+    await expect(page.getByRole("heading", { level: 1, name: "Mi inicio" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("email-usuario")).toHaveText(email);
   });
 
   test("sin sesión, el área de administración redirige al login", async ({ page }) => {

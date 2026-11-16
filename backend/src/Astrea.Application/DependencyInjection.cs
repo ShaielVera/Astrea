@@ -1,4 +1,5 @@
 using Astrea.Application.Features.Academic;
+using Astrea.Application.Features.Agent;
 using Astrea.Application.Features.Auth;
 using Astrea.Application.Features.Auth.IniciarSesion;
 using Astrea.Application.Features.Auth.ObtenerPerfil;
@@ -36,6 +37,8 @@ public static class DependencyInjection
         services.AddScoped<DepuracionHallazgos>();
         services.AddScoped<AdministracionDocumentosRag>();
         services.AddScoped<IngestaDocumentos>();
+        services.AddScoped<Asistente>();
+        services.AddScoped<DepuracionConversaciones>();
 
         return services;
     }

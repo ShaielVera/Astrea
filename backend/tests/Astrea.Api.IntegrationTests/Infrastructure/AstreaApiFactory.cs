@@ -36,6 +36,9 @@ public sealed class AstreaApiFactory : WebApplicationFactory<Program>, IAsyncLif
         builder.UseSetting("Identidad:AdministradoresIniciales:0", AdministradorInicial);
         builder.UseSetting("Ia:Proveedor", "Prueba");
 
+        // Los embeddings de prueba (bolsa de palabras) dan similitudes más bajas que un modelo real.
+        builder.UseSetting("Ia:Asistente:SimilitudMinima", "0.2");
+
         // Los tests procesan la cola de documentos a mano (IngestaDocumentos), para que el resultado sea determinista.
         builder.UseSetting("Ingesta:ProcesarEnSegundoPlano", "false");
 
