@@ -3,15 +3,27 @@ import type { Pagina } from "@/features/academico/api";
 
 export const LARGO_MAXIMO_PREGUNTA = 1000;
 
+/** Un documento oficial (con versión y páginas) o datos actuales de Astrea (con la sección donde verlos). */
 export type Fuente = {
-  documentoId: string;
+  tipo: "Documento" | "DatosDeAstrea";
+  documentoId: string | null;
   titulo: string;
-  version: number;
+  version: number | null;
   seccion: string | null;
   fuente: string | null;
-  paginaDesde: number;
-  paginaHasta: number;
+  paginaDesde: number | null;
+  paginaHasta: number | null;
   extracto: string;
+  enlace: string | null;
+};
+
+export type Propuesta = {
+  estado: "Pendiente" | "Confirmada" | "Cancelada";
+  tipoNombre: string;
+  resumen: { etiqueta: string; valor: string }[];
+  tramiteId: string | null;
+  numeroTramite: string | null;
+  venceEl: string;
 };
 
 export type Mensaje = {
@@ -20,6 +32,8 @@ export type Mensaje = {
   contenido: string;
   fuentes: Fuente[];
   sinEvidencia: boolean;
+  esAclaracion: boolean;
+  propuesta: Propuesta | null;
   fecha: string;
 };
 
@@ -41,11 +55,19 @@ export const asistenteApi = {
 
   eliminar: (token: string, id: string) => apiFetch<void>(`${BASE}/conversaciones/${id}`, { method: "DELETE", token }),
 
+  /** Recién acá se crea el trámite (una sola vez aunque se confirme dos veces). */
+  confirmar: (token: string, conversacionId: string, mensajeId: string) =>
+    apiFetch<Mensaje>(`${BASE}/conversaciones/${conversacionId}/mensajes/${mensajeId}/confirmar`, { method: "POST", token }),
+
+  cancelar: (token: string, conversacionId: string, mensajeId: string) =>
+    apiFetch<Mensaje>(`${BASE}/conversaciones/${conversacionId}/mensajes/${mensajeId}/cancelar`, { method: "POST", token }),
+
   abrirFuente: (token: string, fuente: Fuente) =>
-    apiDescargar(`${BASE}/fuentes/${fuente.documentoId}`, token, `${fuente.titulo} (v${fuente.version}).pdf`),
+    apiDescargar(`${BASE}/fuentes/${fuente.documentoId}`, token, `${fuente.titulo} (v${fuente.version ?? 1}).pdf`),
 };
 
 /** "pág. 3" o "págs. 3–4". */
-export function paginas(fuente: Fuente): string {
+export function paginas(fuente: Fuente): string | null {
+  if (fuente.paginaDesde === null || fuente.paginaHasta === null) return null;
   return fuente.paginaDesde === fuente.paginaHasta ? `pág. ${fuente.paginaDesde}` : `págs. ${fuente.paginaDesde}–${fuente.paginaHasta}`;
 }

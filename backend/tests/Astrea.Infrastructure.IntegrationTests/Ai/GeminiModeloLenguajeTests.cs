@@ -7,14 +7,27 @@ using AwesomeAssertions;
 
 namespace Astrea.Infrastructure.IntegrationTests.Ai;
 
-/// <summary>El modelo del asistente contra un servidor simulado de Gemini: no sale a internet ni gasta cuota.</summary>
+/// <summary>El modelo del asistente (function calling) contra un servidor simulado de Gemini: no sale a internet ni gasta cuota.</summary>
 public sealed class GeminiModeloLenguajeTests
 {
-    private static readonly ConsultaModelo Consulta = new(
+    private static readonly DefinicionHerramienta BuscarMesas = new("buscar_mesas", "Mesas de examen.",
+    [
+        new("materia", TipoParametro.Texto, "Materia.", true),
+        new("desde", TipoParametro.Fecha, "Desde.", false),
+    ]);
+
+    private static readonly DefinicionHerramienta Proponer = new("proponer_tramite", "Propone un trámite.",
+    [
+        new("tipo", TipoParametro.Texto, "Tipo.", true, ["ALUMNO_REGULAR", "ANALITICO_PARCIAL"]),
+        new("datos", TipoParametro.ListaDeObjetos, "Datos.", false, Campos: [new("clave", TipoParametro.Texto, "Clave.", true), new("valor", TipoParametro.Texto, "Valor.", true)]),
+        new("urgente", TipoParametro.Booleano, "Urgente.", false),
+        new("fuentes", TipoParametro.ListaDeTextos, "Fuentes.", false),
+    ]);
+
+    private static readonly ConsultaAgente Consulta = new(
         "Reglas del sistema",
-        [new MensajeModelo(true, "¿Cuándo cierra la inscripción?"), new MensajeModelo(false, "Cierra 48 horas antes [1].")],
-        "<documentos>…</documentos>\n<pregunta>¿Y en diciembre?</pregunta>",
-        [new EvidenciaModelo("F1", "documento=\"Reglamento\"", "texto")]);
+        [BuscarMesas, Proponer],
+        [new TurnoUsuario("¿Cuándo cierra la inscripción?"), new TurnoModelo("Cierra 48 horas antes [1]."), new TurnoUsuario("<pregunta>¿Y la mesa de Didáctica?</pregunta>")]);
 
     private readonly ServidorSimulado _servidor = new();
 
@@ -24,87 +37,110 @@ public sealed class GeminiModeloLenguajeTests
             Espera = _ => TimeSpan.Zero,
         };
 
-    private static string Respuesta(object salida, string finishReason = "STOP", bool conRazonamiento = false)
+    /// <summary>Una respuesta de Gemini con llamadas a funciones (y la firma de razonamiento que hay que devolver tal cual).</summary>
+    private static string Llamadas(params object[] llamadas) => JsonSerializer.Serialize(new
     {
-        var partes = new List<object>();
-        if (conRazonamiento)
+        candidates = new[]
         {
-            partes.Add(new { text = "Pienso que la respuesta está en F1…", thought = true });
-        }
-
-        partes.Add(new { text = JsonSerializer.Serialize(salida) });
-        return JsonSerializer.Serialize(new { candidates = new[] { new { content = new { role = "model", parts = partes }, finishReason } } });
-    }
+            new
+            {
+                content = new { role = "model", parts = llamadas.Select(args => (object)new { functionCall = args, thoughtSignature = "firma-opaca" }).ToArray() },
+                finishReason = "STOP",
+            },
+        },
+    });
 
     [Fact]
-    public async Task Envia_instrucciones_historial_y_pregunta_y_pide_json_con_esquema()
+    public async Task Envia_instrucciones_historial_y_herramientas_en_modo_any()
     {
-        _servidor.Responder(HttpStatusCode.OK, Respuesta(new { respuesta = "En diciembre también [F1].", fuentes = new[] { "F1" }, sinEvidencia = false }));
+        _servidor.Responder(HttpStatusCode.OK, Llamadas(new { name = "buscar_mesas", args = new { materia = "Didáctica" } }));
 
-        var respuesta = await Modelo().ResponderAsync(Consulta, CancellationToken.None);
+        var paso = await Modelo().SiguientePasoAsync(Consulta, CancellationToken.None);
 
-        respuesta.Should().BeEquivalentTo(new RespuestaModelo("En diciembre también [F1].", ["F1"], false));
+        paso.Llamadas.Should().ContainSingle();
+        paso.Llamadas[0].Nombre.Should().Be("buscar_mesas");
+        paso.Llamadas[0].Argumentos.GetProperty("materia").GetString().Should().Be("Didáctica");
+
         var pedido = _servidor.Pedidos.Single();
         pedido.Url.Should().Be("https://gemini.test/v1beta/models/gemini-de-prueba:generateContent");
         pedido.ApiKey.Should().Be("clave-de-prueba");
-        pedido.Url.Should().NotContain("clave", "la API key nunca va en la URL");
-
         var cuerpo = JsonNode.Parse(pedido.Cuerpo)!;
         cuerpo["systemInstruction"]!["parts"]![0]!["text"]!.GetValue<string>().Should().Be("Reglas del sistema");
-        cuerpo["systemInstruction"]!["role"].Should().BeNull();
-        var contenidos = cuerpo["contents"]!.AsArray();
-        contenidos.Select(contenido => contenido!["role"]!.GetValue<string>()).Should().Equal("user", "model", "user");
-        contenidos[2]!["parts"]![0]!["text"]!.GetValue<string>().Should().Contain("¿Y en diciembre?");
+        cuerpo["contents"]!.AsArray().Select(contenido => contenido!["role"]!.GetValue<string>()).Should().Equal("user", "model", "user");
+        cuerpo["toolConfig"]!["functionCallingConfig"]!["mode"]!.GetValue<string>().Should().Be("ANY");
+        cuerpo["generationConfig"]!["thinkingConfig"]!["thinkingLevel"]!.GetValue<string>().Should().Be("low");
 
-        var configuracion = cuerpo["generationConfig"]!;
-        configuracion["temperature"]!.GetValue<double>().Should().BeLessThan(0.5);
-        configuracion["responseMimeType"]!.GetValue<string>().Should().Be("application/json");
-        configuracion["responseSchema"]!["required"]!.AsArray().Select(campo => campo!.GetValue<string>()).Should().BeEquivalentTo(["respuesta", "fuentes", "sinEvidencia"]);
-        configuracion["responseSchema"]!["properties"]!["fuentes"]!["items"]!["type"]!.GetValue<string>().Should().Be("STRING");
-        configuracion["thinkingConfig"]!["thinkingLevel"]!.GetValue<string>().Should().Be("low");
+        var declaraciones = cuerpo["tools"]![0]!["functionDeclarations"]!.AsArray();
+        declaraciones.Select(declaracion => declaracion!["name"]!.GetValue<string>()).Should().Equal("buscar_mesas", "proponer_tramite");
+        declaraciones[0]!["parameters"]!["required"]!.AsArray().Select(r => r!.GetValue<string>()).Should().Equal("materia");
+        var proponer = declaraciones[1]!["parameters"]!["properties"]!;
+        proponer["tipo"]!["enum"]!.AsArray().Select(v => v!.GetValue<string>()).Should().Equal("ALUMNO_REGULAR", "ANALITICO_PARCIAL");
+        proponer["datos"]!["items"]!["properties"]!["valor"]!["type"]!.GetValue<string>().Should().Be("STRING");
+        proponer["urgente"]!["type"]!.GetValue<string>().Should().Be("BOOLEAN");
+        proponer["fuentes"]!["items"]!["type"]!.GetValue<string>().Should().Be("STRING");
+    }
+
+    [Fact]
+    public async Task Devuelve_el_turno_del_modelo_tal_cual_y_los_resultados_de_las_herramientas()
+    {
+        _servidor.Responder(HttpStatusCode.OK, Llamadas(new { name = "buscar_mesas", args = new { materia = "Didáctica" } }));
+        _servidor.Responder(HttpStatusCode.OK, Llamadas(new { name = "responder", args = new { respuesta = "Es el 10/12 [D1].", fuentes = new[] { "D1" } } }));
+
+        var primero = await Modelo().SiguientePasoAsync(Consulta, CancellationToken.None);
+        var conResultados = Consulta with
+        {
+            Turnos = [.. Consulta.Turnos, primero, new TurnoResultados([new ResultadoHerramienta("buscar_mesas", new { id = "D1", total = 1 })])],
+        };
+        var segundo = await Modelo().SiguientePasoAsync(conResultados, CancellationToken.None);
+
+        segundo.Llamadas.Single().Nombre.Should().Be("responder");
+        var contenidos = JsonNode.Parse(_servidor.Pedidos[1].Cuerpo)!["contents"]!.AsArray();
+        contenidos[3]!["parts"]![0]!["thoughtSignature"]!.GetValue<string>().Should().Be("firma-opaca", "Gemini exige recibir la firma sin cambios");
+        contenidos[3]!["parts"]![0]!["functionCall"]!["name"]!.GetValue<string>().Should().Be("buscar_mesas");
+        var respuesta = contenidos[4]!["parts"]![0]!["functionResponse"]!;
+        respuesta["name"]!.GetValue<string>().Should().Be("buscar_mesas");
+        respuesta["response"]!["resultado"]!["id"]!.GetValue<string>().Should().Be("D1");
+        contenidos[4]!["role"]!.GetValue<string>().Should().Be("user");
+    }
+
+    [Fact]
+    public async Task Varias_llamadas_en_un_paso_se_devuelven_todas()
+    {
+        _servidor.Responder(HttpStatusCode.OK, Llamadas(new { name = "buscar_mesas", args = new { materia = "A" } }, new { name = "buscar_mesas", args = new { materia = "B" } }));
+
+        var paso = await Modelo().SiguientePasoAsync(Consulta, CancellationToken.None);
+
+        paso.Llamadas.Select(llamada => llamada.Argumentos.GetProperty("materia").GetString()).Should().Equal("A", "B");
     }
 
     [Fact]
     public async Task Sin_nivel_de_razonamiento_no_envia_esa_configuracion()
     {
-        _servidor.Responder(HttpStatusCode.OK, Respuesta(new { respuesta = "Sí [F1].", fuentes = new[] { "F1" }, sinEvidencia = false }));
+        _servidor.Responder(HttpStatusCode.OK, Llamadas(new { name = "responder", args = new { respuesta = "Hola" } }));
 
-        await Modelo(nivel: null).ResponderAsync(Consulta, CancellationToken.None);
+        await Modelo(nivel: null).SiguientePasoAsync(Consulta, CancellationToken.None);
 
         JsonNode.Parse(_servidor.Pedidos.Single().Cuerpo)!["generationConfig"]!["thinkingConfig"].Should().BeNull();
     }
 
-    [Fact]
-    public async Task Ignora_las_partes_de_razonamiento_interno()
+    [Theory]
+    [InlineData("""{"promptFeedback":{"blockReason":"PROHIBITED_CONTENT"}}""")]
+    [InlineData("""{"candidates":[{"finishReason":"SAFETY"}]}""")]
+    [InlineData("""{"candidates":[{"content":{"role":"model","parts":[{"text":"Respuesta suelta sin herramienta"}]},"finishReason":"STOP"}]}""")]
+    public async Task Si_gemini_bloquea_o_no_llama_a_ninguna_herramienta_no_hay_llamadas(string cuerpo)
     {
-        _servidor.Responder(HttpStatusCode.OK, Respuesta(new { respuesta = "Sí [F1].", fuentes = new[] { "F1" }, sinEvidencia = false }, conRazonamiento: true));
+        _servidor.Responder(HttpStatusCode.OK, cuerpo);
 
-        (await Modelo().ResponderAsync(Consulta, CancellationToken.None)).Respuesta.Should().Be("Sí [F1].");
-    }
-
-    [Fact]
-    public async Task Respeta_cuando_el_modelo_indica_que_no_hay_evidencia()
-    {
-        _servidor.Responder(HttpStatusCode.OK, Respuesta(new { respuesta = "No tengo datos.", fuentes = Array.Empty<string>(), sinEvidencia = true }));
-
-        (await Modelo().ResponderAsync(Consulta, CancellationToken.None)).SinEvidencia.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task Si_gemini_bloquea_el_pedido_se_trata_como_sin_evidencia()
-    {
-        _servidor.Responder(HttpStatusCode.OK, """{"promptFeedback":{"blockReason":"PROHIBITED_CONTENT"}}""");
-
-        (await Modelo().ResponderAsync(Consulta, CancellationToken.None)).SinEvidencia.Should().BeTrue();
+        (await Modelo().SiguientePasoAsync(Consulta, CancellationToken.None)).Llamadas.Should().BeEmpty();
     }
 
     [Fact]
     public async Task Reintenta_una_vez_ante_un_error_temporal()
     {
         _servidor.Responder(HttpStatusCode.ServiceUnavailable, """{"error":{"code":503,"message":"overloaded"}}""");
-        _servidor.Responder(HttpStatusCode.OK, Respuesta(new { respuesta = "Sí [F1].", fuentes = new[] { "F1" }, sinEvidencia = false }));
+        _servidor.Responder(HttpStatusCode.OK, Llamadas(new { name = "responder", args = new { respuesta = "Hola" } }));
 
-        (await Modelo().ResponderAsync(Consulta, CancellationToken.None)).Respuesta.Should().Be("Sí [F1].");
+        (await Modelo().SiguientePasoAsync(Consulta, CancellationToken.None)).Llamadas.Should().ContainSingle();
         _servidor.Pedidos.Should().HaveCount(2);
     }
 
@@ -114,9 +150,9 @@ public sealed class GeminiModeloLenguajeTests
         _servidor.Responder(HttpStatusCode.TooManyRequests, """{"error":{"code":429,"message":"quota"}}""");
         _servidor.Responder(HttpStatusCode.TooManyRequests, """{"error":{"code":429,"message":"quota"}}""");
 
-        var responder = () => Modelo().ResponderAsync(Consulta, CancellationToken.None);
+        var paso = () => Modelo().SiguientePasoAsync(Consulta, CancellationToken.None);
 
-        await responder.Should().ThrowAsync<ModeloNoDisponibleException>().WithMessage("*429*");
+        await paso.Should().ThrowAsync<ModeloNoDisponibleException>().WithMessage("*429*");
         _servidor.Pedidos.Should().HaveCount(2, "con alguien esperando, reintenta una sola vez");
     }
 
@@ -125,33 +161,17 @@ public sealed class GeminiModeloLenguajeTests
     {
         _servidor.Responder(HttpStatusCode.BadRequest, """{"error":{"code":400,"message":"API key not valid. Please pass a valid API key."}}""");
 
-        await FluentActions.Awaiting(() => Modelo().ResponderAsync(Consulta, CancellationToken.None)).Should().ThrowAsync<ModeloNoDisponibleException>().WithMessage("*rechazó la API key*");
-        await FluentActions.Awaiting(() => Modelo(apiKey: null).ResponderAsync(Consulta, CancellationToken.None)).Should().ThrowAsync<ModeloNoDisponibleException>().WithMessage("*Falta configurar*");
+        await FluentActions.Awaiting(() => Modelo().SiguientePasoAsync(Consulta, CancellationToken.None)).Should().ThrowAsync<ModeloNoDisponibleException>().WithMessage("*rechazó la API key*");
+        await FluentActions.Awaiting(() => Modelo(apiKey: null).SiguientePasoAsync(Consulta, CancellationToken.None)).Should().ThrowAsync<ModeloNoDisponibleException>().WithMessage("*Falta configurar*");
     }
 
     [Theory]
     [InlineData("esto no es json")]
-    [InlineData("{\"fuentes\":[]}")]
-    public async Task Una_respuesta_con_formato_invalido_avisa_que_no_esta_disponible(string texto)
+    [InlineData("""{"candidates":[{"finishReason":"MAX_TOKENS"}]}""")]
+    public async Task Una_respuesta_invalida_avisa_que_no_esta_disponible(string cuerpo)
     {
-        _servidor.Responder(HttpStatusCode.OK, JsonSerializer.Serialize(new { candidates = new[] { new { content = new { parts = new[] { new { text = texto } } }, finishReason = "STOP" } } }));
+        _servidor.Responder(HttpStatusCode.OK, cuerpo);
 
-        await FluentActions.Awaiting(() => Modelo().ResponderAsync(Consulta, CancellationToken.None)).Should().ThrowAsync<ModeloNoDisponibleException>();
-    }
-
-    [Fact]
-    public async Task El_modelo_de_prueba_responde_con_la_oracion_mas_parecida_y_la_cita()
-    {
-        var consulta = new ConsultaModelo(
-            "reglas",
-            [],
-            "<documentos>…</documentos>\n<pregunta>\n¿Cuándo cierra la inscripción a mesas?\n</pregunta>",
-            [new EvidenciaModelo("F1", "x", "CAPÍTULO I\nLos turnos son tres. La inscripción a mesas cierra 48 horas antes.")]);
-
-        var respuesta = await new ModeloDePrueba().ResponderAsync(consulta, CancellationToken.None);
-        var sinEvidencias = await new ModeloDePrueba().ResponderAsync(consulta with { Evidencias = [] }, CancellationToken.None);
-
-        respuesta.Should().BeEquivalentTo(new RespuestaModelo("Según los documentos: La inscripción a mesas cierra 48 horas antes. [F1]", ["F1"], false));
-        sinEvidencias.SinEvidencia.Should().BeTrue();
+        await FluentActions.Awaiting(() => Modelo().SiguientePasoAsync(Consulta, CancellationToken.None)).Should().ThrowAsync<ModeloNoDisponibleException>();
     }
 }

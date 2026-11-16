@@ -104,6 +104,26 @@ internal sealed class EfAcademicRepository(AppDbContext db) : IAcademicRepositor
         return PagedResult<MateriaDePlanDto>.From(items, pagina, total);
     }
 
+    public async Task<IReadOnlyList<MateriaEncontradaDto>> BuscarMateriasAsync(string texto, Guid? carreraId, int maximo, CancellationToken cancellationToken)
+    {
+        var limpio = texto.Trim();
+        var patron = $"%{limpio.Replace(@"\", @"\\", StringComparison.Ordinal).Replace("%", @"\%", StringComparison.Ordinal).Replace("_", @"\_", StringComparison.Ordinal)}%";
+        var encontradas = await (
+            from planMateria in db.PlanMaterias.AsNoTracking()
+            join materia in db.Materias.AsNoTracking() on planMateria.MateriaId equals materia.Id
+            join plan in db.PlanesEstudio.AsNoTracking() on planMateria.PlanEstudioId equals plan.Id
+            join carrera in db.Carreras.AsNoTracking() on plan.CarreraId equals carrera.Id
+            where materia.Activa && plan.Activo && carrera.Activa
+                && (carreraId == null || carrera.Id == carreraId)
+                && (EF.Functions.ILike(EF.Functions.Unaccent(materia.Nombre), EF.Functions.Unaccent(patron))
+                    || EF.Functions.ILike(materia.Codigo, patron))
+            orderby EF.Functions.ILike(EF.Functions.Unaccent(materia.Nombre), EF.Functions.Unaccent(limpio)) descending, materia.Nombre.Length, materia.Nombre, carrera.Nombre
+            select new MateriaEncontradaDto(plan.Id, materia.Id, materia.Codigo, materia.Nombre, planMateria.AnioEnPlan, carrera.Id, carrera.Nombre, plan.Nombre))
+            .Take(maximo)
+            .ToListAsync(cancellationToken);
+        return encontradas;
+    }
+
     public async Task<CorrelatividadesDeMateriaDto?> ObtenerCorrelatividadesAsync(
         Guid planId,
         Guid materiaId,

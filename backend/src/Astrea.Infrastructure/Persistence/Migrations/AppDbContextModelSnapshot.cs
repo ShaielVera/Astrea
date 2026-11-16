@@ -322,6 +322,10 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("conversacion_id");
 
+                    b.Property<bool>("EsAclaracion")
+                        .HasColumnType("boolean")
+                        .HasColumnName("es_aclaracion");
+
                     b.Property<DateTimeOffset>("Fecha")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("fecha");
@@ -330,6 +334,10 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("fuentes_json");
+
+                    b.Property<string>("Propuesta")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("propuesta_json");
 
                     b.Property<string>("Rol")
                         .IsRequired()

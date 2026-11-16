@@ -1,6 +1,7 @@
 using Astrea.Application.Abstractions.Ai;
 using Astrea.Application.Features.Agent;
 using Astrea.Application.Features.Knowledge;
+using Astrea.Domain.Agent;
 using Astrea.Domain.Knowledge;
 using AwesomeAssertions;
 
@@ -69,7 +70,7 @@ public class PoliticaRagTests
         var evidencias = PoliticaRag.SeleccionarEvidencias([Fragmento(0.9, "uno"), Fragmento(0.8, "dos"), Fragmento(0.7, "tres")], Configuracion);
 
         var validada = PoliticaRag.Validar(
-            new RespuestaModelo("Cierra 48 horas antes [F3]. Hay tres turnos [F1, F3] y vale dos años [F9].", ["F3", "F1"], SinEvidencia: false),
+            new RespuestaPropuesta("Cierra 48 horas antes [F3]. Hay tres turnos [F1, F3] y vale dos años [F9].", ["F3", "F1"], SinEvidencia: false),
             evidencias);
 
         validada.SinEvidencia.Should().BeFalse();
@@ -83,7 +84,7 @@ public class PoliticaRagTests
     {
         var evidencias = PoliticaRag.SeleccionarEvidencias([Fragmento(0.9)], Configuracion);
 
-        var validada = PoliticaRag.Validar(new RespuestaModelo("Cierra 48 horas antes.", ["f1"], false), evidencias);
+        var validada = PoliticaRag.Validar(new RespuestaPropuesta("Cierra 48 horas antes.", ["f1"], false), evidencias);
 
         validada.Fuentes.Should().ContainSingle();
         validada.Texto.Should().Be("Cierra 48 horas antes.");
@@ -98,7 +99,7 @@ public class PoliticaRagTests
     {
         var evidencias = PoliticaRag.SeleccionarEvidencias([Fragmento(0.9)], Configuracion);
 
-        var validada = PoliticaRag.Validar(new RespuestaModelo(texto, fuentes, sinEvidencia), evidencias);
+        var validada = PoliticaRag.Validar(new RespuestaPropuesta(texto, fuentes, sinEvidencia), evidencias);
 
         validada.SinEvidencia.Should().BeTrue();
         validada.Fuentes.Should().BeEmpty();
@@ -110,9 +111,55 @@ public class PoliticaRagTests
     {
         var evidencias = PoliticaRag.SeleccionarEvidencias([Fragmento(0.9, "CAPÍTULO I\nDE LAS MESAS\n\n" + new string('x', 400))], Configuracion);
 
-        var fuente = PoliticaRag.Validar(new RespuestaModelo("Dato [F1].", ["F1"], false), evidencias).Fuentes.Single();
+        var fuente = PoliticaRag.Validar(new RespuestaPropuesta("Dato [F1].", ["F1"], false), evidencias).Fuentes.Single();
 
         fuente.Extracto.Should().StartWith("CAPÍTULO I DE LAS MESAS x").And.HaveLength(PoliticaRag.LargoExtracto).And.EndWith("…");
+    }
+
+    [Fact]
+    public void Acepta_citas_de_datos_de_astrea_y_las_mezcla_con_las_de_documentos()
+    {
+        var evidencias = PoliticaRag.SeleccionarEvidencias([Fragmento(0.9, "La inscripción cierra 48 horas antes.")], Configuracion);
+        var datos = new[] { new DatoConsultado("D1", "Mesas de examen", "Didáctica General: jueves 10/12/2026 09:00.", "/mesas") };
+
+        var validada = PoliticaRag.Validar(new RespuestaPropuesta("La mesa es el 10/12 [D1] y te anotás hasta 48 horas antes [F1].", ["D1", "F1"], false), evidencias, datos);
+
+        validada.Texto.Should().Be("La mesa es el 10/12 [1] y te anotás hasta 48 horas antes [2].");
+        validada.Fuentes[0].Should().BeEquivalentTo(new { Tipo = TipoFuente.DatosDeAstrea, Titulo = "Mesas de examen", Enlace = "/mesas", DocumentoId = (Guid?)null, Fuente = "Datos actuales de Astrea" });
+        validada.Fuentes[1].Tipo.Should().Be(TipoFuente.Documento);
+    }
+
+    [Fact]
+    public void Un_dato_que_no_se_consulto_no_se_puede_citar()
+    {
+        var validada = PoliticaRag.Validar(new RespuestaPropuesta("Tu trámite está listo [D1].", ["D1"], false), [], []);
+
+        validada.SinEvidencia.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Una_aclaracion_valida_es_una_pregunta_corta_sin_fuentes()
+    {
+        var aclaracion = PoliticaRag.Validar(new RespuestaPropuesta("¿De qué carrera sos [F1]?", [], false, EsAclaracion: true), []);
+        var noEsPregunta = PoliticaRag.Validar(new RespuestaPropuesta("Tu trámite ya está aprobado.", [], false, EsAclaracion: true), []);
+        var muyLarga = PoliticaRag.Validar(new RespuestaPropuesta(new string('a', 400) + "?", [], false, EsAclaracion: true), []);
+
+        aclaracion.Should().BeEquivalentTo(new { Tipo = TipoRespuesta.Aclaracion, Texto = "¿De qué carrera sos?" });
+        aclaracion.Fuentes.Should().BeEmpty();
+        noEsPregunta.SinEvidencia.Should().BeTrue("una afirmación disfrazada de aclaración no se acepta");
+        muyLarga.SinEvidencia.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Una_propuesta_de_tramite_se_acepta_aunque_el_texto_no_cite_fuentes()
+    {
+        var propuesta = new PropuestaTramite(Guid.NewGuid(), "Constancia de alumno regular", [], []);
+
+        var validada = PoliticaRag.Validar(new RespuestaPropuesta("Te preparé la solicitud. Confirmala con el botón.", [], false), [], [], propuesta);
+        var abstencion = PoliticaRag.Validar(new RespuestaPropuesta("No sé.", [], SinEvidencia: true), [], [], propuesta);
+
+        validada.Should().BeEquivalentTo(new { Tipo = TipoRespuesta.Respuesta, Propuesta = propuesta });
+        abstencion.Propuesta.Should().BeNull("si el modelo se abstiene, la propuesta no se muestra");
     }
 
     private static int CantidadDe(string texto, string buscado) => texto.Split(buscado).Length - 1;

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
@@ -16,7 +17,8 @@ import {
 const EJEMPLOS = [
   "¿Cuándo cierra la inscripción a mesas de examen?",
   "¿Cuánto tiempo dura la regularidad de una materia?",
-  "¿Cómo pido una equivalencia?",
+  "¿Cuándo son las próximas mesas de examen?",
+  "Quiero pedir una constancia de alumno regular",
 ];
 
 const boton = "rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800";
@@ -124,6 +126,21 @@ export default function AsistentePage() {
     }
   }
 
+  async function resolverPropuesta(mensaje: Mensaje, accion: "confirmar" | "cancelar") {
+    if (!actual) return;
+    setError(null);
+    try {
+      const token = await obtenerToken();
+      const actualizado =
+        accion === "confirmar"
+          ? await asistenteApi.confirmar(token, actual.id, mensaje.id)
+          : await asistenteApi.cancelar(token, actual.id, mensaje.id);
+      setMensajes((anteriores) => anteriores.map((m) => (m.id === actualizado.id ? actualizado : m)));
+    } catch (e) {
+      setError(mensajeDeError(e));
+    }
+  }
+
   async function abrirFuente(fuente: Fuente) {
     setError(null);
     try {
@@ -138,15 +155,16 @@ export default function AsistentePage() {
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-semibold tracking-tight">Asistente</h1>
         <p className="text-zinc-600 dark:text-zinc-400">
-          Preguntá sobre reglamentos, planes y calendarios. Respondo solo con los documentos oficiales que cargó Secretaría y te muestro de
-          dónde saqué cada dato.
+          Preguntá sobre reglamentos, mesas de examen, correlatividades, objetos perdidos o tus trámites. Respondo solo con los documentos
+          oficiales y los datos actuales de Astrea, y te muestro de dónde saqué cada dato. También puedo prepararte una solicitud de trámite
+          para que la confirmes.
         </p>
       </div>
 
       <div role="note" aria-label="Antes de preguntar" className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
         <p>
           Las respuestas las redacta una inteligencia artificial y pueden tener errores: ante cualquier duda, confirmá en Secretaría. El
-          asistente no aprueba ni inicia trámites.
+          asistente no aprueba trámites ni envía nada sin que lo confirmes.
         </p>
         <p className="mt-1">
           No escribas datos personales (DNI, teléfono, email): no hacen falta y se ocultan automáticamente. Tus conversaciones las ves solo
@@ -231,7 +249,7 @@ export default function AsistentePage() {
                   {mensaje.contenido}
                 </li>
               ) : (
-                <RespuestaAsistente key={mensaje.id} mensaje={mensaje} onAbrirFuente={abrirFuente} />
+                <RespuestaAsistente key={mensaje.id} mensaje={mensaje} onAbrirFuente={abrirFuente} onPropuesta={resolverPropuesta} />
               ),
             )}
             {pendiente && (
@@ -282,7 +300,15 @@ export default function AsistentePage() {
   );
 }
 
-function RespuestaAsistente({ mensaje, onAbrirFuente }: { mensaje: Mensaje; onAbrirFuente: (fuente: Fuente) => void }) {
+function RespuestaAsistente({
+  mensaje,
+  onAbrirFuente,
+  onPropuesta,
+}: {
+  mensaje: Mensaje;
+  onAbrirFuente: (fuente: Fuente) => void;
+  onPropuesta: (mensaje: Mensaje, accion: "confirmar" | "cancelar") => Promise<void>;
+}) {
   return (
     <li aria-label="Respuesta del asistente" className="mr-auto flex max-w-[95%] flex-col gap-2 rounded-xl bg-zinc-100 px-3 py-2 dark:bg-zinc-800">
       {mensaje.sinEvidencia && (
@@ -293,15 +319,17 @@ function RespuestaAsistente({ mensaje, onAbrirFuente }: { mensaje: Mensaje; onAb
       <p className="whitespace-pre-wrap">
         <ConCitas texto={mensaje.contenido} prefijo={mensaje.id} />
       </p>
+      {mensaje.propuesta && <TarjetaPropuesta mensaje={mensaje} onAccion={onPropuesta} />}
       {mensaje.fuentes.length > 0 && (
         <div className="flex flex-col gap-1 border-t border-zinc-200 pt-2 text-sm dark:border-zinc-700">
           <h3 className="font-medium">Fuentes</h3>
           <ol aria-label="Fuentes" className="flex flex-col gap-2">
             {mensaje.fuentes.map((fuente, i) => (
-              <li key={`${fuente.documentoId}-${i}`} id={`${mensaje.id}-fuente-${i + 1}`} className="flex flex-col gap-1">
+              <li key={`${fuente.documentoId ?? fuente.titulo}-${i}`} id={`${mensaje.id}-fuente-${i + 1}`} className="flex flex-col gap-1">
                 <div className="flex flex-wrap items-baseline gap-x-2">
                   <span className="font-medium">
-                    [{i + 1}] {fuente.titulo} (versión {fuente.version})
+                    [{i + 1}] {fuente.titulo}
+                    {fuente.version !== null && ` (versión ${fuente.version})`}
                   </span>
                   <span className="text-zinc-600 dark:text-zinc-400">
                     {[fuente.seccion, paginas(fuente), fuente.fuente].filter(Boolean).join(" · ")}
@@ -310,20 +338,86 @@ function RespuestaAsistente({ mensaje, onAbrirFuente }: { mensaje: Mensaje; onAb
                 <blockquote className="border-l-2 border-zinc-300 pl-2 text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
                   {fuente.extracto}
                 </blockquote>
-                <button
-                  type="button"
-                  onClick={() => onAbrirFuente(fuente)}
-                  className="w-fit text-indigo-600 hover:underline dark:text-indigo-400"
-                  aria-label={`Descargar el PDF de ${fuente.titulo}`}
-                >
-                  Descargar PDF
-                </button>
+                {fuente.tipo === "DatosDeAstrea" && fuente.enlace ? (
+                  <Link href={fuente.enlace} className="w-fit text-indigo-600 hover:underline dark:text-indigo-400">
+                    Ver en {fuente.titulo}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onAbrirFuente(fuente)}
+                    className="w-fit text-indigo-600 hover:underline dark:text-indigo-400"
+                    aria-label={`Descargar el PDF de ${fuente.titulo}`}
+                  >
+                    Descargar PDF
+                  </button>
+                )}
               </li>
             ))}
           </ol>
         </div>
       )}
     </li>
+  );
+}
+
+/** La solicitud que preparó el asistente. Solo se envía si el estudiante la confirma. */
+function TarjetaPropuesta({ mensaje, onAccion }: { mensaje: Mensaje; onAccion: (mensaje: Mensaje, accion: "confirmar" | "cancelar") => Promise<void> }) {
+  const propuesta = mensaje.propuesta!;
+  const [enviando, setEnviando] = useState(false);
+
+  async function ejecutar(accion: "confirmar" | "cancelar") {
+    setEnviando(true);
+    try {
+      await onAccion(mensaje, accion);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <section aria-label={`Solicitud: ${propuesta.tipoNombre}`} className="flex flex-col gap-2 rounded-lg border border-indigo-200 bg-white p-3 text-sm dark:border-indigo-900 dark:bg-zinc-900">
+      <h3 className="font-medium">Solicitud: {propuesta.tipoNombre}</h3>
+      <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
+        {propuesta.resumen.map((dato) => (
+          <div key={dato.etiqueta} className="contents">
+            <dt className="text-zinc-500">{dato.etiqueta}</dt>
+            <dd className="break-words">{dato.valor}</dd>
+          </div>
+        ))}
+      </dl>
+      {propuesta.estado === "Pendiente" && (
+        <>
+          <p className="text-zinc-600 dark:text-zinc-400">Todavía no se envió. Revisá los datos: se envía a Secretaría solo si confirmás.</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={enviando}
+              onClick={() => ejecutar("confirmar")}
+              className="rounded-md bg-indigo-600 px-3 py-1.5 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              Confirmar y enviar
+            </button>
+            <button type="button" disabled={enviando} onClick={() => ejecutar("cancelar")} className={boton}>
+              Cancelar
+            </button>
+          </div>
+        </>
+      )}
+      {propuesta.estado === "Confirmada" && (
+        <p role="status" className="text-emerald-700 dark:text-emerald-300">
+          Enviada: trámite {propuesta.numeroTramite}.{" "}
+          <Link href="/tramites" className="font-medium underline">
+            Seguilo en Mis trámites
+          </Link>
+        </p>
+      )}
+      {propuesta.estado === "Cancelada" && (
+        <p role="status" className="text-zinc-500">
+          Cancelaste esta solicitud. No se envió nada.
+        </p>
+      )}
+    </section>
   );
 }
 

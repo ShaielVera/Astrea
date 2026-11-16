@@ -35,4 +35,10 @@ public interface IAcademicRepository
     /// Devuelve null si el plan o la materia no existen (o están inactivos y no se piden inactivos).
     /// </summary>
     Task<CorrelatividadesDeMateriaDto?> ObtenerCorrelatividadesAsync(Guid planId, Guid materiaId, bool incluirInactivas, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Materias activas de planes activos cuyo nombre o código contiene <paramref name="texto"/> (sin distinguir tildes),
+    /// opcionalmente de una carrera. Primero las que coinciden exacto, después las más cortas.
+    /// </summary>
+    Task<IReadOnlyList<MateriaEncontradaDto>> BuscarMateriasAsync(string texto, Guid? carreraId, int maximo, CancellationToken cancellationToken);
 }

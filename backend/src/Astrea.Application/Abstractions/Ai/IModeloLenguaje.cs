@@ -1,27 +1,68 @@
+using System.Text.Json;
+
 namespace Astrea.Application.Abstractions.Ai;
 
-/// <summary>Un fragmento recuperado que el modelo puede usar y citar por su <see cref="Id"/> (F1, F2…).</summary>
-public sealed record EvidenciaModelo(string Id, string Encabezado, string Contenido);
+public enum TipoParametro
+{
+    Texto,
 
-/// <summary>Un mensaje anterior de la conversación (contexto acotado para entender repreguntas).</summary>
-public sealed record MensajeModelo(bool EsDelUsuario, string Texto);
+    /// <summary>Fecha AAAA-MM-DD (se envía como texto y la valida el backend).</summary>
+    Fecha,
 
-/// <param name="Instrucciones">Reglas del sistema: qué puede responder y cómo.</param>
-/// <param name="Historial">Últimos mensajes, del más viejo al más nuevo.</param>
-/// <param name="Mensaje">La pregunta junto con las evidencias, ya delimitadas como datos.</param>
-/// <param name="Evidencias">Las mismas evidencias, por separado (para validar citas y para el modelo de prueba).</param>
-public sealed record ConsultaModelo(string Instrucciones, IReadOnlyList<MensajeModelo> Historial, string Mensaje, IReadOnlyList<EvidenciaModelo> Evidencias);
+    Booleano,
 
-/// <param name="Respuesta">Texto para el usuario, con citas del tipo [F1].</param>
-/// <param name="Fuentes">Ids de las evidencias que el modelo dice haber usado.</param>
-/// <param name="SinEvidencia">El modelo indica que las evidencias no alcanzan para responder.</param>
-public sealed record RespuestaModelo(string Respuesta, IReadOnlyList<string> Fuentes, bool SinEvidencia);
+    ListaDeTextos,
 
-/// <summary>Puerto de salida: el modelo de lenguaje que redacta la respuesta a partir de las evidencias.</summary>
+    /// <summary>Lista de objetos con los <see cref="ParametroHerramienta.Campos"/> indicados.</summary>
+    ListaDeObjetos,
+}
+
+/// <param name="Valores">Si no es null, los únicos valores admitidos (un enum).</param>
+/// <param name="Campos">Para <see cref="TipoParametro.ListaDeObjetos"/>: los campos de cada objeto.</param>
+public sealed record ParametroHerramienta(
+    string Nombre,
+    TipoParametro Tipo,
+    string Descripcion,
+    bool Obligatorio,
+    IReadOnlyList<string>? Valores = null,
+    IReadOnlyList<ParametroHerramienta>? Campos = null);
+
+/// <summary>Lo que el modelo sabe de una herramienta: nombre, para qué sirve y qué argumentos lleva.</summary>
+public sealed record DefinicionHerramienta(string Nombre, string Descripcion, IReadOnlyList<ParametroHerramienta> Parametros);
+
+/// <summary>Un paso de la conversación con el modelo.</summary>
+public abstract record TurnoAgente;
+
+public sealed record TurnoUsuario(string Texto) : TurnoAgente;
+
+/// <summary>Una respuesta anterior del asistente (historial).</summary>
+public sealed record TurnoModelo(string Texto) : TurnoAgente;
+
+/// <summary>
+/// Herramientas que el modelo pidió usar. <paramref name="Original"/> es el contenido tal como lo devolvió el proveedor:
+/// algunos (Gemini) exigen recibirlo sin cambios en el pedido siguiente.
+/// </summary>
+public sealed record TurnoLlamadas(IReadOnlyList<LlamadaHerramienta> Llamadas, object? Original = null) : TurnoAgente;
+
+/// <summary>Lo que devolvió el backend al ejecutar (o rechazar) cada llamada, en el mismo orden.</summary>
+public sealed record TurnoResultados(IReadOnlyList<ResultadoHerramienta> Resultados) : TurnoAgente;
+
+public sealed record LlamadaHerramienta(string Nombre, JsonElement Argumentos);
+
+/// <param name="Contenido">Objeto serializable a JSON con el resultado (o un error) para el modelo.</param>
+public sealed record ResultadoHerramienta(string Nombre, object Contenido);
+
+public sealed record ConsultaAgente(string Instrucciones, IReadOnlyList<DefinicionHerramienta> Herramientas, IReadOnlyList<TurnoAgente> Turnos);
+
+/// <summary>
+/// Puerto de salida: el modelo de lenguaje. En cada paso solo PROPONE llamadas a herramientas (incluida "responder",
+/// que termina el turno); el backend valida y ejecuta cada una. El modelo nunca toca datos directamente.
+/// </summary>
 public interface IModeloLenguaje
 {
+    /// <summary>Las llamadas que propone el modelo. Una lista vacía significa que no supo cómo seguir.</summary>
     /// <exception cref="ModeloNoDisponibleException">El proveedor no está configurado, no respondió o respondió algo inválido.</exception>
-    Task<RespuestaModelo> ResponderAsync(ConsultaModelo consulta, CancellationToken cancellationToken);
+    Task<TurnoLlamadas> SiguientePasoAsync(ConsultaAgente consulta, CancellationToken cancellationToken);
 }
 
 /// <summary>El modelo de lenguaje no se pudo usar. El mensaje es para el registro del servidor, no para el usuario.</summary>

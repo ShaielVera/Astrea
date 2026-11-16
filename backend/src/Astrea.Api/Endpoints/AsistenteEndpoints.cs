@@ -41,6 +41,24 @@ internal static class AsistenteEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        asistente.MapPost("/conversaciones/{id:guid}/mensajes/{mensajeId:guid}/confirmar", async (Guid id, Guid mensajeId, Asistente servicio, CancellationToken ct) =>
+                (await servicio.ConfirmarPropuestaAsync(id, mensajeId, ct)).AHttp())
+            .WithName("ConfirmarPropuestaDeTramite")
+            .WithDescription(
+                "Crea el trámite que preparó el asistente, a nombre del usuario de la sesión. Es idempotente: confirmar dos veces crea uno solo. " +
+                "El asistente nunca crea trámites por su cuenta.")
+            .Produces<MensajeDto>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        asistente.MapPost("/conversaciones/{id:guid}/mensajes/{mensajeId:guid}/cancelar", async (Guid id, Guid mensajeId, Asistente servicio, CancellationToken ct) =>
+                (await servicio.CancelarPropuestaAsync(id, mensajeId, ct)).AHttp())
+            .WithName("CancelarPropuestaDeTramite")
+            .Produces<MensajeDto>()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         asistente.MapGet("/fuentes/{documentoId:guid}", async (Guid documentoId, Asistente servicio, CancellationToken ct) =>
                 (await servicio.DescargarFuenteAsync(documentoId, ct)).AArchivo())
             .WithName("DescargarFuente")

@@ -74,3 +74,6 @@ public static class ErroresAcademicos
     public static Contracts.Results.Error CodigoCarreraDuplicado(string codigo) =>
         Contracts.Results.Error.Conflicto("academico.codigo_duplicado", $"Ya existe una carrera con el código {codigo}.");
 }
+
+/// <summary>Una materia dentro de un plan vigente, encontrada por nombre.</summary>
+public sealed record MateriaEncontradaDto(Guid PlanId, Guid MateriaId, string Codigo, string Nombre, int Anio, Guid CarreraId, string Carrera, string Plan);

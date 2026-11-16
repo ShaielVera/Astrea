@@ -29,7 +29,7 @@ public sealed class EfConversacionRepositoryTests(BaseDeDatosFixture baseDeDatos
     {
         await using var db = baseDeDatos.CrearContexto();
         var conversacion = Conversacion.Iniciar(Guid.CreateVersion7(), usuario.Id, pregunta, fecha);
-        conversacion.Registrar(pregunta, "Cierra 48 horas antes [1].", [Fuente], false, fecha);
+        conversacion.Registrar(pregunta, "Cierra 48 horas antes [1].", [Fuente], TipoRespuesta.Respuesta, fecha);
         var repositorio = new EfConversacionRepository(db);
         repositorio.Agregar(conversacion);
         await new EfUnitOfWork(db).GuardarCambiosAsync(CancellationToken.None);
@@ -46,7 +46,7 @@ public sealed class EfConversacionRepositoryTests(BaseDeDatosFixture baseDeDatos
         {
             var repositorio = new EfConversacionRepository(db);
             var guardada = (await repositorio.ObtenerAsync(conversacion.Id, CancellationToken.None))!;
-            guardada.Registrar("¿Y en diciembre?", "No encontré información confirmada.", [], true, Ahora.AddMinutes(1));
+            guardada.Registrar("¿Y en diciembre?", "No encontré información confirmada.", [], TipoRespuesta.SinEvidencia, Ahora.AddMinutes(1));
             await new EfUnitOfWork(db).GuardarCambiosAsync(CancellationToken.None);
         }
 
@@ -56,6 +56,33 @@ public sealed class EfConversacionRepositoryTests(BaseDeDatosFixture baseDeDatos
         final.FechaUltimoMensaje.Should().Be(Ahora.AddMinutes(1));
         final.Mensajes.Single(mensaje => mensaje.Rol == RolMensaje.Asistente && !mensaje.SinEvidencia).Fuentes.Should().Equal(Fuente);
         final.Mensajes.Single(mensaje => mensaje.SinEvidencia).Fuentes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Guarda_la_propuesta_de_tramite_y_su_confirmacion()
+    {
+        var usuario = await CrearUsuarioAsync();
+        var conversacion = Conversacion.Iniciar(Guid.CreateVersion7(), usuario.Id, "Quiero una constancia", Ahora);
+        var propuesta = new PropuestaTramite(Guid.NewGuid(), "Constancia de alumno regular", new Dictionary<string, string?> { ["presentarAnte"] = "ANSES" }, [new DatoPropuesta("Para presentar ante", "ANSES")]);
+        var (_, mensaje) = conversacion.Registrar("Quiero una constancia", "Te preparé la solicitud.", [], TipoRespuesta.Respuesta, Ahora, propuesta);
+        await using (var db = baseDeDatos.CrearContexto())
+        {
+            new EfConversacionRepository(db).Agregar(conversacion);
+            await new EfUnitOfWork(db).GuardarCambiosAsync(CancellationToken.None);
+        }
+
+        var tramiteId = Guid.NewGuid();
+        await using (var db = baseDeDatos.CrearContexto())
+        {
+            var guardada = (await new EfConversacionRepository(db).ObtenerAsync(conversacion.Id, CancellationToken.None))!;
+            guardada.Mensajes.Single(m => m.Id == mensaje.Id).Propuesta.Should().BeEquivalentTo(propuesta);
+            guardada.ConfirmarPropuesta(mensaje.Id, tramiteId, "T-000099", Ahora.AddMinutes(1));
+            await new EfUnitOfWork(db).GuardarCambiosAsync(CancellationToken.None);
+        }
+
+        await using var lectura = baseDeDatos.CrearContexto();
+        var final = (await new EfConversacionRepository(lectura).ObtenerAsync(conversacion.Id, CancellationToken.None))!;
+        final.Mensajes.Single(m => m.Id == mensaje.Id).Propuesta.Should().BeEquivalentTo(new { Estado = EstadoPropuesta.Confirmada, TramiteId = tramiteId, NumeroTramite = "T-000099" });
     }
 
     [Fact]

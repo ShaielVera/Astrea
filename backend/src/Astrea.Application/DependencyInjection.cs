@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<DepuracionHallazgos>();
         services.AddScoped<AdministracionDocumentosRag>();
         services.AddScoped<IngestaDocumentos>();
+        services.AddScoped<HerramientasAsistente>();
         services.AddScoped<Asistente>();
         services.AddScoped<DepuracionConversaciones>();
 

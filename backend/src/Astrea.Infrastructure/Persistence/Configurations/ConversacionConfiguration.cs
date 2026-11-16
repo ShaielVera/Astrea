@@ -2,6 +2,7 @@ using Astrea.Domain.Agent;
 using Astrea.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Astrea.Infrastructure.Persistence.Configurations;
 
@@ -49,6 +50,10 @@ internal sealed class MensajeChatConfiguration : IEntityTypeConfiguration<Mensaj
             .HasColumnName("fuentes_json")
             .HasColumnType("jsonb")
             .HasConversion(Json.Conversor<List<FuenteRespuesta>>(() => []), Json.Comparador<List<FuenteRespuesta>>());
+        builder.Property(mensaje => mensaje.Propuesta)
+            .HasColumnName("propuesta_json")
+            .HasColumnType("jsonb")
+            .HasConversion((ValueConverter)Json.Conversor<PropuestaTramite>(() => throw new InvalidOperationException("Propuesta inválida.")), Json.Comparador<PropuestaTramite>());
         builder.HasIndex(mensaje => new { mensaje.ConversacionId, mensaje.Fecha });
     }
 }

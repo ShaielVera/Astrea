@@ -6,10 +6,31 @@ namespace Astrea.Application.Features.Agent;
 /// <param name="ConversacionId">Null para empezar una conversación nueva.</param>
 public sealed record PreguntaCommand(Guid? ConversacionId, string Mensaje);
 
-public sealed record MensajeDto(Guid Id, RolMensaje Rol, string Contenido, IReadOnlyList<FuenteRespuesta> Fuentes, bool SinEvidencia, DateTimeOffset Fecha)
+/// <summary>Una solicitud de trámite preparada por el asistente, para confirmar o cancelar hasta <see cref="VenceEl"/>.</summary>
+public sealed record PropuestaDto(EstadoPropuesta Estado, string TipoNombre, IReadOnlyList<DatoPropuesta> Resumen, Guid? TramiteId, string? NumeroTramite, DateTimeOffset VenceEl);
+
+public sealed record MensajeDto(
+    Guid Id,
+    RolMensaje Rol,
+    string Contenido,
+    IReadOnlyList<FuenteRespuesta> Fuentes,
+    bool SinEvidencia,
+    bool EsAclaracion,
+    PropuestaDto? Propuesta,
+    DateTimeOffset Fecha)
 {
     public static MensajeDto Desde(MensajeChat mensaje) =>
-        new(mensaje.Id, mensaje.Rol, mensaje.Contenido, mensaje.Fuentes, mensaje.SinEvidencia, mensaje.Fecha);
+        new(
+            mensaje.Id,
+            mensaje.Rol,
+            mensaje.Contenido,
+            mensaje.Fuentes,
+            mensaje.SinEvidencia,
+            mensaje.EsAclaracion,
+            mensaje.Propuesta is { } propuesta
+                ? new PropuestaDto(propuesta.Estado, propuesta.TipoNombre, propuesta.Resumen, propuesta.TramiteId, propuesta.NumeroTramite, mensaje.Fecha.AddHours(Conversacion.HorasDeVigenciaPropuesta))
+                : null,
+            mensaje.Fecha);
 }
 
 /// <summary>Lo que devuelve una pregunta: la pregunta tal como quedó guardada (con datos personales ocultos) y la respuesta.</summary>
@@ -43,6 +64,9 @@ public static class ErroresAsistente
 
     public static readonly Error FuenteNoDisponible =
         Error.NoEncontrado("fuente_no_disponible", "Ese documento ya no está disponible.");
+
+    public static readonly Error MensajeNoEncontrado =
+        Error.NoEncontrado("mensaje_no_encontrado", "El mensaje no existe.");
 
     public static readonly Error NoDisponible =
         Error.NoDisponible("asistente_no_disponible", "El asistente no está disponible en este momento. Probá de nuevo en unos minutos o consultá en Secretaría.");

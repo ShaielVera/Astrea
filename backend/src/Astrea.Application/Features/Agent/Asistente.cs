@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Astrea.Application.Abstractions.Ai;
 using Astrea.Application.Abstractions.Clock;
 using Astrea.Application.Abstractions.Documents;
@@ -8,15 +9,17 @@ using Astrea.Application.Features.Auth;
 using Astrea.Application.Features.Knowledge;
 using Astrea.Application.Features.Procedures;
 using Astrea.Domain.Agent;
+using Astrea.Domain.Common;
 using Astrea.Domain.Knowledge;
 using Microsoft.Extensions.Logging;
 
 namespace Astrea.Application.Features.Agent;
 
 /// <summary>
-/// El asistente de consultas (RAG): busca en los documentos oficiales los fragmentos que hablan de la pregunta,
-/// le pide al modelo una respuesta limitada a esos fragmentos y solo la acepta si cita fuentes reales.
-/// Si no hay evidencia suficiente, lo reconoce y deriva a Secretaría. Cada usuario ve solo sus conversaciones.
+/// El asistente de consultas. Combina documentos oficiales (RAG) con datos vigentes del sistema (herramientas):
+/// el modelo propone qué herramienta usar, el backend valida y ejecuta, y la respuesta solo se acepta si cita fuentes reales.
+/// Si no hay evidencia suficiente, lo reconoce y deriva a Secretaría. Un trámite solo se crea cuando el estudiante confirma
+/// la propuesta. Cada usuario ve solo sus conversaciones.
 /// </summary>
 public sealed class Asistente(
     UsuarioActual usuarioActual,
@@ -24,6 +27,8 @@ public sealed class Asistente(
     IDocumentoRagRepository documentos,
     IEmbeddingService embeddings,
     IModeloLenguaje modelo,
+    HerramientasAsistente herramientas,
+    SolicitudesTramite solicitudes,
     IFileStorage archivos,
     IUnitOfWork unitOfWork,
     IClock clock,
@@ -35,6 +40,12 @@ public sealed class Asistente(
 
     /// <summary>Mensajes anteriores que se le pasan al modelo para entender repreguntas.</summary>
     public const int MensajesDeContexto = 6;
+
+    /// <summary>Idas y vueltas con el modelo por pregunta: acota costo, demora y bucles.</summary>
+    public const int PasosMaximos = 4;
+
+    /// <summary>Herramientas que se ejecutan por paso (el modelo puede pedir varias a la vez).</summary>
+    public const int LlamadasPorPaso = 3;
 
     public async Task<Result<IntercambioDto>> PreguntarAsync(PreguntaCommand comando, CancellationToken cancellationToken)
     {
@@ -55,11 +66,14 @@ public sealed class Asistente(
             return ErroresAsistente.PreguntaDemasiadoLarga;
         }
 
+        // Nunca se guardan ni se envían al proveedor de IA datos personales que no hacen falta para responder.
+        var pregunta = DatosSensibles.Ocultar(texto);
+
         Conversacion conversacion;
         var nueva = comando.ConversacionId is null;
         if (nueva)
         {
-            conversacion = Conversacion.Iniciar(Guid.CreateVersion7(), usuario.Valor.Id, DatosSensibles.Ocultar(texto), clock.UtcNow);
+            conversacion = Conversacion.Iniciar(Guid.CreateVersion7(), usuario.Valor.Id, pregunta, clock.UtcNow);
         }
         else
         {
@@ -78,13 +92,10 @@ public sealed class Asistente(
             conversacion = existente;
         }
 
-        // Nunca se guardan ni se envían al proveedor de IA datos personales que no hacen falta para responder.
-        var pregunta = DatosSensibles.Ocultar(texto);
-
         RespuestaValidada respuesta;
         try
         {
-            respuesta = await ResponderAsync(conversacion, pregunta, cancellationToken);
+            respuesta = await ResponderAsync(conversacion, pregunta, new ContextoHerramientas(usuario.Valor), cancellationToken);
         }
         catch (Exception ex) when (ex is EmbeddingNoDisponibleException or ModeloNoDisponibleException)
         {
@@ -92,7 +103,7 @@ public sealed class Asistente(
             return ErroresAsistente.NoDisponible;
         }
 
-        var (mensajePregunta, mensajeRespuesta) = conversacion.Registrar(pregunta, respuesta.Texto, respuesta.Fuentes, respuesta.SinEvidencia, clock.UtcNow);
+        var (mensajePregunta, mensajeRespuesta) = conversacion.Registrar(pregunta, respuesta.Texto, respuesta.Fuentes, respuesta.Tipo, clock.UtcNow, respuesta.Propuesta);
         if (nueva)
         {
             conversaciones.Agregar(conversacion);
@@ -100,6 +111,76 @@ public sealed class Asistente(
 
         await unitOfWork.GuardarCambiosAsync(cancellationToken);
         return new IntercambioDto(conversacion.Id, conversacion.Titulo, MensajeDto.Desde(mensajePregunta), MensajeDto.Desde(mensajeRespuesta));
+    }
+
+    /// <summary>
+    /// El estudiante confirma la solicitud que preparó el asistente: recién ahí se crea el trámite, a su nombre.
+    /// La clave de idempotencia es el id del mensaje, así que confirmar dos veces crea un solo trámite.
+    /// </summary>
+    public async Task<Result<MensajeDto>> ConfirmarPropuestaAsync(Guid conversacionId, Guid mensajeId, CancellationToken cancellationToken)
+    {
+        var conversacion = await PropiaAsync(conversacionId, cancellationToken);
+        if (!conversacion.EsExitoso)
+        {
+            return conversacion.Error!;
+        }
+
+        if (conversacion.Valor.Mensajes.All(mensaje => mensaje.Id != mensajeId))
+        {
+            return ErroresAsistente.MensajeNoEncontrado;
+        }
+
+        // Una propuesta ya confirmada se informa sin volver a crear nada.
+        var mensajeActual = conversacion.Valor.Mensajes.Single(mensaje => mensaje.Id == mensajeId);
+        if (mensajeActual.Propuesta is { Estado: EstadoPropuesta.Confirmada })
+        {
+            return MensajeDto.Desde(mensajeActual);
+        }
+
+        PropuestaTramite propuesta;
+        try
+        {
+            propuesta = conversacion.Valor.PropuestaPendiente(mensajeId, clock.UtcNow);
+        }
+        catch (DomainException ex)
+        {
+            return Error.Conflicto("propuesta_no_disponible", ex.Message);
+        }
+
+        var tramite = await solicitudes.SolicitarAsync(new SolicitarTramiteCommand(propuesta.TipoId, propuesta.Datos, ClaveIdempotencia: mensajeId), cancellationToken);
+        if (!tramite.EsExitoso)
+        {
+            return tramite.Error!;
+        }
+
+        var mensaje = conversacion.Valor.ConfirmarPropuesta(mensajeId, tramite.Valor.Id, tramite.Valor.Numero, clock.UtcNow);
+        await unitOfWork.GuardarCambiosAsync(cancellationToken);
+        return MensajeDto.Desde(mensaje);
+    }
+
+    public async Task<Result<MensajeDto>> CancelarPropuestaAsync(Guid conversacionId, Guid mensajeId, CancellationToken cancellationToken)
+    {
+        var conversacion = await PropiaAsync(conversacionId, cancellationToken);
+        if (!conversacion.EsExitoso)
+        {
+            return conversacion.Error!;
+        }
+
+        if (conversacion.Valor.Mensajes.All(mensaje => mensaje.Id != mensajeId))
+        {
+            return ErroresAsistente.MensajeNoEncontrado;
+        }
+
+        try
+        {
+            var mensaje = conversacion.Valor.CancelarPropuesta(mensajeId, clock.UtcNow);
+            await unitOfWork.GuardarCambiosAsync(cancellationToken);
+            return MensajeDto.Desde(mensaje);
+        }
+        catch (DomainException ex)
+        {
+            return Error.Conflicto("propuesta_no_disponible", ex.Message);
+        }
     }
 
     public async Task<Result<PagedResult<ConversacionResumenDto>>> ListarAsync(int? page, int? pageSize, CancellationToken cancellationToken)
@@ -150,7 +231,7 @@ public sealed class Asistente(
             : new ArchivoDto(AdministracionDocumentosRag.NombreArchivo(documento), "application/pdf", contenido);
     }
 
-    private async Task<RespuestaValidada> ResponderAsync(Conversacion conversacion, string pregunta, CancellationToken cancellationToken)
+    private async Task<RespuestaValidada> ResponderAsync(Conversacion conversacion, string pregunta, ContextoHerramientas contexto, CancellationToken cancellationToken)
     {
         // Una repregunta ("¿y en diciembre?") se entiende mejor buscando junto con la pregunta anterior.
         var busqueda = conversacion.UltimaPregunta is { } anterior ? $"{anterior}\n{pregunta}" : pregunta;
@@ -158,18 +239,66 @@ public sealed class Asistente(
         var encontrados = await documentos.BuscarSimilaresAsync(vector, Candidatos, cancellationToken);
         var evidencias = PoliticaRag.SeleccionarEvidencias(encontrados, configuracion.Asistente);
 
-        // Sin evidencia no se consulta al modelo: no hay de dónde sacar una respuesta confirmada.
-        if (evidencias.Count == 0)
+        var turnos = new List<TurnoAgente>();
+        foreach (var mensaje in conversacion.UltimosMensajes(MensajesDeContexto))
         {
-            return PoliticaRag.Abstencion();
+            turnos.Add(mensaje.Rol == RolMensaje.Usuario ? new TurnoUsuario(mensaje.Contenido) : new TurnoModelo(mensaje.Contenido));
         }
 
-        var historial = conversacion.UltimosMensajes(MensajesDeContexto)
-            .Select(mensaje => new MensajeModelo(mensaje.Rol == RolMensaje.Usuario, mensaje.Contenido))
-            .ToList();
-        var consulta = new ConsultaModelo(PoliticaRag.Instrucciones, historial, PoliticaRag.ArmarMensaje(pregunta, evidencias), PoliticaRag.ParaElModelo(evidencias));
-        var respuesta = await modelo.ResponderAsync(consulta, cancellationToken);
-        return PoliticaRag.Validar(respuesta, evidencias);
+        turnos.Add(new TurnoUsuario(PoliticaRag.ArmarMensaje(pregunta, evidencias)));
+        var definiciones = await herramientas.DefinicionesAsync(cancellationToken);
+
+        for (var paso = 0; paso < PasosMaximos; paso++)
+        {
+            var llamadas = await modelo.SiguientePasoAsync(new ConsultaAgente(PoliticaRag.Instrucciones, definiciones, turnos.ToList()), cancellationToken);
+            if (llamadas.Llamadas.Count == 0)
+            {
+                return PoliticaRag.Abstencion();
+            }
+
+            if (llamadas.Llamadas.FirstOrDefault(llamada => llamada.Nombre == HerramientasAsistente.Responder) is { } final)
+            {
+                return final.Argumentos.ValueKind == JsonValueKind.Object
+                    ? PoliticaRag.Validar(LeerRespuesta(final.Argumentos), evidencias, contexto.Datos, contexto.Propuesta)
+                    : PoliticaRag.Abstencion();
+            }
+
+            // Cada llamada recibe un resultado (algunos proveedores lo exigen); las que pasan del tope no se ejecutan.
+            var resultados = new List<ResultadoHerramienta>(llamadas.Llamadas.Count);
+            foreach (var (llamada, i) in llamadas.Llamadas.Select((llamada, i) => (llamada, i)))
+            {
+                logger.LogInformation("El asistente pide la herramienta {Herramienta}.", llamada.Nombre);
+                var resultado = i < LlamadasPorPaso
+                    ? await herramientas.EjecutarAsync(llamada, contexto, cancellationToken)
+                    : new { error = $"Se ejecutan como máximo {LlamadasPorPaso} herramientas por paso." };
+                resultados.Add(new ResultadoHerramienta(llamada.Nombre, resultado));
+            }
+
+            turnos.Add(llamadas);
+            turnos.Add(new TurnoResultados(resultados));
+        }
+
+        logger.LogWarning("El asistente no terminó de responder en {Pasos} pasos.", PasosMaximos);
+        return PoliticaRag.Abstencion();
+    }
+
+    private static RespuestaPropuesta LeerRespuesta(JsonElement argumentos)
+    {
+        string texto;
+        try
+        {
+            texto = Argumentos.Texto(argumentos, "respuesta", Conversacion.LargoMaximoRespuesta * 2, obligatorio: false) ?? string.Empty;
+        }
+        catch (ArgumentoInvalidoException)
+        {
+            texto = string.Empty;
+        }
+
+        return new RespuestaPropuesta(
+            texto,
+            Argumentos.ListaDeTextos(argumentos, "fuentes"),
+            Argumentos.Booleano(argumentos, "sinEvidencia"),
+            Argumentos.Booleano(argumentos, "esAclaracion"));
     }
 
     private async Task<Result<Conversacion>> PropiaAsync(Guid id, CancellationToken cancellationToken)
