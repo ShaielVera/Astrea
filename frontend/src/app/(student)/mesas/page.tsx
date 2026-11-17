@@ -86,7 +86,7 @@ export default function MesasPage() {
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-10 sm:px-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-semibold tracking-tight">Mesas de examen</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">Llamados a examen final con fecha, hora, aula y los profesores que toman el examen. Los horarios son de Argentina.</p>
+        <p className="text-zinc-600 dark:text-zinc-400">Llamados a examen final con fecha, hora, aula y los profesores que toman el examen.</p>
       </div>
 
       <form onSubmit={enviar} aria-label="Buscar mesas" className="grid grid-cols-1 gap-3 rounded-xl border bg-superficie border-zinc-200 p-4 sm:grid-cols-2 lg:grid-cols-4 dark:border-zinc-800">

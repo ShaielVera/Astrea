@@ -77,3 +77,86 @@ body {
     }
   }
 }
+
+/* Panel de bienvenida del inicio: el cielo cambia con la hora (mañana, tarde, atardecer, noche). */
+@layer components {
+  .cielo-astrea {
+    --cielo-fondo: linear-gradient(160deg, #ffffff 0%, #f3f8fd 55%, #e4eef9 100%);
+    --cielo-borde: #d8e3f0;
+    --cielo-texto: #132c4a;
+    --cielo-texto-2: #4b5a6e;
+    --cielo-texto-3: #6a778a;
+    --cielo-acento: #1f4f86;
+    --cielo-constelacion: #1f4f86;
+    --cielo-linea: 0.25;
+    --cielo-estrellas: 0;
+    --cielo-sol: #f9d77e;
+    --cielo-resplandor: 1;
+    --cielo-rol-fondo: #c99a2e;
+    --cielo-rol-texto: #0b1a2e;
+    background: var(--cielo-fondo);
+    border-color: var(--cielo-borde);
+    color: var(--cielo-texto);
+    transition: background 0.6s, color 0.6s;
+  }
+  .cielo-astrea h1 { color: var(--cielo-texto); }
+  .cielo-astrea .cielo-texto-2 { color: var(--cielo-texto-2); }
+  .cielo-astrea .cielo-texto-3 { color: var(--cielo-texto-3); }
+  .cielo-astrea .cielo-acento { color: var(--cielo-acento); }
+  .cielo-astrea .cielo-rol { background: var(--cielo-rol-fondo); color: var(--cielo-rol-texto); }
+  .cielo-astrea .cielo-estrellas { opacity: var(--cielo-estrellas); transition: opacity 0.6s; }
+  .cielo-astrea .cielo-linea { stroke: var(--cielo-constelacion); stroke-opacity: var(--cielo-linea); }
+  .cielo-astrea .cielo-punto { fill: var(--cielo-constelacion); }
+  .cielo-astrea .cielo-resplandor { fill: var(--cielo-sol); opacity: var(--cielo-resplandor); filter: blur(38px); transition: opacity 0.6s; }
+
+  .cielo-astrea[data-momento="tarde"] {
+    --cielo-fondo: linear-gradient(160deg, #ffffff 0%, #fffaf0 55%, #fbf0d9 100%);
+    --cielo-borde: #eadfc6;
+    --cielo-texto-3: #6f6a5e;
+    --cielo-acento: #9a7322;
+    --cielo-constelacion: #c99a2e;
+    --cielo-linea: 0.45;
+    --cielo-sol: #fbe3a4;
+    --cielo-resplandor: 0.7;
+  }
+  .cielo-astrea[data-momento="atardecer"] {
+    --cielo-fondo: linear-gradient(160deg, #fff1e0 0%, #fcd9b4 50%, #f6bb8a 100%);
+    --cielo-borde: #efc49c;
+    --cielo-texto-2: #4f3b2e;
+    --cielo-texto-3: #5f4636;
+    --cielo-acento: #9c4f1c;
+    --cielo-constelacion: #b5602a;
+    --cielo-linea: 0.45;
+    --cielo-sol: #fbe2b8;
+    --cielo-resplandor: 0.9;
+  }
+  /* De noche, y siempre en modo oscuro: azul con estrellas. */
+  .cielo-astrea[data-momento="noche"] {
+    --cielo-fondo: radial-gradient(120% 140% at 85% 0%, #2a5d97 0%, #132c4a 45%, #0b1a2e 100%);
+    --cielo-borde: #0b1a2e;
+    --cielo-texto: #ffffff;
+    --cielo-texto-2: #c8d5e6;
+    --cielo-texto-3: #aebfd6;
+    --cielo-acento: #f3d77a;
+    --cielo-constelacion: #f3d77a;
+    --cielo-linea: 0.45;
+    --cielo-estrellas: 1;
+    --cielo-resplandor: 0;
+    --cielo-rol-fondo: #f3d77a;
+  }
+  @media (prefers-color-scheme: dark) {
+    .cielo-astrea[data-momento] {
+      --cielo-fondo: radial-gradient(120% 140% at 85% 0%, #2a5d97 0%, #132c4a 45%, #0b1a2e 100%);
+      --cielo-borde: #1c3352;
+      --cielo-texto: #ffffff;
+      --cielo-texto-2: #c8d5e6;
+      --cielo-texto-3: #aebfd6;
+      --cielo-acento: #f3d77a;
+      --cielo-constelacion: #f3d77a;
+      --cielo-linea: 0.45;
+      --cielo-estrellas: 1;
+      --cielo-resplandor: 0;
+      --cielo-rol-fondo: #f3d77a;
+    }
+  }
+}

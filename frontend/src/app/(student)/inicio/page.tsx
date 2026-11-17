@@ -76,9 +76,62 @@ function saludo(hora: number): string {
   return "Buenas noches";
 }
 
+type Momento = "manana" | "tarde" | "atardecer" | "noche";
+
+/** El color del cielo del panel de bienvenida: blanco de día, durazno al atardecer y azul con estrellas de noche. */
+function momentoDelDia(hora: number): Momento {
+  if (hora >= 5 && hora < 13) return "manana";
+  if (hora >= 13 && hora < 18) return "tarde";
+  if (hora >= 18 && hora < 20) return "atardecer";
+  return "noche";
+}
+
+/** La hora actual, que se actualiza sola cada minuto (el panel cambia sin recargar la página). */
+function useHoraActual(): number {
+  const [hora, setHora] = useState(() => new Date().getHours());
+  useEffect(() => {
+    const intervalo = setInterval(() => setHora(new Date().getHours()), 60_000);
+    return () => clearInterval(intervalo);
+  }, []);
+  return hora;
+}
+
+/** Estrellas, resplandor del sol y la constelación de Astrea; los colores los pone el momento del día (globals.css). */
+function DecoracionCielo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 1000 230" preserveAspectRatio="xMaxYMid slice" className="pointer-events-none absolute inset-0 size-full">
+      <circle className="cielo-resplandor" cx="900" cy="10" r="110" />
+      <g className="cielo-estrellas" fill="#fff">
+        <circle cx="70" cy="30" r="1.3" opacity=".7" />
+        <circle cx="160" cy="200" r="1" opacity=".5" />
+        <circle cx="300" cy="18" r="1.4" opacity=".6" />
+        <circle cx="420" cy="205" r="1" opacity=".4" />
+        <circle cx="520" cy="40" r="1.2" opacity=".6" />
+        <circle cx="380" cy="120" r=".9" opacity=".4" />
+        <circle cx="610" cy="215" r="1" opacity=".5" />
+        <circle cx="240" cy="110" r=".8" opacity=".5" />
+        <circle cx="560" cy="130" r="1" opacity=".4" />
+      </g>
+      <g fill="none" strokeWidth="1.2">
+        <polyline className="cielo-linea" points="700,160 760,90 840,118 880,48 945,82" />
+        <line className="cielo-linea" x1="760" y1="90" x2="785" y2="25" />
+      </g>
+      <g>
+        <circle className="cielo-punto" cx="700" cy="160" r="3" />
+        <circle className="cielo-punto" cx="760" cy="90" r="3.8" />
+        <circle className="cielo-punto" cx="840" cy="118" r="2.8" />
+        <circle className="cielo-punto" cx="880" cy="48" r="4.2" />
+        <circle className="cielo-punto" cx="945" cy="82" r="2.6" />
+        <circle className="cielo-punto" cx="785" cy="25" r="2.8" />
+      </g>
+    </svg>
+  );
+}
+
 export default function InicioEstudiante() {
   const { perfil, obtenerToken } = useAuth();
   const [pendientes, setPendientes] = useState<string[]>([]);
+  const hora = useHoraActual();
 
   // Aviso si falta completar el perfil o renovar la validación anual del email o el celular.
   useEffect(() => {
@@ -96,25 +149,29 @@ export default function InicioEstudiante() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
-      <section className="flex flex-col gap-5 rounded-2xl border border-dorado-500/25 bg-gradient-to-br from-dorado-100/70 via-superficie to-superficie p-6 shadow-sm sm:flex-row sm:items-center sm:p-7 dark:from-indigo-900/60">
+      <section
+        data-momento={momentoDelDia(hora)}
+        className="cielo-astrea relative flex flex-col gap-5 overflow-hidden rounded-2xl border p-6 shadow-md sm:flex-row sm:items-center sm:p-7"
+      >
+        <DecoracionCielo />
         {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático, no necesita optimización */}
-        <img src="/icons/astrea.svg" alt="" width={80} height={80} className="size-20 shrink-0 rounded-2xl shadow-md" />
-        <div className="flex flex-1 flex-col gap-1">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">Portal académico · ISP N.º 20</p>
+        <img src="/icons/astrea.svg" alt="" width={80} height={80} className="relative size-20 shrink-0 rounded-2xl shadow-md" />
+        <div className="relative flex flex-1 flex-col gap-1">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] cielo-acento">Portal académico · ISP N.º 20</p>
           <h1 className="text-3xl font-bold sm:text-4xl">
-            {saludo(new Date().getHours())}
+            {saludo(hora)}
             {nombre ? `, ${nombre}` : ""}
           </h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
+          <p className="cielo-texto-2">
             Tu espacio para consultar tu carrera, seguir tus trámites y estar al día con las mesas.
             {!nombre && perfil && <span className="block text-sm">Sesión iniciada como {perfil.email}.</span>}
           </p>
-          <p className="text-sm text-zinc-500 italic dark:text-zinc-400">
+          <p className="font-serif text-sm italic cielo-texto-3">
             Astrea es la diosa griega de la justicia y el orden: precisión en las correlatividades y verificación en cada trámite y en cada
             hallazgo devuelto a su dueño.
           </p>
         </div>
-        <span className="self-start rounded-full bg-dorado-500 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-indigo-950 sm:self-center">
+        <span className="cielo-rol relative self-start rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-wider sm:self-center">
           {rol}
         </span>
       </section>
