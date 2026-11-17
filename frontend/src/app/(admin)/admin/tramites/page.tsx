@@ -24,6 +24,7 @@ const FILTROS: Record<string, { etiqueta: string; estados: EstadoTramite[] }> = 
   EnProceso: { etiqueta: "En proceso", estados: ["EnProceso"] },
   Listo: { etiqueta: "Listos", estados: ["Listo"] },
   Rechazado: { etiqueta: "Rechazados", estados: ["Rechazado"] },
+  Cancelado: { etiqueta: "Cancelados por el estudiante", estados: ["Cancelado"] },
   todos: { etiqueta: "Todos", estados: [] },
 };
 
@@ -151,7 +152,7 @@ export default function BandejaTramites() {
                   type="button"
                   onClick={() => void abrir(tramite.id)}
                   aria-current={seleccionado?.id === tramite.id}
-                  className="flex w-full flex-col gap-1 rounded-lg border border-zinc-200 px-3 py-2 text-left hover:border-indigo-400 aria-[current=true]:border-indigo-500 dark:border-zinc-800"
+                  className="flex w-full flex-col gap-1 rounded-lg border border-zinc-200 bg-superficie px-3 py-2 text-left shadow-sm hover:border-indigo-400 aria-[current=true]:border-indigo-500 dark:border-zinc-800"
                 >
                   <span className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium">
@@ -243,7 +244,7 @@ function AccionesTramite({
   const [motivo, setMotivo] = useState("");
   const [ocupado, setOcupado] = useState(false);
 
-  if (tramite.estado === "Listo" || tramite.estado === "Rechazado") return null;
+  if (tramite.estado === "Listo" || tramite.estado === "Rechazado" || tramite.estado === "Cancelado") return null;
 
   async function ejecutar(accion: () => Promise<void>) {
     setOcupado(true);

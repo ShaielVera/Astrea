@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
 import { crearCuenta, obtenerIdToken } from "./emulador";
-import { E2E, emailUnico } from "./entorno";
+import { E2E, emailUnico, dniUnico } from "./entorno";
 import { ingresarComoAdministrador, ingresarComoEstudianteNuevo } from "./sesiones";
 
 /** El estudiante pide una constancia de alumno regular y devuelve el número y el id del trámite. */
@@ -43,7 +43,7 @@ test.describe("Documentos oficiales", () => {
     const datos = enBandeja.getByRole("form", { name: "Datos oficiales del titular" });
     await datos.getByLabel("Nombre").fill("Ana");
     await datos.getByLabel("Apellido").fill("Pérez");
-    await datos.getByLabel("DNI").fill("30.123.456");
+    await datos.getByLabel("DNI").fill(dniUnico());
     await datos.getByRole("button", { name: "Guardar datos oficiales" }).click();
     await expect(admin.getByRole("status")).toContainText("Datos oficiales guardados");
     await enBandeja.getByRole("button", { name: "Aprobar" }).click();

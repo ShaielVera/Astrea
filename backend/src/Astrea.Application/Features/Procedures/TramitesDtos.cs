@@ -17,8 +17,22 @@ public sealed record TramiteTipoDto(Guid Id, string Codigo, string Nombre, strin
             tipo.Campos.Select(campo => new CampoTramiteDto(campo.Clave, campo.Etiqueta, campo.Tipo, campo.Obligatorio, campo.LargoMaximo, campo.Ayuda)).ToList());
 }
 
-/// <summary>Datos de una persona. El DNI solo se completa en la vista de administración y la del propio titular.</summary>
-public sealed record PersonaDto(Guid Id, string Email, string? Nombre, string? Apellido, string? Legajo, string? Dni = null)
+/// <summary>
+/// Datos de una persona. El DNI y el contacto solo se completan en la vista de administración y la del propio titular.
+/// <see cref="DatosConfirmados"/>: Secretaría ya revisó nombre, apellido y DNI (si no, los cargó el estudiante).
+/// </summary>
+public sealed record PersonaDto(
+    Guid Id,
+    string Email,
+    string? Nombre,
+    string? Apellido,
+    string? Legajo,
+    string? Dni = null,
+    bool DatosConfirmados = false,
+    string? EmailContacto = null,
+    DateTimeOffset? EmailContactoVerificadoEn = null,
+    string? Celular = null,
+    DateTimeOffset? CelularVerificadoEn = null)
 {
     public string NombreParaMostrar => Apellido is not null || Nombre is not null ? $"{Apellido}, {Nombre}".Trim(' ', ',') : Email;
 
@@ -135,7 +149,10 @@ public static class ErroresTramites
     public static readonly Error DatosOficialesIncompletos =
         Error.Validacion(
             "datos_oficiales_incompletos",
-            "Antes de aprobar, cargá los datos oficiales del estudiante (nombre, apellido y DNI): van impresos en el documento.");
+            "Antes de aprobar, revisá y confirmá los datos oficiales del estudiante (nombre, apellido y DNI): van impresos en el documento.");
+
+    public static readonly Error DniEnUso =
+        Error.Conflicto("dni_en_uso", "Ese DNI ya figura en otra cuenta de Astrea.");
 
     public static readonly Error DocumentoNoEncontrado =
         Error.NoEncontrado("documento_no_encontrado", "No hay un documento emitido para este trámite.");

@@ -1,7 +1,7 @@
 import { apiDescargar, apiFetch } from "@/lib/api-client";
 import type { Pagina } from "@/features/academico/api";
 
-export type EstadoTramite = "Pendiente" | "EnProceso" | "Rechazado" | "Listo";
+export type EstadoTramite = "Pendiente" | "EnProceso" | "Rechazado" | "Listo" | "Cancelado";
 export type TipoCampo = "Texto" | "TextoLargo" | "Fecha" | "Carrera";
 
 export type CampoTramite = {
@@ -35,6 +35,12 @@ export type Persona = {
   apellido: string | null;
   legajo: string | null;
   dni: string | null;
+  /** Secretaría ya revisó nombre, apellido y DNI (si no, los cargó el estudiante en "Mi perfil"). */
+  datosConfirmados: boolean;
+  emailContacto: string | null;
+  emailContactoVerificadoEn: string | null;
+  celular: string | null;
+  celularVerificadoEn: string | null;
 };
 
 export type EstadoDocumento = "Vigente" | "Anulado";
@@ -101,6 +107,7 @@ export const ETIQUETA_ESTADO: Record<EstadoTramite, string> = {
   EnProceso: "En proceso",
   Rechazado: "Rechazado",
   Listo: "Listo",
+  Cancelado: "Cancelado",
 };
 
 /** Arma la query string con los filtros que tienen valor; `estado` puede repetirse. */
@@ -124,6 +131,9 @@ export const tramitesApi = {
   mios: (token: string, page = 1) => apiFetch<Pagina<TramiteResumen>>(`/me/tramites${consulta({ page, pageSize: 10 })}`, { token }),
 
   detalle: (token: string, id: string) => apiFetch<TramiteDetalle>(`/tramites/${id}`, { token }),
+
+  /** El titular lo cancela mientras esté pendiente o en proceso. */
+  cancelar: (token: string, id: string) => apiFetch<TramiteDetalle>(`/tramites/${id}/cancelacion`, { method: "POST", token }),
 
   bandeja: (token: string, filtro: { estados?: EstadoTramite[]; texto?: string; page?: number }) =>
     apiFetch<Pagina<TramiteResumen>>(`/admin/tramites${consulta({ ...filtro, pageSize: 10 })}`, { token }),

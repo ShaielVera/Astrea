@@ -18,6 +18,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<UsuarioRol> UsuarioRoles => Set<UsuarioRol>();
 
+    public DbSet<CodigoVerificacion> CodigosVerificacion => Set<CodigoVerificacion>();
+
     public DbSet<Carrera> Carreras => Set<Carrera>();
 
     public DbSet<PlanEstudio> PlanesEstudio => Set<PlanEstudio>();

@@ -77,7 +77,7 @@ function EditorPlantilla({ tipo, onGuardar }: { tipo: PlantillaDeTipo; onGuardar
   return (
     <form
       aria-label={`Plantilla de ${tipo.tipoNombre}`}
-      className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
+      className="flex flex-col gap-3 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800"
       onSubmit={async (e) => {
         e.preventDefault();
         setGuardando(true);

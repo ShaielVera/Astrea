@@ -4,8 +4,26 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
-import { NOMBRE_ANIO } from "@/features/academico/api";
+import { NOMBRE_ANIO, type Pagina } from "@/features/academico/api";
+import { Paginacion } from "@/features/mesas/Paginacion";
 import { asistenciaApi, ETIQUETA_VALOR, fechaCorta, type Avance, type Informe, type Relevamiento } from "@/features/asistencia/api";
+
+/** Materias por página en el avance: así el informe queda a la vista sin bajar tanto. */
+const MATERIAS_POR_PAGINA = 8;
+
+function paginar<T>(items: T[], page: number, pageSize: number): Pagina<T> {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const actual = Math.min(Math.max(1, page), totalPages);
+  return {
+    items: items.slice((actual - 1) * pageSize, actual * pageSize),
+    page: actual,
+    pageSize,
+    totalItems: items.length,
+    totalPages,
+    hasPrevious: actual > 1,
+    hasNext: actual < totalPages,
+  };
+}
 
 const campo = "rounded-md border border-zinc-300 bg-transparent px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900";
 const botonPrimario = "rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-60";
@@ -95,7 +113,7 @@ export default function AsistenciaAdmin() {
         </p>
       )}
 
-      <section aria-labelledby="abrir-titulo" className="flex flex-col gap-3">
+      <section aria-labelledby="abrir-titulo" className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-superficie p-5 shadow-sm dark:border-zinc-800">
         <h2 id="abrir-titulo" className="text-lg font-semibold">
           Pedir una confirmación
         </h2>
@@ -144,6 +162,7 @@ export default function AsistenciaAdmin() {
 function DetalleRelevamiento({ relevamiento, onCerrado }: { relevamiento: Relevamiento; onCerrado: () => Promise<void> }) {
   const { obtenerToken } = useAuth();
   const [avance, setAvance] = useState<Avance | null>(null);
+  const [paginaAvance, setPaginaAvance] = useState(1);
   const [informe, setInforme] = useState<Informe | null>(null);
   const [texto, setTexto] = useState("");
   const [dnis, setDnis] = useState("");
@@ -208,7 +227,7 @@ function DetalleRelevamiento({ relevamiento, onCerrado }: { relevamiento: Releva
         </p>
       )}
 
-      <section aria-labelledby="avance-titulo" className="flex flex-col gap-3">
+      <section aria-labelledby="avance-titulo" className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-superficie p-5 shadow-sm dark:border-zinc-800">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id="avance-titulo" className="text-lg font-semibold">
             Avance de los profesores
@@ -247,7 +266,7 @@ function DetalleRelevamiento({ relevamiento, onCerrado }: { relevamiento: Releva
                     </tr>
                   </thead>
                   <tbody>
-                    {avance.materias.map((materia) => (
+                    {paginar(avance.materias, paginaAvance, MATERIAS_POR_PAGINA).items.map((materia) => (
                       <tr key={materia.planMateriaId} className="border-b border-zinc-100 dark:border-zinc-900">
                         <th scope="row" className="py-2 pr-4 font-normal">
                           {materia.materia}
@@ -265,11 +284,12 @@ function DetalleRelevamiento({ relevamiento, onCerrado }: { relevamiento: Releva
                 </table>
               </div>
             )}
+            <Paginacion pagina={paginar(avance.materias, paginaAvance, MATERIAS_POR_PAGINA)} onCambiar={setPaginaAvance} />
           </>
         )}
       </section>
 
-      <section aria-labelledby="informe-titulo" className="flex flex-col gap-3">
+      <section aria-labelledby="informe-titulo" className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-superficie p-5 shadow-sm dark:border-zinc-800">
         <h2 id="informe-titulo" className="text-lg font-semibold">
           Informe
         </h2>
@@ -282,8 +302,19 @@ function DetalleRelevamiento({ relevamiento, onCerrado }: { relevamiento: Releva
           className="flex flex-col gap-3"
         >
           <label className="flex flex-col gap-1 text-sm font-medium">
-            DNI de la lista (uno por línea, opcional)
-            <textarea value={dnis} onChange={(e) => setDnis(e.target.value)} rows={4} placeholder={"30123456\n40987654"} className={campo} />
+            Lista de DNI (opcional)
+            <textarea
+              value={dnis}
+              onChange={(e) => setDnis(e.target.value)}
+              rows={4}
+              placeholder={"30123456\n40.987.654"}
+              aria-describedby="ayuda-dnis"
+              className={campo}
+            />
+            <span id="ayuda-dnis" className="text-xs font-normal text-zinc-500">
+              Pegá la lista completa de una vez (por ejemplo, la columna de DNI copiada de Excel o del listado del Progresar): uno por renglón o
+              separados por coma. Los puntos se ignoran. Hasta 500 DNI.
+            </span>
           </label>
           <label className="flex flex-col gap-1 text-sm font-medium">
             Buscar por nombre, email o DNI (opcional)
@@ -317,7 +348,7 @@ function DetalleRelevamiento({ relevamiento, onCerrado }: { relevamiento: Releva
             )}
             <ul aria-label="Estudiantes del informe" className="flex flex-col gap-3">
               {informe.estudiantes.items.map((estudiante) => (
-                <li key={estudiante.id} aria-label={estudiante.nombre} className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+                <li key={estudiante.id} aria-label={estudiante.nombre} className="rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <span className="font-medium">
                       {estudiante.nombre}

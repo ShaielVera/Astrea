@@ -138,7 +138,7 @@ function TablaMateria({ relevamiento, materia }: { relevamiento: Relevamiento; m
   }
 
   return (
-    <section aria-label={titulo} className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <section aria-label={titulo} className="flex flex-col gap-3 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
       <h2 className="text-lg font-semibold">
         {materia.materia}
         <span className="block text-sm font-normal text-zinc-500">
@@ -152,13 +152,9 @@ function TablaMateria({ relevamiento, materia }: { relevamiento: Relevamiento; m
       ) : (
         <form onSubmit={guardar} aria-label={`Confirmar asistencia de ${materia.materia}`} className="flex flex-col gap-3">
           {!soloLectura && (
-            <button
-              type="button"
-              onClick={() => setFilas((actuales) => Object.fromEntries(Object.entries(actuales).map(([id, fila]) => [id, { ...fila, valor: fila.valor || "AsisteRegularmente" }])))}
-              className="self-start text-sm font-medium text-indigo-700 hover:underline dark:text-indigo-300"
-            >
-              Marcar a los que faltan como “Asiste regularmente”
-            </button>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Si un estudiante faltó seguido, marcalo “Asiste de forma irregular”; si dejó de venir, “No asiste”.
+            </p>
           )}
           <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-900">
             {materia.estudiantes.map((estudiante) => (

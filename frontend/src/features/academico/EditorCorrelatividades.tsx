@@ -60,7 +60,7 @@ export function EditorCorrelatividades({ planId, materia, materiasDelPlan, onCer
   }
 
   return (
-    <section ref={panel} aria-label={`Correlatividades de ${materia.nombre}`} className="flex flex-col gap-4 rounded-xl border border-indigo-200 p-4 dark:border-indigo-900">
+    <section ref={panel} aria-label={`Correlatividades de ${materia.nombre}`} className="flex flex-col gap-4 rounded-xl border bg-superficie border-indigo-200 p-4 dark:border-indigo-900">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="font-semibold">Correlatividades de {materia.nombre}</h3>

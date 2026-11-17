@@ -30,6 +30,37 @@ public class TramiteTests
     }
 
     [Fact]
+    public void El_titular_cancela_un_tramite_pendiente_o_en_proceso_y_queda_en_el_historial()
+    {
+        var pendiente = Solicitar();
+        var enProceso = Solicitar();
+        enProceso.Tomar(Secretaria, Ahora);
+
+        pendiente.Cancelar(Estudiante, Ahora);
+        enProceso.Cancelar(Estudiante, Ahora);
+        pendiente.Cancelar(Estudiante, Ahora); // un reintento no agrega otro evento
+
+        pendiente.Estado.Should().Be(EstadoTramite.Cancelado);
+        pendiente.EstaFinalizado.Should().BeTrue();
+        pendiente.Eventos.Should().HaveCount(2).And.Contain(evento => evento.EstadoNuevo == EstadoTramite.Cancelado && evento.ActorUsuarioId == Estudiante);
+        enProceso.Estado.Should().Be(EstadoTramite.Cancelado);
+    }
+
+    [Fact]
+    public void Nadie_mas_que_el_titular_lo_cancela_y_uno_finalizado_no_se_cancela()
+    {
+        var ajeno = () => Solicitar().Cancelar(Secretaria, Ahora);
+        var listo = Solicitar();
+        listo.Aprobar(Secretaria, null, Ahora);
+        var cancelado = Solicitar();
+        cancelado.Cancelar(Estudiante, Ahora);
+
+        ajeno.Should().Throw<DomainException>().WithMessage("*Solo quien pidió*");
+        listo.Invoking(tramite => tramite.Cancelar(Estudiante, Ahora)).Should().Throw<DomainException>().WithMessage("*finalizado*");
+        cancelado.Invoking(tramite => tramite.Aprobar(Secretaria, null, Ahora)).Should().Throw<DomainException>().WithMessage("*finalizado*");
+    }
+
+    [Fact]
     public void Los_datos_se_validan_y_normalizan_contra_el_formulario_del_tipo()
     {
         var tramite = Tramite.Solicitar(
@@ -180,5 +211,6 @@ public class TramiteTests
 
         tipos.Select(tipo => tipo.Codigo).Should().BeEquivalentTo("ALUMNO_REGULAR", "CONSTANCIA_EXAMEN", "ANALITICO_PARCIAL", "JUSTIFICACION_INASISTENCIA");
         tipos.Should().OnlyContain(tipo => tipo.Campos.Any(campo => campo.Tipo == TipoCampo.Carrera && campo.Obligatorio));
+        tipos.Where(tipo => tipo.Activo).Select(tipo => tipo.Codigo).Should().BeEquivalentTo("ALUMNO_REGULAR", "CONSTANCIA_EXAMEN");
     }
 }

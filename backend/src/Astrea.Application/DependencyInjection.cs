@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<CursadaEstudiante>();
         services.AddScoped<ConfirmacionesDocente>();
         services.AddScoped<RelevamientosAsistencia>();
+        services.AddScoped<Features.Profile.Perfil>();
 
         return services;
     }

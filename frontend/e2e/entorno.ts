@@ -14,3 +14,8 @@ export const E2E = {
 export function emailUnico(prefijo: string): string {
   return `${prefijo}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@astrea.test`;
 }
+
+/** DNI único por test (dos cuentas no pueden compartirlo) que termina en 456, para comprobar el enmascarado "**.***.456". */
+export function dniUnico(): string {
+  return `${Math.floor(20 + Math.random() * 30)}${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}456`;
+}

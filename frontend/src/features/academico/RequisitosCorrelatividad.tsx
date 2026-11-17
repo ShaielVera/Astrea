@@ -43,7 +43,7 @@ function BloqueRequisitos({ titulo, explicacion, requisitos, ...acciones }: { ti
   }
 
   return (
-    <section aria-label={titulo} className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <section aria-label={titulo} className="flex flex-col gap-3 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
       <div>
         <h3 className="font-semibold">{titulo}</h3>
         <p className="text-xs text-zinc-500">{explicacion}</p>

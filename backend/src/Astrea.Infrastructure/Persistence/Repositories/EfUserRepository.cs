@@ -14,6 +14,20 @@ internal sealed class EfUserRepository(AppDbContext db) : IUserRepository
 
     public void Agregar(Usuario usuario) => db.Usuarios.Add(usuario);
 
+    public Task<bool> ExisteOtroConDniAsync(string dni, Guid excluirUsuarioId, CancellationToken cancellationToken) =>
+        db.Usuarios.AnyAsync(usuario => usuario.Dni == dni && usuario.Id != excluirUsuarioId, cancellationToken);
+
+    public Task<CodigoVerificacion?> UltimoCodigoAsync(Guid usuarioId, CanalContacto canal, CancellationToken cancellationToken) =>
+        db.CodigosVerificacion
+            .Where(codigo => codigo.UsuarioId == usuarioId && codigo.Canal == canal)
+            .OrderByDescending(codigo => codigo.CreadoEn)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    public void Agregar(CodigoVerificacion codigo) => db.CodigosVerificacion.Add(codigo);
+
+    public Task<int> BorrarCodigosVencidosAsync(DateTimeOffset antesDe, CancellationToken cancellationToken) =>
+        db.CodigosVerificacion.Where(codigo => codigo.VenceEn < antesDe).ExecuteDeleteAsync(cancellationToken);
+
     public async Task<IReadOnlyDictionary<string, int>> ContarActivosPorRolAsync(CancellationToken cancellationToken)
     {
         var conteo = await db.UsuarioRoles

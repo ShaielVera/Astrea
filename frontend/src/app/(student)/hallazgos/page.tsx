@@ -278,14 +278,28 @@ function FormularioPublicacion({
   const [franja, setFranja] = useState<FranjaHoraria>("Manana");
   const [punto, setPunto] = useState<PuntoResguardo>("Direccion");
   const [descripcion, setDescripcion] = useState("");
-  const [foto, setFoto] = useState<File | null>(null);
+  const [foto, setFoto] = useState<{ archivo: File; vistaPrevia: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const campoFoto = useRef<HTMLInputElement>(null);
+
+  // La miniatura (blob:) se libera al cambiar de foto o al salir del formulario.
+  useEffect(() => () => {
+    if (foto) URL.revokeObjectURL(foto.vistaPrevia);
+  }, [foto]);
 
   function elegirFoto(archivo: File | undefined) {
     const problema = archivo ? problemaDeFoto(archivo) : null;
     setError(problema);
-    setFoto(archivo && !problema ? archivo : null);
+    setFoto(archivo && !problema ? { archivo, vistaPrevia: URL.createObjectURL(archivo) } : null);
+    if (problema && campoFoto.current) campoFoto.current.value = "";
+  }
+
+  function quitarFoto() {
+    setFoto(null);
+    if (campoFoto.current) campoFoto.current.value = "";
+    campoFoto.current?.focus();
   }
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
@@ -310,7 +324,7 @@ function FormularioPublicacion({
       // Ya quedó publicado: si la foto falla, no se reenvía el formulario (duplicaría el hallazgo); se sube desde "Lo que publicaste".
       let errorFoto: string | null = null;
       try {
-        hallazgo = await hallazgosApi.subirFoto(token, hallazgo.id, foto);
+        hallazgo = await hallazgosApi.subirFoto(token, hallazgo.id, foto.archivo);
       } catch (e) {
         errorFoto = mensajeDeError(e);
       }
@@ -323,7 +337,7 @@ function FormularioPublicacion({
   }
 
   return (
-    <form onSubmit={enviar} aria-label="Publicar un hallazgo" className="flex flex-col gap-4 rounded-xl border border-indigo-200 p-4 dark:border-indigo-900">
+    <form onSubmit={enviar} aria-label="Publicar un hallazgo" className="flex flex-col gap-4 rounded-xl border bg-superficie border-indigo-200 p-4 dark:border-indigo-900">
       <h2 className="text-lg font-semibold">Publicar un hallazgo</h2>
       {error && (
         <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
@@ -381,6 +395,7 @@ function FormularioPublicacion({
         <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
           Foto
           <input
+            ref={campoFoto}
             type="file"
             required
             accept={FOTO_TIPOS.join(",")}
@@ -393,6 +408,18 @@ function FormularioPublicacion({
             Que no se vean nombres, documentos ni las marcas que pusiste en los detalles privados.
           </span>
         </label>
+        {foto && (
+          <div className="flex items-center gap-3 sm:col-span-2">
+            {/* eslint-disable-next-line @next/next/no-img-element -- vista previa local (blob:), no pasa por el optimizador */}
+            <img src={foto.vistaPrevia} alt="Vista previa de la foto elegida" className="size-20 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700" />
+            <div className="flex flex-col items-start gap-1 text-sm">
+              <span className="max-w-xs truncate text-zinc-600 dark:text-zinc-400">{foto.archivo.name}</span>
+              <button type="button" onClick={quitarFoto} className={botonSecundario}>
+                Quitar foto
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
         Detalles privados

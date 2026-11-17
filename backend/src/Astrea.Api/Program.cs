@@ -12,6 +12,7 @@ using Astrea.Application.Abstractions.Documents;
 using Astrea.Application.Abstractions.Identity;
 using Astrea.Application.Features.Knowledge;
 using Astrea.Infrastructure;
+using Astrea.Infrastructure.Mensajeria;
 using Astrea.Infrastructure.Persistence;
 using Astrea.Infrastructure.Persistence.Seed;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -49,6 +50,15 @@ if (builder.Environment.IsProduction() && string.Equals(ia.Proveedor, Configurac
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString, carpetaPrivada, ia);
 builder.Services.AddSingleton(ia);
+
+// Códigos de verificación del perfil. La contraseña SMTP va en user-secrets (Mensajeria:Smtp:Password).
+var mensajeria = builder.Configuration.GetSection(ConfiguracionMensajeria.Seccion).Get<ConfiguracionMensajeria>() ?? new ConfiguracionMensajeria();
+if (builder.Environment.IsProduction() && mensajeria.ModoDemostracion)
+{
+    throw new InvalidOperationException("El modo demostración de los códigos de verificación no se puede usar en producción.");
+}
+
+builder.Services.AddMensajeria(mensajeria);
 builder.Services.AddSingleton(
     builder.Configuration.GetSection(ConfiguracionIdentidad.Seccion).Get<ConfiguracionIdentidad>() ?? new ConfiguracionIdentidad());
 builder.Services.AddSingleton(
@@ -197,6 +207,7 @@ api.MapHallazgoEndpoints();
 api.MapDocumentoRagEndpoints();
 api.MapAsistenteEndpoints();
 api.MapAsistenciaEndpoints();
+api.MapPerfilEndpoints();
 
 app.Run();
 

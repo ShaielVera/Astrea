@@ -1,4 +1,6 @@
 using System.Net.Http.Headers;
+using Astrea.Application.Abstractions.Notifications;
+using Astrea.Domain.Users;
 using Astrea.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
@@ -6,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Testcontainers.PostgreSql;
 
@@ -43,12 +46,34 @@ public sealed class AstreaApiFactory : WebApplicationFactory<Program>, IAsyncLif
         builder.UseSetting("Ingesta:ProcesarEnSegundoPlano", "false");
 
         builder.ConfigureTestServices(services =>
+        {
             services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
             {
                 // Evita descargar las claves de Google: los tokens de prueba se firman localmente.
                 options.Configuration = new OpenIdConnectConfiguration();
                 options.TokenValidationParameters.IssuerSigningKey = TokensDePrueba.ClaveConfiable;
-            }));
+            });
+
+            // Los códigos de verificación no salen a ningún lado: los tests los leen de acá.
+            services.RemoveAll<IEnviadorCodigos>();
+            services.AddSingleton<IEnviadorCodigos>(Codigos);
+        });
+    }
+
+    /// <summary>Último código "enviado" a cada destino (email o celular).</summary>
+    public CodigosCapturados Codigos { get; } = new();
+
+    public sealed class CodigosCapturados : IEnviadorCodigos
+    {
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _ultimos = new();
+
+        public string Ultimo(string destino) => _ultimos[destino];
+
+        public Task<EntregaCodigo> EnviarAsync(CanalContacto canal, string destino, string codigo, CancellationToken cancellationToken)
+        {
+            _ultimos[destino] = codigo;
+            return Task.FromResult(EntregaCodigo.Enviado);
+        }
     }
 
     public async Task InitializeAsync()

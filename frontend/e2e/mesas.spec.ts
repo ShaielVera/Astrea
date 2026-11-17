@@ -44,7 +44,7 @@ test.describe("Mesas de examen", () => {
     await nueva.getByLabel("Fecha").fill(fecha);
     await nueva.getByLabel("Hora").fill("18:30");
     await nueva.getByLabel("Aula").fill("Laboratorio 2");
-    await nueva.getByLabel("Tribunal").fill(`${presidente}\nProf. Ana Gómez`);
+    await nueva.getByLabel("Profesores (tribunal)").fill(`${presidente}\nProf. Ana Gómez`);
     await sinDesbordeHorizontal(admin);
     await nueva.getByRole("button", { name: "Guardar borrador" }).click();
     await expect(admin.getByRole("status")).toContainText("Borrador de Programación II guardado");

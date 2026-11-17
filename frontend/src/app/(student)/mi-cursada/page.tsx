@@ -92,7 +92,7 @@ export default function MiCursada() {
         ) : datos.materias.length === 0 ? (
           <p className="text-zinc-500">Todavía no anotaste ninguna materia.</p>
         ) : (
-          <ul aria-label="Materias que curso" className="flex flex-col divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+          <ul aria-label="Materias que curso" className="flex flex-col divide-y divide-zinc-200 rounded-xl border bg-superficie border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
             {datos.materias.map((materia) => (
               <li key={materia.planMateriaId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                 <span>
@@ -127,7 +127,7 @@ export default function MiCursada() {
         ) : (
           <ul aria-label="Confirmaciones de asistencia" className="flex flex-col gap-2">
             {datos?.confirmaciones.map((confirmacion) => (
-              <li key={`${confirmacion.relevamientoId}-${confirmacion.materia}`} className="rounded-xl border border-zinc-200 px-4 py-3 dark:border-zinc-800">
+              <li key={`${confirmacion.relevamientoId}-${confirmacion.materia}`} className="rounded-xl border bg-superficie border-zinc-200 px-4 py-3 dark:border-zinc-800">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">{confirmacion.materia}</span>
                   <span className={`rounded-full px-2.5 py-0.5 text-sm font-medium ${ESTILO_VALOR[confirmacion.valor]}`}>

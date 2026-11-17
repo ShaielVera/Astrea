@@ -166,10 +166,7 @@ export default function AsistentePage() {
           Las respuestas las redacta una inteligencia artificial y pueden tener errores: ante cualquier duda, confirmá en Secretaría. El
           asistente no aprueba trámites ni envía nada sin que lo confirmes.
         </p>
-        <p className="mt-1">
-          No escribas datos personales (DNI, teléfono, email): no hacen falta y se ocultan automáticamente. Tus conversaciones las ves solo
-          vos y se borran a los 30 días sin uso.
-        </p>
+        <p className="mt-1">Tus conversaciones las ves solo vos y se borran a los 30 días sin uso.</p>
       </div>
 
       {error && (
@@ -205,7 +202,7 @@ export default function AsistentePage() {
           </ul>
         </nav>
 
-        <section aria-label="Chat con el asistente" className="flex min-w-0 flex-col gap-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+        <section aria-label="Chat con el asistente" className="flex min-w-0 flex-col gap-4 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
           {actual && (
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 pb-3 dark:border-zinc-800">
               <h2 className="min-w-0 truncate font-medium">{actual.titulo}</h2>
@@ -335,9 +332,7 @@ function RespuestaAsistente({
                     {[fuente.seccion, paginas(fuente), fuente.fuente].filter(Boolean).join(" · ")}
                   </span>
                 </div>
-                <blockquote className="border-l-2 border-zinc-300 pl-2 text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
-                  {fuente.extracto}
-                </blockquote>
+                <Extracto texto={fuente.extracto} />
                 {fuente.tipo === "DatosDeAstrea" && fuente.enlace ? (
                   <Link href={fuente.enlace} className="w-fit text-indigo-600 hover:underline dark:text-indigo-400">
                     Ver en {fuente.titulo}
@@ -422,6 +417,24 @@ function TarjetaPropuesta({ mensaje, onAccion }: { mensaje: Mensaje; onAccion: (
 }
 
 /** Convierte las citas [1], [2]… en enlaces a la fuente correspondiente. */
+const LARGO_RESUMIDO = 280;
+
+/** La cita completa del documento; si es larga, se muestra el comienzo y se despliega con un botón. */
+function Extracto({ texto }: { texto: string }) {
+  const [abierto, setAbierto] = useState(false);
+  const largo = texto.length > LARGO_RESUMIDO;
+  return (
+    <blockquote className="flex flex-col items-start gap-1 border-l-2 border-dorado-500/60 pl-2 text-zinc-700 dark:text-zinc-300">
+      <span className="whitespace-pre-line">{largo && !abierto ? `${texto.slice(0, LARGO_RESUMIDO).trimEnd()}…` : texto}</span>
+      {largo && (
+        <button type="button" aria-expanded={abierto} onClick={() => setAbierto(!abierto)} className="text-xs font-medium text-indigo-700 hover:underline dark:text-indigo-300">
+          {abierto ? "Ver menos" : "Ver texto completo"}
+        </button>
+      )}
+    </blockquote>
+  );
+}
+
 function ConCitas({ texto, prefijo }: { texto: string; prefijo: string }) {
   const partes = texto.split(/(\[\d+\])/);
   return (

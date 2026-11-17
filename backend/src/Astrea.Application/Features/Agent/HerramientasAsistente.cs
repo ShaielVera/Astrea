@@ -64,6 +64,7 @@ public sealed class HerramientasAsistente(
     ITramiteRepository tramites,
     IClock clock)
 {
+    public const string VerPlanDeEstudios = "ver_plan_de_estudios";
     public const string BuscarCorrelatividades = "buscar_correlatividades";
     public const string BuscarMesas = "buscar_mesas";
     public const string BuscarHallazgos = "buscar_hallazgos";
@@ -81,6 +82,7 @@ public sealed class HerramientasAsistente(
     /// <summary>Herramientas que ejecuta este servicio y el rol que exige cada una.</summary>
     private static readonly IReadOnlyDictionary<string, string> RolRequerido = new Dictionary<string, string>
     {
+        [VerPlanDeEstudios] = Rol.CodigoEstudiante,
         [BuscarCorrelatividades] = Rol.CodigoEstudiante,
         [BuscarMesas] = Rol.CodigoEstudiante,
         [BuscarHallazgos] = Rol.CodigoEstudiante,
@@ -92,17 +94,27 @@ public sealed class HerramientasAsistente(
     public async Task<IReadOnlyList<DefinicionHerramienta>> DefinicionesAsync(CancellationToken cancellationToken)
     {
         var tipos = await solicitudes.ListarTiposAsync(cancellationToken);
+
+        // Los estudiantes nombran las carreras por la sigla (TSDS, PEI…): el modelo recibe la lista para reconocerlas.
+        var carreras = (await academico.ListarCarrerasAsync(PageRequest.Create(1, PageRequest.MaxPageSize), incluirInactivas: false, cancellationToken)).Items;
+        var siglas = string.Join("; ", carreras.Select(carrera => $"{carrera.Codigo} = {carrera.Nombre}"));
+        var carreraOpcional = $"Carrera, si el estudiante la mencionó (nombre o sigla: {siglas}).";
         return
         [
+            new(VerPlanDeEstudios, "Materias del plan de estudios vigente de una carrera, por año (qué se cursa en cada año y en qué cuatrimestre).",
+            [
+                new("carrera", TipoParametro.Texto, $"Carrera: nombre o sigla ({siglas}).", true),
+                new("anio", TipoParametro.Texto, "Año de la carrera (1 = primer año). Si no se indica, todos los años.", false, ["1", "2", "3", "4", "5", "6"]),
+            ]),
             new(BuscarCorrelatividades, "Requisitos (correlatividades) para cursar y para rendir una materia, según el plan de estudios vigente.",
             [
                 new("materia", TipoParametro.Texto, "Nombre de la materia, como lo escribió el estudiante.", true),
-                new("carrera", TipoParametro.Texto, "Carrera, si el estudiante la mencionó.", false),
+                new("carrera", TipoParametro.Texto, carreraOpcional, false),
             ]),
-            new(BuscarMesas, "Mesas de examen publicadas (fecha, hora, aula, tribunal e inscripción). Sin fechas, busca desde hoy.",
+            new(BuscarMesas, "Mesas de examen publicadas (fecha, hora, aula, profesores del tribunal e inscripción). Sin fechas, busca desde hoy.",
             [
-                new("materia", TipoParametro.Texto, "Nombre de la materia o integrante del tribunal.", false),
-                new("carrera", TipoParametro.Texto, "Carrera.", false),
+                new("materia", TipoParametro.Texto, "Nombre de la materia o apellido de un profesor del tribunal.", false),
+                new("carrera", TipoParametro.Texto, carreraOpcional, false),
                 new("desde", TipoParametro.Fecha, "Desde (AAAA-MM-DD).", false),
                 new("hasta", TipoParametro.Fecha, "Hasta (AAAA-MM-DD).", false),
             ]),
@@ -120,7 +132,7 @@ public sealed class HerramientasAsistente(
                 "Tipos: " + string.Join("; ", tipos.Select(tipo => $"{tipo.Codigo} = {tipo.Nombre} (datos: {string.Join(", ", tipo.Campos.Where(c => c.Tipo != TipoCampo.Carrera).Select(c => $"{c.Clave}{(c.Obligatorio ? "*" : string.Empty)}"))})")),
             [
                 new("tipo", TipoParametro.Texto, "Código del tipo de trámite.", true, tipos.Select(tipo => tipo.Codigo).ToList()),
-                new("carrera", TipoParametro.Texto, "Carrera del estudiante.", true),
+                new("carrera", TipoParametro.Texto, $"Carrera del estudiante (nombre o sigla: {siglas}).", true),
                 new("datos", TipoParametro.ListaDeObjetos, "Los demás datos del formulario (los marcados con * son obligatorios). Fechas en AAAA-MM-DD.", false, Campos:
                 [
                     new("clave", TipoParametro.Texto, "Nombre del dato.", true),
@@ -164,6 +176,7 @@ public sealed class HerramientasAsistente(
 
             return llamada.Nombre switch
             {
+                VerPlanDeEstudios => await PlanDeEstudiosAsync(llamada.Argumentos, contexto, cancellationToken),
                 BuscarCorrelatividades => await CorrelatividadesAsync(llamada.Argumentos, contexto, cancellationToken),
                 BuscarMesas => await MesasAsync(llamada.Argumentos, contexto, cancellationToken),
                 BuscarHallazgos => await HallazgosAsync(llamada.Argumentos, contexto, cancellationToken),
@@ -175,6 +188,59 @@ public sealed class HerramientasAsistente(
         {
             return new { error = ex.Message };
         }
+    }
+
+    private async Task<object> PlanDeEstudiosAsync(JsonElement argumentos, ContextoHerramientas contexto, CancellationToken cancellationToken)
+    {
+        var carrera = (await ResolverCarreraAsync(Argumentos.Texto(argumentos, "carrera", LargoMaximoTexto, obligatorio: true), cancellationToken))!;
+        var textoAnio = Argumentos.Texto(argumentos, "anio", 1, obligatorio: false);
+        int? anio = null;
+        if (textoAnio is not null)
+        {
+            if (!int.TryParse(textoAnio, NumberStyles.None, CultureInfo.InvariantCulture, out var valor) || valor < 1 || valor > carrera.DuracionAnios)
+            {
+                throw new ArgumentoInvalidoException($"{carrera.Nombre} dura {carrera.DuracionAnios} años: el año tiene que ser de 1 a {carrera.DuracionAnios}.");
+            }
+
+            anio = valor;
+        }
+
+        var plan = (await academico.ListarPlanesAsync(carrera.Id, incluirInactivos: false, cancellationToken))
+            .OrderByDescending(plan => plan.VigenciaDesde)
+            .FirstOrDefault();
+        if (plan is null)
+        {
+            return new { error = $"{carrera.Nombre} todavía no tiene un plan de estudios cargado." };
+        }
+
+        var materias = new List<MateriaDePlanDto>();
+        for (var pagina = 1; ; pagina++)
+        {
+            var lote = await academico.ListarMateriasDePlanAsync(plan.Id, anio, PageRequest.Create(pagina, PageRequest.MaxPageSize), incluirInactivas: false, cancellationToken);
+            materias.AddRange(lote.Items);
+            if (!lote.HasNext)
+            {
+                break;
+            }
+        }
+
+        var porAnio = materias
+            .OrderBy(materia => materia.Anio).ThenBy(materia => materia.Orden)
+            .GroupBy(materia => materia.Anio)
+            .Select(grupo => new
+            {
+                anio = grupo.Key,
+                materias = grupo.Select(materia => materia.Cuatrimestre switch
+                {
+                    Cuatrimestre.Primero => $"{materia.Nombre} (1.er cuatrimestre)",
+                    Cuatrimestre.Segundo => $"{materia.Nombre} (2.º cuatrimestre)",
+                    _ => materia.Nombre,
+                }).ToList(),
+            })
+            .ToList();
+        var resumen = string.Join(" ", porAnio.Select(grupo => $"{grupo.anio}.º año: {string.Join(", ", grupo.materias)}."));
+        var id = contexto.Registrar(anio is null ? $"Plan de estudios de {carrera.Codigo}" : $"{anio}.º año de {carrera.Codigo}", resumen, "/plan-de-estudios");
+        return new { id, carrera = carrera.Nombre, sigla = carrera.Codigo, plan = plan.Nombre, porAnio };
     }
 
     private async Task<object> CorrelatividadesAsync(JsonElement argumentos, ContextoHerramientas contexto, CancellationToken cancellationToken)
@@ -400,7 +466,7 @@ public sealed class HerramientasAsistente(
         {
             1 => coincidencias[0],
             0 => throw new ArgumentoInvalidoException(
-                $"No existe la carrera \"{texto}\". Carreras disponibles: {string.Join("; ", carreras.Select(carrera => carrera.Nombre))}."),
+                $"No existe la carrera \"{texto}\". Carreras disponibles: {string.Join("; ", carreras.Select(carrera => $"{carrera.Codigo} = {carrera.Nombre}"))}."),
             _ => throw new ArgumentoInvalidoException(
                 $"\"{texto}\" coincide con varias carreras: {string.Join("; ", coincidencias.Select(carrera => carrera.Nombre))}. Preguntale al estudiante cuál."),
         };

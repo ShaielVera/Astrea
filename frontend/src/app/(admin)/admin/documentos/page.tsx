@@ -275,7 +275,7 @@ function FormularioCarga({
       ref={referencia}
       onSubmit={enviar}
       aria-label="Cargar documento"
-      className="flex flex-col gap-4 rounded-xl border border-indigo-200 p-4 dark:border-indigo-900"
+      className="flex flex-col gap-4 rounded-xl border bg-superficie border-indigo-200 p-4 dark:border-indigo-900"
     >
       <h2 className="text-lg font-semibold">{versionDe ? `Nueva versión de "${versionDe.titulo}"` : "Cargar documento"}</h2>
       {versionDe && (
@@ -366,7 +366,7 @@ function TarjetaDocumento({
   }
 
   return (
-    <article aria-label={documento.titulo} className="flex min-w-0 flex-col gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <article aria-label={documento.titulo} className="flex min-w-0 flex-col gap-3 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-0.5">
           <h3 className="break-words font-semibold">{documento.titulo}</h3>

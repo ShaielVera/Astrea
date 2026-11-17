@@ -7,6 +7,8 @@ import { academicoApi, type Carrera, type Pagina } from "@/features/academico/ap
 import { Paginacion } from "@/features/mesas/Paginacion";
 import { fechaHora, tramitesApi, type TramiteDetalle, type TramiteResumen, type TramiteTipo } from "@/features/tramites/api";
 import { DetalleTramite, EstadoBadge } from "@/features/tramites/DetalleTramite";
+import { perfilApi } from "@/features/perfil/api";
+import Link from "next/link";
 import { FormularioTramite } from "@/features/tramites/FormularioTramite";
 
 const campo = "w-full min-w-0 rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-normal dark:border-zinc-700 dark:bg-zinc-900";
@@ -19,6 +21,7 @@ export default function TramitesPage() {
   const [mios, setMios] = useState<Pagina<TramiteResumen> | null>(null);
   const [seleccionado, setSeleccionado] = useState<TramiteDetalle | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [sinDatos, setSinDatos] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Una clave por solicitud: si el envío se repite (doble clic, reintento), el backend crea un solo trámite.
   const claveIdempotencia = useRef<string | null>(null);
@@ -33,6 +36,10 @@ export default function TramitesPage() {
         setCarreras(listaCarreras);
         setMios(pagina);
       })
+      .catch((e) => vigente && setError(mensajeDeError(e)));
+    obtenerToken()
+      .then((token) => perfilApi.obtener(token))
+      .then((miPerfil) => vigente && setSinDatos(!miPerfil.nombre || !miPerfil.apellido || !miPerfil.dni))
       .catch((e) => vigente && setError(mensajeDeError(e)));
     return () => {
       vigente = false;
@@ -82,6 +89,20 @@ export default function TramitesPage() {
     }
   }
 
+  async function cancelar(id: string) {
+    setError(null);
+    setAviso(null);
+    try {
+      const token = await obtenerToken();
+      const cancelado = await tramitesApi.cancelar(token, id);
+      setSeleccionado(cancelado);
+      setAviso(`Cancelaste el trámite ${cancelado.numero}.`);
+      setMios(await tramitesApi.mios(token, mios?.page ?? 1));
+    } catch (e) {
+      setError(mensajeDeError(e));
+    }
+  }
+
   const tipo = tipos?.find((t) => t.id === tipoId);
 
   return (
@@ -102,7 +123,7 @@ export default function TramitesPage() {
         </p>
       )}
 
-      <section aria-labelledby="pedir-titulo" className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+      <section aria-labelledby="pedir-titulo" className="flex flex-col gap-3 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
         <h2 id="pedir-titulo" className="text-lg font-semibold">
           Pedir un trámite
         </h2>
@@ -125,7 +146,27 @@ export default function TramitesPage() {
             ))}
           </select>
         </label>
-        {tipo && <FormularioTramite key={tipo.id} tipo={tipo} carreras={carreras} onEnviar={solicitar} />}
+        {sinDatos && (
+          <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+            Antes de pedir una constancia, completá tu nombre, apellido y DNI en{" "}
+            <Link href="/mi-perfil" className="font-semibold underline">
+              Mi perfil
+            </Link>
+            : son los que van impresos.
+          </p>
+        )}
+        {tipo && (
+          <FormularioTramite
+            key={tipo.id}
+            tipo={tipo}
+            carreras={carreras}
+            onEnviar={solicitar}
+            onCancelar={() => {
+              setTipoId("");
+              claveIdempotencia.current = null;
+            }}
+          />
+        )}
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
@@ -141,7 +182,7 @@ export default function TramitesPage() {
                   type="button"
                   onClick={() => void verDetalle(tramite.id)}
                   aria-current={seleccionado?.id === tramite.id}
-                  className="flex w-full flex-col gap-1 rounded-lg border border-zinc-200 px-3 py-2 text-left hover:border-indigo-400 aria-[current=true]:border-indigo-500 dark:border-zinc-800"
+                  className="flex w-full flex-col gap-1 rounded-lg border border-zinc-200 bg-superficie px-3 py-2 text-left shadow-sm hover:border-indigo-400 aria-[current=true]:border-indigo-500 dark:border-zinc-800"
                 >
                   <span className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium">{tramite.tipoNombre}</span>
@@ -162,6 +203,11 @@ export default function TramitesPage() {
             <DetalleTramite
               tramite={seleccionado}
               onDescargar={() => void descargar(seleccionado.id)}
+              acciones={
+                (seleccionado.estado === "Pendiente" || seleccionado.estado === "EnProceso") && (
+                  <CancelarTramite key={seleccionado.id} onConfirmar={() => cancelar(seleccionado.id)} />
+                )
+              }
             />
           ) : (
             mios && mios.totalItems > 0 && <p className="text-sm text-zinc-500">Elegí un pedido para ver su detalle e historial.</p>
@@ -169,5 +215,41 @@ export default function TramitesPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+/** Cancelar pide una confirmación en el lugar (sin ventanas emergentes). */
+function CancelarTramite({ onConfirmar }: { onConfirmar: () => Promise<void> }) {
+  const [confirmando, setConfirmando] = useState(false);
+  const [ocupado, setOcupado] = useState(false);
+  const boton = "rounded-md border px-3 py-1.5 text-sm font-medium disabled:opacity-60";
+
+  if (!confirmando) {
+    return (
+      <button type="button" onClick={() => setConfirmando(true)} className={`${boton} self-start border-red-300 text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950`}>
+        Cancelar trámite
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      <span>¿Cancelar este trámite? Si lo necesitás de nuevo, vas a tener que pedirlo otra vez.</span>
+      <button
+        type="button"
+        disabled={ocupado}
+        onClick={async () => {
+          setOcupado(true);
+          await onConfirmar();
+          setOcupado(false);
+        }}
+        className={`${boton} border-red-300 bg-red-600 text-white hover:bg-red-700 dark:border-red-900`}
+      >
+        {ocupado ? "Cancelando…" : "Sí, cancelar"}
+      </button>
+      <button type="button" disabled={ocupado} onClick={() => setConfirmando(false)} className={`${boton} border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800`}>
+        No
+      </button>
+    </div>
   );
 }

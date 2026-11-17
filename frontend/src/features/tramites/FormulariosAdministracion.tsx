@@ -22,6 +22,7 @@ export function FormularioDatosOficiales({ persona, onGuardar }: { persona: Pers
   const [legajo, setLegajo] = useState(persona.legajo ?? "");
   const [guardando, setGuardando] = useState(false);
   const completos = Boolean(persona.nombre && persona.apellido && persona.dni);
+  const confirmados = completos && persona.datosConfirmados;
 
   return (
     <form
@@ -39,8 +40,8 @@ export function FormularioDatosOficiales({ persona, onGuardar }: { persona: Pers
     >
       <p className="text-sm font-medium">
         Datos oficiales del titular{" "}
-        <span className={completos ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}>
-          {completos ? "(completos)" : "(faltan: se imprimen en el documento)"}
+        <span className={confirmados ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}>
+          {confirmados ? "(confirmados)" : completos ? "(los cargó el estudiante: revisalos con su DNI y confirmalos)" : "(faltan: se imprimen en el documento)"}
         </span>
       </p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -63,7 +64,7 @@ export function FormularioDatosOficiales({ persona, onGuardar }: { persona: Pers
       </div>
       <div>
         <button type="submit" className={botonChico} disabled={guardando}>
-          Guardar datos oficiales
+          {completos && !confirmados ? "Confirmar datos oficiales" : "Guardar datos oficiales"}
         </button>
       </div>
     </form>

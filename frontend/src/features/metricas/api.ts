@@ -39,6 +39,7 @@ export const metricasApi = {
 };
 
 export const HERRAMIENTAS: Record<string, string> = {
+  ver_plan_de_estudios: "Plan de estudios",
   buscar_correlatividades: "Correlatividades",
   buscar_mesas: "Mesas de examen",
   buscar_hallazgos: "Hallazgos",

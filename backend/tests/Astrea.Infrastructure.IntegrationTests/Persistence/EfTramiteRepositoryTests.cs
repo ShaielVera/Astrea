@@ -42,9 +42,12 @@ public sealed class EfTramiteRepositoryTests(BaseDeDatosFixture baseDeDatos)
     {
         await using var db = baseDeDatos.CrearContexto();
 
-        var tipos = await new EfTramiteRepository(db).ListarTiposAsync(incluirInactivos: false, CancellationToken.None);
+        var repositorio = new EfTramiteRepository(db);
+        var tipos = await repositorio.ListarTiposAsync(incluirInactivos: true, CancellationToken.None);
 
         tipos.Should().HaveCount(4);
+        (await repositorio.ListarTiposAsync(incluirInactivos: false, CancellationToken.None)).Select(tipo => tipo.Codigo)
+            .Should().BeEquivalentTo("ALUMNO_REGULAR", "CONSTANCIA_EXAMEN");
         tipos.Single(tipo => tipo.Codigo == "JUSTIFICACION_INASISTENCIA").Campos.Should().Contain(campo => campo.Clave == "motivo" && campo.Tipo == TipoCampo.TextoLargo);
     }
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { celularLegible } from "@/features/perfil/api";
 import { ETIQUETA_ESTADO, fechaHora, type Documento, type EstadoTramite, type TramiteDetalle } from "./api";
 
 const ESTILO_ESTADO: Record<EstadoTramite, string> = {
@@ -7,6 +8,7 @@ const ESTILO_ESTADO: Record<EstadoTramite, string> = {
   EnProceso: "bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200",
   Rechazado: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
   Listo: "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200",
+  Cancelado: "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
 };
 
 export function EstadoBadge({ estado }: { estado: EstadoTramite }) {
@@ -30,7 +32,7 @@ export function DetalleTramite({ tramite, vistaAdministracion = false, acciones,
   const rechazado = tramite.estado === "Rechazado";
 
   return (
-    <section aria-label={`Trámite ${tramite.numero}`} className="flex flex-col gap-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <section aria-label={`Trámite ${tramite.numero}`} className="flex flex-col gap-4 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm text-zinc-500">{tramite.numero}</p>
@@ -58,6 +60,15 @@ export function DetalleTramite({ tramite, vistaAdministracion = false, acciones,
             {[tramite.solicitante.apellido, tramite.solicitante.nombre].filter(Boolean).join(", ") || "Sin datos cargados"} · {tramite.solicitante.email}
             {tramite.solicitante.dni ? ` · DNI ${tramite.solicitante.dni}` : ""}
             {tramite.solicitante.legajo ? ` · Legajo ${tramite.solicitante.legajo}` : ""}
+          </dd>
+          <dt className="text-zinc-500">Contacto</dt>
+          <dd className="min-w-0 break-words">
+            <ContactoTitular valor={tramite.solicitante.emailContacto} verificadoEn={tramite.solicitante.emailContactoVerificadoEn} />
+            {" · "}
+            <ContactoTitular
+              valor={tramite.solicitante.celular && celularLegible(tramite.solicitante.celular)}
+              verificadoEn={tramite.solicitante.celularVerificadoEn}
+            />
           </dd>
           <dt className="text-zinc-500">Asignado a</dt>
           <dd className="min-w-0 break-words">{tramite.administradorAsignado ?? "Nadie todavía"}</dd>
@@ -127,5 +138,18 @@ function BloqueDocumento({ documento, onDescargar, acciones }: { documento: Docu
         {acciones}
       </div>
     </section>
+  );
+}
+
+/** Un dato de contacto del titular y cuándo lo validó con el código (la validación dura un año). */
+function ContactoTitular({ valor, verificadoEn }: { valor: string | null; verificadoEn: string | null }) {
+  if (!valor) return <span className="text-zinc-500">sin cargar</span>;
+  return (
+    <span>
+      {valor}{" "}
+      <span className={verificadoEn ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}>
+        {verificadoEn ? `(validado el ${new Date(verificadoEn).toLocaleDateString("es-AR")})` : "(sin validar)"}
+      </span>
+    </span>
   );
 }

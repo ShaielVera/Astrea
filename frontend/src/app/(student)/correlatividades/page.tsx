@@ -138,10 +138,15 @@ export default function CorrelatividadesPage() {
 
       {materias && (
         <div className="grid gap-6 lg:grid-cols-[16rem_1fr]">
-          <nav aria-label="Lista de materias">
-            <ul className="flex flex-col gap-1">
+          <nav aria-label="Lista de materias" className="self-start rounded-xl border border-zinc-200 bg-superficie p-2 shadow-sm dark:border-zinc-800">
+            {delAnio.length > 0 && (
+              <p className="border-b border-zinc-200 px-3 pt-1 pb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:border-zinc-800">
+                {NOMBRE_ANIO[anio] ?? `Año ${anio}`} · {delAnio.length} {delAnio.length === 1 ? "materia" : "materias"}
+              </p>
+            )}
+            <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
               {delAnio.map((materia) => (
-                <li key={materia.planMateriaId}>
+                <li key={materia.planMateriaId} className="py-1">
                   <button
                     type="button"
                     onClick={() => void verMateria(materia.materiaId, [materia.materiaId])}
@@ -159,7 +164,7 @@ export default function CorrelatividadesPage() {
           </nav>
 
           {detalle ? (
-            <section aria-labelledby="materia-titulo" className="flex min-w-0 flex-col gap-4">
+            <section aria-labelledby="materia-titulo" className="flex min-w-0 flex-col gap-4 rounded-xl border border-zinc-200 bg-superficie p-5 shadow-sm dark:border-zinc-800">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 id="materia-titulo" className="text-xl font-semibold">
@@ -180,7 +185,7 @@ export default function CorrelatividadesPage() {
               <VerificarSituacion key={detalle.materiaId} detalle={detalle} />
             </section>
           ) : (
-            <p className="text-zinc-500">Elegí una materia para ver sus correlatividades.</p>
+            <p className="self-start rounded-xl border border-dashed border-zinc-300 bg-superficie/60 p-5 text-zinc-500 dark:border-zinc-700">Elegí una materia para ver sus correlatividades.</p>
           )}
         </div>
       )}
@@ -218,7 +223,7 @@ function VerificarSituacion({ detalle }: { detalle: CorrelatividadesDeMateria })
   }
 
   return (
-    <section aria-labelledby="verificar-titulo" className="flex flex-col gap-3 rounded-xl bg-zinc-50 p-4 dark:bg-zinc-900">
+    <section aria-labelledby="verificar-titulo" className="flex flex-col gap-3 rounded-xl bg-indigo-50/60 p-4 dark:bg-indigo-950/50">
       <div>
         <h3 id="verificar-titulo" className="font-semibold">
           ¿Puedo cursarla o rendirla?

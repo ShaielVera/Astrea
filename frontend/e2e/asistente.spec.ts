@@ -30,7 +30,7 @@ test.describe("Asistente", () => {
     await ingresarComoEstudianteNuevo(page);
     await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Asistente" }).click();
     await expect(page).toHaveURL(/\/asistente$/);
-    await expect(page.getByRole("note", { name: "Antes de preguntar" })).toContainText("No escribas datos personales");
+    await expect(page.getByRole("note", { name: "Antes de preguntar" })).toContainText("se borran a los 30 días sin uso");
 
     // Pregunta con respuesta en los documentos: se ve la respuesta con su cita y la fuente.
     const formulario = page.getByRole("form", { name: "Hacer una pregunta" });

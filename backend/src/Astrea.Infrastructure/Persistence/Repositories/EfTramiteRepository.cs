@@ -113,7 +113,18 @@ internal sealed class EfTramiteRepository(AppDbContext db) : ITramiteRepository
         var ids = usuarioIds.ToList();
         return await db.Usuarios.AsNoTracking()
             .Where(usuario => ids.Contains(usuario.Id))
-            .Select(usuario => new PersonaDto(usuario.Id, usuario.Email, usuario.Nombre, usuario.Apellido, usuario.Legajo, usuario.Dni))
+            .Select(usuario => new PersonaDto(
+                usuario.Id,
+                usuario.Email,
+                usuario.Nombre,
+                usuario.Apellido,
+                usuario.Legajo,
+                usuario.Dni,
+                usuario.DatosConfirmadosEn != null,
+                usuario.EmailContacto,
+                usuario.EmailContactoVerificadoEn,
+                usuario.Celular,
+                usuario.CelularVerificadoEn))
             .ToDictionaryAsync(persona => persona.Id, cancellationToken);
     }
 

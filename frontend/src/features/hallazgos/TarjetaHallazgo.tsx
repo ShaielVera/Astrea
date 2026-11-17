@@ -52,7 +52,7 @@ export function EstadoHallazgo({ estado }: { estado: EstadoObjeto }) {
 /** Tarjeta con los datos públicos de un hallazgo. `extra` agrega contenido (estado, datos privados, acciones). */
 export function TarjetaHallazgo({ hallazgo, extra }: { hallazgo: HallazgoPublico; extra?: ReactNode }) {
   return (
-    <article aria-label={hallazgo.tituloPublico} className="flex min-w-0 flex-col gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <article aria-label={hallazgo.tituloPublico} className="flex min-w-0 flex-col gap-3 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
       {hallazgo.tieneFoto && <FotoHallazgo id={hallazgo.id} titulo={hallazgo.tituloPublico} />}
       <div className="flex flex-col gap-1">
         <h3 className="font-semibold">{hallazgo.tituloPublico}</h3>

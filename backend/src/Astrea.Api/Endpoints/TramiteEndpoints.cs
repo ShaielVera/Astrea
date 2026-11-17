@@ -31,6 +31,14 @@ internal static class TramiteEndpoints
             .Produces<TramiteDetalleDto>()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        tramites.MapPost("/tramites/{tramiteId:guid}/cancelacion", async (Guid tramiteId, SolicitudesTramite solicitudes, CancellationToken ct) =>
+                (await solicitudes.CancelarAsync(tramiteId, ct)).AHttp())
+            .WithName("CancelarTramite")
+            .WithDescription("Solo el titular, mientras esté pendiente o en proceso. Queda en el historial.")
+            .Produces<TramiteDetalleDto>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         tramites.MapGet("/me/tramites", async (EstadoTramite[]? estado, int? page, int? pageSize, SolicitudesTramite solicitudes, CancellationToken ct) =>
                 (await solicitudes.ListarMiosAsync(estado, page, pageSize, ct)).AHttp())
             .WithName("ListarMisTramites")

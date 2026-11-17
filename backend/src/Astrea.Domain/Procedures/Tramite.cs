@@ -12,6 +12,9 @@ public enum EstadoTramite
     EnProceso = 2,
     Rechazado = 3,
     Listo = 4,
+
+    /// <summary>Lo canceló el estudiante antes de que estuviera listo (ya no lo necesita).</summary>
+    Cancelado = 5,
 }
 
 /// <summary>
@@ -65,7 +68,7 @@ public sealed class Tramite : Entity
 
     public IReadOnlyList<TramiteEvento> Eventos => _eventos;
 
-    public bool EstaFinalizado => Estado is EstadoTramite.Rechazado or EstadoTramite.Listo;
+    public bool EstaFinalizado => Estado is EstadoTramite.Rechazado or EstadoTramite.Listo or EstadoTramite.Cancelado;
 
     public static Tramite Solicitar(
         Guid id,
@@ -131,6 +134,30 @@ public sealed class Tramite : Entity
         ObservacionAdministrativa = Texto.Requerido(motivo, "motivo del rechazo", 500);
         AdministradorAsignadoId ??= administradorId;
         Registrar(Estado, EstadoTramite.Rechazado, ObservacionAdministrativa, administradorId, ahora);
+    }
+
+    /// <summary>
+    /// El titular lo cancela mientras no esté listo ni rechazado (pendiente o en proceso). Queda en el historial.
+    /// Es idempotente: cancelar uno ya cancelado (un reintento) no hace nada.
+    /// </summary>
+    public void Cancelar(Guid usuarioId, DateTimeOffset ahora)
+    {
+        if (!EsTitular(usuarioId))
+        {
+            throw new DomainException("Solo quien pidió el trámite lo puede cancelar.");
+        }
+
+        if (Estado == EstadoTramite.Cancelado)
+        {
+            return;
+        }
+
+        if (EstaFinalizado)
+        {
+            throw new DomainException("El trámite ya está finalizado: no se puede cancelar.");
+        }
+
+        Registrar(Estado, EstadoTramite.Cancelado, "Lo canceló el estudiante.", usuarioId, ahora);
     }
 
     private void ValidarAbierto()

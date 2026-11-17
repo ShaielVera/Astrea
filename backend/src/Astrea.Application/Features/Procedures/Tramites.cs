@@ -6,6 +6,7 @@ using Astrea.Application.Contracts.Pagination;
 using Astrea.Application.Contracts.Results;
 using Astrea.Application.Features.Auth;
 using Astrea.Domain.Procedures;
+using Astrea.Domain.Users;
 
 namespace Astrea.Application.Features.Procedures;
 
@@ -76,6 +77,20 @@ public sealed class SolicitudesTramite(
             return tramite.Error!;
         }
 
+        return await detalles.ArmarAsync(tramite.Valor, tramite.Valor.UsuarioId, vistaAdministracion: false, cancellationToken);
+    }
+
+    /// <summary>El titular cancela su trámite mientras no esté listo ni rechazado.</summary>
+    public async Task<Result<TramiteDetalleDto>> CancelarAsync(Guid tramiteId, CancellationToken cancellationToken)
+    {
+        var tramite = await ObtenerPropioAsync(tramiteId, cancellationToken);
+        if (!tramite.EsExitoso)
+        {
+            return tramite.Error!;
+        }
+
+        tramite.Valor.Cancelar(tramite.Valor.UsuarioId, clock.UtcNow);
+        await unitOfWork.GuardarCambiosAsync(cancellationToken);
         return await detalles.ArmarAsync(tramite.Valor, tramite.Valor.UsuarioId, vistaAdministracion: false, cancellationToken);
     }
 
@@ -298,9 +313,10 @@ public sealed class EmisionDocumentos(
             return Result<string?>.Exito(null);
         }
 
-        // El PDF solo se genera con los datos institucionales confirmados por Secretaría (SDD §9).
+        // El PDF solo se genera con los datos institucionales confirmados por Secretaría (SDD §9): los que carga el estudiante
+        // en "Mi perfil" se revisan antes de imprimirlos.
         var titular = await usuarios.ObtenerPorIdAsync(tramite.UsuarioId, cancellationToken);
-        if (titular is not { TieneDatosOficiales: true })
+        if (titular is not { TieneDatosOficiales: true, DatosConfirmados: true })
         {
             return ErroresTramites.DatosOficialesIncompletos;
         }
@@ -393,9 +409,26 @@ public sealed class DatosOficiales(IUserRepository usuarios, IUnitOfWork unitOfW
             return ErroresTramites.UsuarioNoEncontrado;
         }
 
+        if (await usuarios.ExisteOtroConDniAsync(Usuario.NormalizarDni(comando.Dni), usuario.Id, cancellationToken))
+        {
+            return ErroresTramites.DniEnUso;
+        }
+
+        // Guardar es confirmar: Secretaría los revisó contra la documentación del estudiante.
         usuario.ActualizarDatosOficiales(comando.Nombre, comando.Apellido, comando.Dni, comando.Legajo, clock.UtcNow);
         await unitOfWork.GuardarCambiosAsync(cancellationToken);
-        return new PersonaDto(usuario.Id, usuario.Email, usuario.Nombre, usuario.Apellido, usuario.Legajo, usuario.Dni);
+        return new PersonaDto(
+            usuario.Id,
+            usuario.Email,
+            usuario.Nombre,
+            usuario.Apellido,
+            usuario.Legajo,
+            usuario.Dni,
+            usuario.DatosConfirmados,
+            usuario.EmailContacto,
+            usuario.EmailContactoVerificadoEn,
+            usuario.Celular,
+            usuario.CelularVerificadoEn);
     }
 }
 

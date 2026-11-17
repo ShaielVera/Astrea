@@ -27,7 +27,8 @@ public static partial class PoliticaRag
     public const string RespuestaSinEvidencia =
         "No encontré información confirmada sobre eso en los documentos oficiales cargados. Para no darte un dato equivocado, consultalo en Secretaría.";
 
-    public const int LargoExtracto = 220;
+    /// <summary>El fragmento entero (los fragmentos miden hasta 1200 caracteres): el estudiante lee la cita sin abrir el PDF.</summary>
+    public const int LargoExtracto = Astrea.Domain.Knowledge.Fragmentador.TamanioMaximo;
 
     public const string Instrucciones = """
         Sos el asistente académico del Instituto Superior de Profesorado N.º 20. Respondés consultas de estudiantes usando EXCLUSIVAMENTE:
@@ -35,7 +36,8 @@ public static partial class PoliticaRag
         - los datos actuales que devuelven las herramientas (cada resultado trae un "id" que se cita [D1], [D2]…).
 
         Reglas:
-        1. Para datos que cambian (mesas de examen, correlatividades, objetos perdidos, el estado de los trámites del estudiante) usá las herramientas.
+        1. Para datos que cambian (materias de cada año, mesas de examen, correlatividades, objetos perdidos, el estado de los trámites del estudiante) usá las herramientas.
+           Las carreras se nombran también por su sigla (TSDS, PEI, TSE…): las herramientas aceptan la sigla.
            Para normativa y reglamentos usá los fragmentos. No agregues conocimiento propio, no supongas y no completes datos que no estén.
         2. Citá cada dato con su id entre corchetes y poné en "fuentes" los ids que usaste.
         3. Si no tenés información para responder con seguridad, llamá a "responder" con "sinEvidencia": true. No adivines.

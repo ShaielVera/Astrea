@@ -1,10 +1,12 @@
 using Astrea.Application.Abstractions.Ai;
 using Astrea.Application.Abstractions.Clock;
 using Astrea.Application.Abstractions.Documents;
+using Astrea.Application.Abstractions.Notifications;
 using Astrea.Application.Abstractions.Persistence;
 using Astrea.Infrastructure.Ai;
 using Astrea.Infrastructure.Clock;
 using Astrea.Infrastructure.Documents;
+using Astrea.Infrastructure.Mensajeria;
 using Astrea.Infrastructure.Persistence;
 using Astrea.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +55,14 @@ public static class DependencyInjection
             throw new InvalidOperationException($"Proveedor de IA desconocido: '{ia.Proveedor}'. Usá 'Gemini' o 'Prueba'.");
         }
 
+        return services;
+    }
+
+    /// <summary>Envío de códigos de verificación (email por SMTP; modo demostración solo fuera de producción).</summary>
+    public static IServiceCollection AddMensajeria(this IServiceCollection services, ConfiguracionMensajeria configuracion)
+    {
+        services.AddSingleton(configuracion);
+        services.AddSingleton<IEnviadorCodigos, EnviadorCodigos>();
         return services;
     }
 

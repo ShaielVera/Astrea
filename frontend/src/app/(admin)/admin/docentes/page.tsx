@@ -100,7 +100,7 @@ export default function Docentes() {
         <p className="text-sm text-zinc-500">El profesor tiene que haber entrado a Astrea al menos una vez para aparecer.</p>
         {candidatos?.length === 0 && <p className="text-zinc-500">No se encontró ningún usuario.</p>}
         {candidatos && candidatos.length > 0 && (
-          <ul aria-label="Usuarios encontrados" className="flex flex-col divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+          <ul aria-label="Usuarios encontrados" className="flex flex-col divide-y divide-zinc-200 rounded-xl border bg-superficie border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
             {candidatos.map((usuario) => (
               <li key={usuario.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                 <span>
@@ -145,7 +145,7 @@ export default function Docentes() {
           <p className="text-zinc-500">Todavía no hay docentes.</p>
         ) : (
           docentes.map((docente) => (
-            <article key={docente.id} aria-label={`Docente ${docente.nombre}`} className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+            <article key={docente.id} aria-label={`Docente ${docente.nombre}`} className="flex flex-col gap-3 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <h3 className="font-semibold">
                   {docente.nombre}

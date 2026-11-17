@@ -104,7 +104,7 @@ export function FormularioMesa({ carreras, mesa, onGuardar, onCancelar }: Props)
   const titulo = mesa ? `Editar mesa de ${mesa.materiaNombre}` : "Nueva mesa";
 
   return (
-    <form onSubmit={enviar} aria-label={titulo} className="flex flex-col gap-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <form onSubmit={enviar} aria-label={titulo} className="flex flex-col gap-4 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
       <h2 className="text-lg font-semibold">{titulo}</h2>
 
       {error && (
@@ -181,7 +181,7 @@ export function FormularioMesa({ carreras, mesa, onGuardar, onCancelar }: Props)
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
-          Tribunal
+          Profesores (tribunal)
           <textarea
             value={tribunal}
             onChange={(e) => setTribunal(e.target.value)}
@@ -191,7 +191,7 @@ export function FormularioMesa({ carreras, mesa, onGuardar, onCancelar }: Props)
             className={campo}
           />
           <span id="ayuda-tribunal" className="text-xs font-normal text-zinc-500">
-            Un integrante por renglón. El primero preside.
+            Un profesor por renglón. El primero preside la mesa.
           </span>
         </label>
         <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">

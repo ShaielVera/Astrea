@@ -107,13 +107,23 @@ public class PoliticaRagTests
     }
 
     [Fact]
-    public void El_extracto_de_la_fuente_es_corto_y_en_una_linea()
+    public void El_extracto_de_la_fuente_trae_el_fragmento_completo_en_una_linea()
     {
         var evidencias = PoliticaRag.SeleccionarEvidencias([Fragmento(0.9, "CAPÍTULO I\nDE LAS MESAS\n\n" + new string('x', 400))], Configuracion);
 
         var fuente = PoliticaRag.Validar(new RespuestaPropuesta("Dato [F1].", ["F1"], false), evidencias).Fuentes.Single();
 
-        fuente.Extracto.Should().StartWith("CAPÍTULO I DE LAS MESAS x").And.HaveLength(PoliticaRag.LargoExtracto).And.EndWith("…");
+        fuente.Extracto.Should().Be("CAPÍTULO I DE LAS MESAS " + new string('x', 400), "se lee la cita entera sin abrir el PDF");
+    }
+
+    [Fact]
+    public void Un_texto_mas_largo_que_un_fragmento_se_recorta()
+    {
+        var evidencias = PoliticaRag.SeleccionarEvidencias([Fragmento(0.9, new string('x', 2000))], new ConfiguracionAsistente { SimilitudMinima = 0.5, FragmentosMaximos = 3, CaracteresMaximosContexto = 5000 });
+
+        var fuente = PoliticaRag.Validar(new RespuestaPropuesta("Dato [F1].", ["F1"], false), evidencias).Fuentes.Single();
+
+        fuente.Extracto.Should().HaveLength(PoliticaRag.LargoExtracto).And.EndWith("…");
     }
 
     [Fact]

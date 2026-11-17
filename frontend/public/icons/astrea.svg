@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Astrea">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f4f86"/>
+      <stop offset="1" stop-color="#132c4a"/>
+    </linearGradient>
+    <linearGradient id="oro" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3d77a"/>
+      <stop offset="1" stop-color="#c99a2e"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="url(#fondo)"/>
+  <path d="M12 52 V27 A20 20 0 0 1 52 27 V52" fill="none" stroke="#c99a2e" stroke-width="1.8" stroke-opacity=".9"/>
+  <polygon points="32.00,9.50 33.49,20.90 37.66,18.84 35.60,23.01 47.00,24.50 35.60,25.99 37.66,30.16 33.49,28.10 32.00,39.50 30.51,28.10 26.34,30.16 28.40,25.99 17.00,24.50 28.40,23.01 26.34,18.84 30.51,20.90" fill="url(#oro)"/>
+  <path d="M31 41.5 C24 38 17 38 10 40.5 V53 C17 50.5 24 50.5 31 54 Z" fill="#fbf3dc"/>
+  <path d="M33 41.5 C40 38 47 38 54 40.5 V53 C47 50.5 40 50.5 33 54 Z" fill="#fbf3dc"/>
+  <path d="M32 42 V54.5" stroke="#c99a2e" stroke-width="2" stroke-linecap="round"/>
+</svg>

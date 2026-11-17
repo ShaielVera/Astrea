@@ -1362,7 +1362,7 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = new Guid("0193a5d0-0000-7000-8000-000000000003"),
-                            Activo = true,
+                            Activo = false,
                             Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"motivo\",\"etiqueta\":\"\\u00BFPara qu\\u00E9 lo necesit\\u00E1s?\",\"tipo\":1,\"obligatorio\":true,\"largoMaximo\":200,\"ayuda\":\"Ej.: pase a otra instituci\\u00F3n, beca.\"}]",
                             Codigo = "ANALITICO_PARCIAL",
                             Descripcion = "Detalle de las materias aprobadas hasta hoy, con nota y fecha.",
@@ -1372,13 +1372,69 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = new Guid("0193a5d0-0000-7000-8000-000000000004"),
-                            Activo = true,
+                            Activo = false,
                             Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"desde\",\"etiqueta\":\"Desde\",\"tipo\":3,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"hasta\",\"etiqueta\":\"Hasta\",\"tipo\":3,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"motivo\",\"etiqueta\":\"Motivo\",\"tipo\":2,\"obligatorio\":true,\"largoMaximo\":500,\"ayuda\":null}]",
                             Codigo = "JUSTIFICACION_INASISTENCIA",
                             Descripcion = "Pedí que se justifiquen tus faltas por un motivo de salud, laboral u otro previsto en el reglamento. Presentá el comprobante original en Secretaría.",
                             Nombre = "Justificación de inasistencia",
                             RequiereAdjunto = false
                         });
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Users.CodigoVerificacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Canal")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("canal");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("Destino")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("destino");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("hash");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("integer")
+                        .HasColumnName("intentos");
+
+                    b.Property<DateTimeOffset?>("UsadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("usado_en");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<DateTimeOffset>("VenceEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("vence_en");
+
+                    b.HasKey("Id")
+                        .HasName("pk_codigos_verificacion");
+
+                    b.HasIndex("VenceEn")
+                        .HasDatabaseName("ix_codigos_verificacion_vence_en");
+
+                    b.HasIndex("UsuarioId", "Canal", "CreadoEn")
+                        .HasDatabaseName("ix_codigos_verificacion_usuario_id_canal_creado_en");
+
+                    b.ToTable("codigos_verificacion", (string)null);
                 });
 
             modelBuilder.Entity("Astrea.Domain.Users.Rol", b =>
@@ -1453,9 +1509,22 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("apellido");
 
+                    b.Property<string>("Celular")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("celular");
+
+                    b.Property<DateTimeOffset?>("CelularVerificadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("celular_verificado_en");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DatosConfirmadosEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("datos_confirmados_en");
 
                     b.Property<string>("Dni")
                         .HasMaxLength(20)
@@ -1467,6 +1536,15 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasMaxLength(320)
                         .HasColumnType("character varying(320)")
                         .HasColumnName("email");
+
+                    b.Property<string>("EmailContacto")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email_contacto");
+
+                    b.Property<DateTimeOffset?>("EmailContactoVerificadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("email_contacto_verificado_en");
 
                     b.Property<string>("FirebaseUid")
                         .IsRequired()
@@ -1490,6 +1568,9 @@ namespace Astrea.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_usuarios");
+
+                    b.HasIndex("Dni")
+                        .HasDatabaseName("ix_usuarios_dni");
 
                     b.HasIndex("Email")
                         .HasDatabaseName("ix_usuarios_email");
@@ -1823,6 +1904,16 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_tramite_eventos_tramites_tramite_id");
+                });
+
+            modelBuilder.Entity("Astrea.Domain.Users.CodigoVerificacion", b =>
+                {
+                    b.HasOne("Astrea.Domain.Users.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_codigos_verificacion_usuarios_usuario_id");
                 });
 
             modelBuilder.Entity("Astrea.Domain.Users.UsuarioRol", b =>

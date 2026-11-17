@@ -33,7 +33,7 @@ public class HerramientasAsistenteTests
         var definiciones = await _entorno.Herramientas().DefinicionesAsync(CancellationToken.None);
 
         definiciones.Select(definicion => definicion.Nombre).Should().BeEquivalentTo(
-            "buscar_correlatividades", "buscar_mesas", "buscar_hallazgos", "consultar_mis_tramites", "proponer_tramite", "responder");
+            "ver_plan_de_estudios", "buscar_correlatividades", "buscar_mesas", "buscar_hallazgos", "consultar_mis_tramites", "proponer_tramite", "responder");
         var proponer = definiciones.Single(definicion => definicion.Nombre == "proponer_tramite");
         proponer.Parametros.Single(parametro => parametro.Nombre == "tipo").Valores.Should().Contain("ALUMNO_REGULAR");
         proponer.Descripcion.Should().Contain("NO crea el trámite");
@@ -158,6 +158,44 @@ public class HerramientasAsistenteTests
         resultado.GetProperty("paraCursar")[0].GetString().Should().Be("Didáctica General regularizada");
         resultado.GetProperty("paraRendir")[0].GetString().Should().Be("Didáctica General aprobada");
         resultado.GetProperty("nota").GetString().Should().Contain("condiciones distintas");
+    }
+
+    [Fact]
+    public async Task El_plan_de_estudios_reconoce_la_sigla_de_la_carrera_y_lista_las_materias_del_anio()
+    {
+        var plan = new PlanEstudioDto(Guid.NewGuid(), Matematica.Id, "2024", "Plan 2024", new DateOnly(2024, 3, 1), null, true, 2);
+        _entorno.Academico.ListarPlanesAsync(Matematica.Id, false, Arg.Any<CancellationToken>()).Returns([plan]);
+        _entorno.Academico.ListarMateriasDePlanAsync(plan.Id, 2, Arg.Any<PageRequest>(), false, Arg.Any<CancellationToken>()).Returns(PagedResult<MateriaDePlanDto>.From(
+        [
+            new MateriaDePlanDto(Guid.NewGuid(), Guid.NewGuid(), "M3", "Análisis II", 2, Cuatrimestre.Anual, 1, null, true, true),
+            new MateriaDePlanDto(Guid.NewGuid(), Guid.NewGuid(), "M4", "Geometría", 2, Cuatrimestre.Segundo, 2, null, true, true),
+        ], PageRequest.Create(1, 50), 2));
+        var contexto = Contexto();
+
+        var resultado = await EjecutarAsync(HerramientasAsistente.VerPlanDeEstudios, new { carrera = "pm", anio = "2" }, contexto);
+
+        resultado.GetProperty("carrera").GetString().Should().Be(Matematica.Nombre);
+        resultado.GetProperty("porAnio")[0].GetProperty("materias").EnumerateArray().Select(materia => materia.GetString())
+            .Should().Equal("Análisis II", "Geometría (2.º cuatrimestre)");
+        contexto.Datos.Single().Enlace.Should().Be("/plan-de-estudios");
+    }
+
+    [Fact]
+    public async Task El_plan_de_estudios_rechaza_un_anio_que_la_carrera_no_tiene()
+    {
+        var resultado = await EjecutarAsync(HerramientasAsistente.VerPlanDeEstudios, new { carrera = "PM", anio = "5" });
+
+        resultado.GetProperty("error").GetString().Should().Contain("dura 4 años");
+        await _entorno.Academico.DidNotReceiveWithAnyArgs().ListarPlanesAsync(default, default, default);
+    }
+
+    [Fact]
+    public async Task Las_definiciones_le_muestran_al_modelo_las_siglas_de_las_carreras()
+    {
+        var definiciones = await _entorno.Herramientas().DefinicionesAsync(CancellationToken.None);
+
+        definiciones.Single(definicion => definicion.Nombre == "ver_plan_de_estudios").Parametros.Single(p => p.Nombre == "carrera").Descripcion
+            .Should().Contain("PM = Profesorado de Matemática").And.Contain("PH = Profesorado de Historia");
     }
 
     [Fact]

@@ -4,7 +4,8 @@ namespace Astrea.Domain.Users;
 
 /// <summary>
 /// Identidad institucional vinculada a una cuenta de Firebase Authentication.
-/// Los datos oficiales (nombre, apellido, DNI, legajo) los carga Secretaría; no se toman del cliente.
+/// El estudiante completa nombre, apellido y DNI en "Mi perfil"; Secretaría los confirma y desde entonces solo ella los cambia
+/// (van impresos en las constancias). El email y el celular de contacto se validan con un código y se renuevan cada año.
 /// </summary>
 public sealed class Usuario : Entity
 {
@@ -35,6 +36,19 @@ public sealed class Usuario : Entity
     public string? Dni { get; private set; }
 
     public string? Legajo { get; private set; }
+
+    /// <summary>Cuándo Secretaría confirmó nombre, apellido y DNI. Null: los cargó el estudiante y falta confirmarlos.</summary>
+    public DateTimeOffset? DatosConfirmadosEn { get; private set; }
+
+    /// <summary>Email donde el instituto se comunica con el estudiante (puede ser distinto del de la cuenta).</summary>
+    public string? EmailContacto { get; private set; }
+
+    public DateTimeOffset? EmailContactoVerificadoEn { get; private set; }
+
+    /// <summary>Celular solo con dígitos, con código de área (ej.: 3424123456).</summary>
+    public string? Celular { get; private set; }
+
+    public DateTimeOffset? CelularVerificadoEn { get; private set; }
 
     public bool Activo { get; private set; }
 
@@ -117,22 +131,94 @@ public sealed class Usuario : Entity
     /// <summary>Hay datos suficientes para emitir un documento oficial a su nombre.</summary>
     public bool TieneDatosOficiales => Nombre is not null && Apellido is not null && Dni is not null;
 
+    public bool DatosConfirmados => DatosConfirmadosEn is not null;
+
+    public static readonly TimeSpan VigenciaContacto = TimeSpan.FromDays(365);
+
+    /// <summary>
+    /// El estudiante completa o corrige sus datos mientras Secretaría no los haya confirmado.
+    /// Después, solo Secretaría los cambia: así nadie altera lo que sale en una constancia.
+    /// </summary>
+    public void CompletarDatosPersonales(string nombre, string apellido, string dni, DateTimeOffset ahora)
+    {
+        if (DatosConfirmados)
+        {
+            throw new DomainException("Secretaría ya confirmó tus datos: si hay un error, pedí la corrección en Secretaría.");
+        }
+
+        Nombre = Texto.Requerido(nombre, "nombre", 100);
+        Apellido = Texto.Requerido(apellido, "apellido", 100);
+        Dni = NormalizarDni(dni);
+        UpdatedAt = ahora;
+    }
+
+    /// <summary>Cambia el email de contacto. Si es otro, hay que volver a validarlo.</summary>
+    public void CambiarEmailContacto(string? email, DateTimeOffset ahora)
+    {
+        var normalizado = string.IsNullOrWhiteSpace(email) ? null : NormalizarEmail(email, "El email de contacto no es válido.");
+        if (normalizado == EmailContacto)
+        {
+            return;
+        }
+
+        EmailContacto = normalizado;
+        EmailContactoVerificadoEn = null;
+        UpdatedAt = ahora;
+    }
+
+    /// <summary>Cambia el celular. Si es otro, hay que volver a validarlo.</summary>
+    public void CambiarCelular(string? celular, DateTimeOffset ahora)
+    {
+        var normalizado = string.IsNullOrWhiteSpace(celular) ? null : NormalizarCelular(celular);
+        if (normalizado == Celular)
+        {
+            return;
+        }
+
+        Celular = normalizado;
+        CelularVerificadoEn = null;
+        UpdatedAt = ahora;
+    }
+
+    /// <summary>Registra la validación con el código. El dato tiene que ser el actual (pudo cambiar mientras tanto).</summary>
+    public void MarcarContactoVerificado(CanalContacto canal, string destino, DateTimeOffset ahora)
+    {
+        if (destino != ContactoDe(canal))
+        {
+            throw new DomainException("El dato cambió después de pedir el código: pedí uno nuevo.");
+        }
+
+        if (canal == CanalContacto.Email)
+        {
+            EmailContactoVerificadoEn = ahora;
+        }
+        else
+        {
+            CelularVerificadoEn = ahora;
+        }
+
+        UpdatedAt = ahora;
+    }
+
+    public string? ContactoDe(CanalContacto canal) => canal == CanalContacto.Email ? EmailContacto : Celular;
+
+    public DateTimeOffset? ContactoVerificadoEn(CanalContacto canal) => canal == CanalContacto.Email ? EmailContactoVerificadoEn : CelularVerificadoEn;
+
+    /// <summary>Validado hace menos de un año: después se pide revalidar por si cambió.</summary>
+    public bool ContactoVigente(CanalContacto canal, DateTimeOffset ahora) =>
+        ContactoVerificadoEn(canal) is { } verificado && ahora - verificado < VigenciaContacto;
+
     /// <summary>
     /// Secretaría carga los datos oficiales (los que van en constancias). El DNI se guarda solo con dígitos
     /// ("30.123.456" → "30123456") para poder compararlo y mostrarlo enmascarado.
     /// </summary>
     public void ActualizarDatosOficiales(string nombre, string apellido, string dni, string? legajo, DateTimeOffset ahora)
     {
-        var soloDigitos = new string((dni ?? string.Empty).Where(c => !char.IsWhiteSpace(c) && c != '.' && c != '-').ToArray());
-        if (soloDigitos.Length is < 7 or > 9 || !soloDigitos.All(char.IsAsciiDigit))
-        {
-            throw new DomainException("El DNI debe tener entre 7 y 9 dígitos.");
-        }
-
         Nombre = Texto.Requerido(nombre, "nombre", 100);
         Apellido = Texto.Requerido(apellido, "apellido", 100);
-        Dni = soloDigitos;
+        Dni = NormalizarDni(dni);
         Legajo = Texto.Opcional(legajo, "legajo", 30);
+        DatosConfirmadosEn = ahora;
         UpdatedAt = ahora;
     }
 
@@ -142,13 +228,62 @@ public sealed class Usuario : Entity
         UpdatedAt = ahora;
     }
 
-    private static string NormalizarEmail(string email)
+    /// <summary>Solo dígitos ("30.123.456" → "30123456") para poder compararlo y mostrarlo enmascarado.</summary>
+    public static string NormalizarDni(string? dni)
+    {
+        var soloDigitos = new string((dni ?? string.Empty).Where(c => !char.IsWhiteSpace(c) && c != '.' && c != '-').ToArray());
+        if (soloDigitos.Length is < 7 or > 9 || !soloDigitos.All(char.IsAsciiDigit))
+        {
+            throw new DomainException("El DNI debe tener entre 7 y 9 dígitos.");
+        }
+
+        return soloDigitos;
+    }
+
+    /// <summary>
+    /// Celular argentino con código de área, guardado solo con dígitos (10): acepta "+54 9 342 412-3456",
+    /// "0342 15 412-3456" o "342 4123456" y los guarda como "3424123456".
+    /// </summary>
+    public static string NormalizarCelular(string celular)
+    {
+        var digitos = new string(celular.Where(char.IsAsciiDigit).ToArray());
+        if (digitos.StartsWith("549", StringComparison.Ordinal))
+        {
+            digitos = digitos[3..];
+        }
+        else if (digitos.StartsWith("54", StringComparison.Ordinal) && digitos.Length == 12)
+        {
+            digitos = digitos[2..];
+        }
+
+        digitos = digitos.TrimStart('0');
+
+        // "342 15 4123456": el 15 que va después del código de área no es parte del número.
+        foreach (var largoArea in new[] { 2, 3, 4 })
+        {
+            if (digitos.Length == 12 && digitos.Substring(largoArea, 2) == "15")
+            {
+                digitos = digitos[..largoArea] + digitos[(largoArea + 2)..];
+                break;
+            }
+        }
+
+        if (digitos.Length != 10)
+        {
+            throw new DomainException("El celular tiene que tener código de área y número: 10 dígitos en total (ej.: 342 412-3456).");
+        }
+
+        return digitos;
+    }
+
+    private static string NormalizarEmail(string email, string mensaje = "El email del usuario no es válido.")
     {
         var normalizado = email?.Trim().ToLowerInvariant() ?? string.Empty;
         var arroba = normalizado.IndexOf('@', StringComparison.Ordinal);
-        if (arroba <= 0 || arroba != normalizado.LastIndexOf('@') || arroba == normalizado.Length - 1)
+        if (arroba <= 0 || arroba != normalizado.LastIndexOf('@') || arroba == normalizado.Length - 1
+            || normalizado.Length > 320 || normalizado.Any(char.IsWhiteSpace) || !normalizado[(arroba + 1)..].Contains('.', StringComparison.Ordinal))
         {
-            throw new DomainException("El email del usuario no es válido.");
+            throw new DomainException(mensaje);
         }
 
         return normalizado;

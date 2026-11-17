@@ -44,8 +44,13 @@ public sealed class TramitesTests(AstreaApiFactory factory)
 
     /// <summary>La constancia de alumno regular emite PDF: para aprobarla, el titular necesita datos oficiales.</summary>
     private static async Task CargarDatosOficialesAsync(HttpClient admin, Detalle tramite) =>
-        (await admin.PutAsJsonAsync($"/api/v1/admin/usuarios/{tramite.Solicitante.Id}/datos-oficiales", new { nombre = "Ana", apellido = "Pérez", dni = "30123456" }))
+        (await admin.PutAsJsonAsync($"/api/v1/admin/usuarios/{tramite.Solicitante.Id}/datos-oficiales", new { nombre = "Ana", apellido = "Pérez", dni = DniPara(tramite) }))
             .EnsureSuccessStatusCode();
+
+    /// <summary>Un DNI distinto por trámite (dos cuentas no pueden compartirlo), que termina en 456 como el resto de los casos.</summary>
+    private static string DniPara(Detalle tramite) => $"3{int.Parse(tramite.Numero[2..], System.Globalization.CultureInfo.InvariantCulture) % 10_000:D4}456";
+
+
 
     private static async Task<Detalle> SolicitarOkAsync(HttpClient estudiante, Guid carreraId)
     {
@@ -59,7 +64,8 @@ public sealed class TramitesTests(AstreaApiFactory factory)
     {
         var tipos = (await (await EstudianteAsync()).GetFromJsonAsync<List<Tipo>>("/api/v1/tramites/tipos", Json))!;
 
-        tipos.Select(tipo => tipo.Codigo).Should().Contain(["ALUMNO_REGULAR", "CONSTANCIA_EXAMEN", "ANALITICO_PARCIAL", "JUSTIFICACION_INASISTENCIA"]);
+        tipos.Select(tipo => tipo.Codigo).Should().Contain(["ALUMNO_REGULAR", "CONSTANCIA_EXAMEN"]);
+        tipos.Select(tipo => tipo.Codigo).Should().NotContain(["ANALITICO_PARCIAL", "JUSTIFICACION_INASISTENCIA"], "se resuelven en Secretaría");
         tipos.Single(tipo => tipo.Codigo == "CONSTANCIA_EXAMEN").Campos.Select(campo => campo.Clave)
             .Should().Equal("carrera", "materia", "fechaExamen", "presentarAnte");
     }
@@ -135,6 +141,43 @@ public sealed class TramitesTests(AstreaApiFactory factory)
         rechazado.StatusCode.Should().Be(HttpStatusCode.OK);
         aprobarDespues.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await aprobarDespues.Content.ReadAsStringAsync()).Should().Contain("finalizado");
+    }
+
+    [Fact]
+    public async Task Los_datos_que_cargo_el_estudiante_se_confirman_antes_de_emitir_la_constancia()
+    {
+        var admin = await AdminAsync();
+        var estudiante = await EstudianteAsync();
+        var dni = Random.Shared.Next(20_000_000, 49_999_999).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        (await estudiante.PutAsJsonAsync("/api/v1/me/perfil/datos", new { nombre = "Brenda", apellido = "Vera", dni })).EnsureSuccessStatusCode();
+        var tramite = await SolicitarOkAsync(estudiante, await CrearCarreraAsync(admin));
+
+        var sinConfirmar = await admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramite.Id}/aprobar", new { comentario = (string?)null });
+        await CargarDatosOficialesAsync(admin, tramite);
+        var confirmado = await admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramite.Id}/aprobar", new { comentario = (string?)null });
+
+        sinConfirmar.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await sinConfirmar.Content.ReadAsStringAsync()).Should().Contain("confirmá los datos oficiales");
+        confirmado.StatusCode.Should().Be(HttpStatusCode.OK, await confirmado.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task El_estudiante_cancela_su_tramite_y_nadie_mas_puede()
+    {
+        var admin = await AdminAsync();
+        var estudiante = await EstudianteAsync();
+        var tramite = await SolicitarOkAsync(estudiante, await CrearCarreraAsync(admin));
+
+        var ajeno = await (await EstudianteAsync()).PostAsync($"/api/v1/tramites/{tramite.Id}/cancelacion", null);
+        var cancelado = await estudiante.PostAsync($"/api/v1/tramites/{tramite.Id}/cancelacion", null);
+        var aprobarDespues = await admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramite.Id}/aprobar", new { comentario = (string?)null });
+
+        ajeno.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        cancelado.StatusCode.Should().Be(HttpStatusCode.OK);
+        var detalle = await LeerAsync<Detalle>(cancelado);
+        detalle.Estado.Should().Be("Cancelado");
+        detalle.Historial.Select(evento => (evento.EstadoNuevo, evento.Actor)).Should().Equal(("Pendiente", "Vos"), ("Cancelado", "Vos"));
+        aprobarDespues.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]

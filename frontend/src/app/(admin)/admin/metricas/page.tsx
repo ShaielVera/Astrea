@@ -18,7 +18,7 @@ import {
 } from "@/features/metricas/api";
 
 const campo = "rounded-md border border-zinc-300 bg-transparent px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900";
-const tarjeta = "rounded-xl border border-zinc-200 p-4 dark:border-zinc-800";
+const tarjeta = "rounded-xl border border-zinc-200 bg-superficie p-4 shadow-sm dark:border-zinc-800";
 
 // Paleta categórica validada (claro y oscuro) para las dos series del gráfico.
 const COLOR_RESPONDIDAS = "bg-[#2a78d6] dark:bg-[#3987e5]";

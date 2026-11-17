@@ -5,7 +5,7 @@ const modulos = [
   },
   {
     titulo: "Mesas de examen",
-    descripcion: "Llamados, fechas, horarios y tribunales filtrables por fecha y cátedra.",
+    descripcion: "Llamados, fechas, horarios y profesores, filtrables por fecha y materia.",
   },
   {
     titulo: "Mis trámites",
@@ -24,15 +24,19 @@ const modulos = [
 export default function Inicio() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-4 py-12 sm:px-6">
-      <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
-          Instituto Superior de Profesorado N.º 20
-        </p>
-        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Astrea</h1>
-        <p className="max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
-          Portal académico e institucional: correlatividades, mesas de examen, trámites,
-          objetos perdidos y un asistente para resolver tus consultas.
-        </p>
+      <header className="flex flex-col items-start gap-6 rounded-2xl border border-dorado-500/30 bg-gradient-to-br from-dorado-100/60 to-superficie p-6 sm:flex-row sm:items-center sm:p-8 dark:from-indigo-900/60 dark:to-indigo-950">
+        {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático, no necesita optimización */}
+        <img src="/icons/astrea.svg" alt="" width={112} height={112} className="size-24 shrink-0 drop-shadow-md sm:size-28" />
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-dorado-700 dark:text-dorado-300">
+            Instituto Superior de Profesorado N.º 20
+          </p>
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Astrea</h1>
+          <p className="max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
+            Portal académico e institucional: correlatividades, mesas de examen, trámites,
+            objetos perdidos y un asistente para resolver tus consultas.
+          </p>
+        </div>
       </header>
 
       <section aria-labelledby="modulos-titulo" className="flex flex-col gap-4">
@@ -43,14 +47,12 @@ export default function Inicio() {
           {modulos.map((modulo) => (
             <li
               key={modulo.titulo}
-              className="flex flex-col gap-2 rounded-xl border border-zinc-200 p-5 dark:border-zinc-800"
+              className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-superficie p-5 shadow-sm dark:border-zinc-800"
             >
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="font-medium">{modulo.titulo}</h3>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                  Próximamente
-                </span>
-              </div>
+              <h3 className="flex items-center gap-2 font-medium text-indigo-900 dark:text-indigo-100">
+                <span aria-hidden="true" className="text-dorado-500">✦</span>
+                {modulo.titulo}
+              </h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">{modulo.descripcion}</p>
             </li>
           ))}

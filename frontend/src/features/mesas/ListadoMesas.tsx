@@ -48,7 +48,7 @@ function ItemMesa({ mesa, mostrarEstado, acciones }: { mesa: MesaExamen } & Omit
     <li
       aria-label={`${mesa.materiaNombre}, ${horaCorta(mesa.hora)}`}
       className={`flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-start ${
-        cancelada ? "border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-950/20" : "border-zinc-200 dark:border-zinc-800"
+        cancelada ? "border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-950/20" : "border-zinc-200 bg-superficie shadow-sm dark:border-zinc-800"
       }`}
     >
       <div className="w-16 shrink-0 text-2xl font-semibold tabular-nums">
@@ -69,7 +69,7 @@ function ItemMesa({ mesa, mostrarEstado, acciones }: { mesa: MesaExamen } & Omit
           {mesa.carreraNombre} · {mesa.turno}, {mesa.llamado}.º llamado{mesa.aula ? ` · ${mesa.aula}` : ""}
         </p>
         <p className="text-sm">
-          <span className="text-zinc-500">Tribunal: </span>
+          <span className="text-zinc-500">Profesores: </span>
           {mesa.tribunal.join(" · ")}
         </p>
         {cancelada && mesa.motivoCancelacion && (

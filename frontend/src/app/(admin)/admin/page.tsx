@@ -39,63 +39,63 @@ export default function PanelAdministracion() {
       <nav aria-label="Secciones de administración" className="flex flex-wrap gap-3">
         <Link
           href="/admin/academico"
-          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+          className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
         >
           Plan de estudios
           <span className="block text-sm font-normal text-zinc-500">Carreras, planes y materias</span>
         </Link>
         <Link
           href="/admin/mesas"
-          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+          className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
         >
           Mesas de examen
-          <span className="block text-sm font-normal text-zinc-500">Llamados, tribunales y publicación</span>
+          <span className="block text-sm font-normal text-zinc-500">Llamados, profesores y publicación</span>
         </Link>
         <Link
           href="/admin/tramites"
-          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+          className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
         >
           Trámites
           <span className="block text-sm font-normal text-zinc-500">Bandeja de pedidos de estudiantes</span>
         </Link>
         <Link
           href="/admin/plantillas"
-          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+          className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
         >
           Plantillas de documentos
           <span className="block text-sm font-normal text-zinc-500">Texto versionado de las constancias</span>
         </Link>
         <Link
           href="/admin/hallazgos"
-          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+          className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
         >
           Hallazgos
           <span className="block text-sm font-normal text-zinc-500">Objetos perdidos: entregas y bajas</span>
         </Link>
         <Link
           href="/admin/documentos"
-          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+          className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
         >
           Documentos del asistente
           <span className="block text-sm font-normal text-zinc-500">Reglamentos y planes en PDF para consultar</span>
         </Link>
         <Link
           href="/admin/metricas"
-          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+          className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
         >
           Métricas del asistente
           <span className="block text-sm font-normal text-zinc-500">Uso, temas frecuentes y sin respuesta</span>
         </Link>
         <Link
           href="/admin/docentes"
-          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+          className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
         >
           Docentes
           <span className="block text-sm font-normal text-zinc-500">Profesores y las materias que dictan</span>
         </Link>
         <Link
           href="/admin/asistencia"
-          className="rounded-xl border border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+          className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
         >
           Confirmación de asistencia
           <span className="block text-sm font-normal text-zinc-500">Relevamientos e informe (beca Progresar)</span>
@@ -118,13 +118,13 @@ export default function PanelAdministracion() {
         )}
         {estado.tipo === "ok" && (
           <dl className="grid max-w-md grid-cols-2 gap-4">
-            <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+            <div className="rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
               <dt className="text-sm text-zinc-500">Estudiantes</dt>
               <dd className="text-3xl font-semibold" data-testid="total-estudiantes">
                 {estado.resumen.estudiantes}
               </dd>
             </div>
-            <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+            <div className="rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
               <dt className="text-sm text-zinc-500">Administradores</dt>
               <dd className="text-3xl font-semibold" data-testid="total-administradores">
                 {estado.resumen.administradores}

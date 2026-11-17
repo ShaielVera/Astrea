@@ -19,7 +19,7 @@ export function ListaMateriasPorAnio({ materias, acciones }: Props) {
           <h3 id={`anio-${anio}`} className="text-lg font-semibold">
             {NOMBRE_ANIO[anio] ?? `Año ${anio}`}
           </h3>
-          <ul className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+          <ul className="divide-y divide-zinc-200 rounded-xl border bg-superficie border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
             {delAnio.map((materia) => (
               <li key={materia.planMateriaId} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <div className="flex min-w-0 flex-col">

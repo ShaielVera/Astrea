@@ -23,7 +23,7 @@ test.describe("Identidad y acceso", () => {
     await page.getByRole("button", { name: "Crear cuenta" }).click();
 
     await expect(page).toHaveURL(/\/inicio$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Mi inicio" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /^(Buen día|Buenas tardes|Buenas noches)/ })).toBeVisible();
     await expect(page.getByTestId("email-usuario")).toHaveText(email);
     await expect(page.getByRole("link", { name: "Administración" })).toHaveCount(0);
 
@@ -56,7 +56,7 @@ test.describe("Identidad y acceso", () => {
     await expect(page.getByTestId("total-administradores")).not.toHaveText("0");
 
     await page.getByRole("link", { name: "Mi inicio" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Mi inicio" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /^(Buen día|Buenas tardes|Buenas noches)/ })).toBeVisible();
   });
 
   test("con una contraseña incorrecta muestra un error y no ingresa", async ({ page }) => {
@@ -78,7 +78,7 @@ test.describe("Identidad y acceso", () => {
 
     // Vuelve la API: reintenta sola y sigue en su área, sin tener que ingresar de nuevo.
     await page.unroute("**/api/v1/auth/sesion");
-    await expect(page.getByRole("heading", { level: 1, name: "Mi inicio" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { level: 1, name: /^(Buen día|Buenas tardes|Buenas noches)/ })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId("email-usuario")).toHaveText(email);
   });
 

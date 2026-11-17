@@ -54,7 +54,13 @@ public sealed class DocumentosTests(AstreaApiFactory factory)
     private static async Task CargarDatosOficialesAsync(HttpClient admin, Detalle tramite) =>
         await LeerAsync<Persona>(await admin.PutAsJsonAsync(
             $"/api/v1/admin/usuarios/{tramite.Solicitante.Id}/datos-oficiales",
-            new { nombre = "Ana", apellido = "Pérez", dni = "30.123.456", legajo = "L-2026-001" }));
+            new { nombre = "Ana", apellido = "Pérez", dni = DniFormateado(tramite), legajo = "L-2026-001" }));
+
+    /// <summary>Un DNI distinto por trámite (dos cuentas no pueden compartirlo), que termina en 456 como el resto de los casos.</summary>
+    private static string DniPara(Detalle tramite) => $"3{int.Parse(tramite.Numero[2..], System.Globalization.CultureInfo.InvariantCulture) % 10_000:D4}456";
+
+    private static string DniFormateado(Detalle tramite) => $"{DniPara(tramite)[..2]}.{DniPara(tramite)[2..5]}.{DniPara(tramite)[5..]}";
+
 
     private static Task<HttpResponseMessage> AprobarAsync(HttpClient admin, Guid tramiteId) =>
         admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramiteId}/aprobar", new { comentario = "Ya podés descargarla" });
@@ -101,7 +107,7 @@ public sealed class DocumentosTests(AstreaApiFactory factory)
         var texto = string.Join(" ", leido.GetPages().Select(pagina => pagina.Text));
         texto.Should().Contain("CONSTANCIA DE ALUMNO REGULAR")
             .And.Contain("Ana Pérez")
-            .And.Contain("30.123.456")
+            .And.Contain(DniFormateado(tramite))
             .And.Contain("Profesorado de Prueba")
             .And.Contain("ANSES")
             .And.Contain(documento.CodigoValidacion)
@@ -142,7 +148,7 @@ public sealed class DocumentosTests(AstreaApiFactory factory)
         validacion.DniParcial.Should().Be("**.***.456");
         validacion.NumeroTramite.Should().Be(tramite.Numero);
         validacion.HashSha256.Should().Be(documento.HashSha256);
-        json.Should().NotContain("Pérez").And.NotContain("30123456").And.NotContain("30.123.456").And.NotContain("@astrea.test");
+        json.Should().NotContain("Pérez").And.NotContain(DniPara(tramite)).And.NotContain(DniFormateado(tramite)).And.NotContain("@astrea.test");
 
         (await publico.GetAsync("/api/v1/documentos/validar/ZZZZ-ZZZZ-ZZZZ")).StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

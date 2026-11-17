@@ -49,7 +49,13 @@ public static class CatalogoTramites
         ];
     }
 
-    public static IReadOnlyList<TramiteTipo> Tipos() =>
+    /// <summary>
+    /// El analítico parcial y la justificación de inasistencia quedan desactivados: el instituto los resuelve
+    /// en Secretaría. No se borran para que los pedidos que pudiera haber conserven su tipo.
+    /// </summary>
+    public static IReadOnlyList<TramiteTipo> Tipos()
+    {
+        TramiteTipo[] tipos =
     [
         TramiteTipo.Crear(
             AlumnoRegularId,
@@ -86,4 +92,11 @@ public static class CatalogoTramites
                 new("motivo", "Motivo", TipoCampo.TextoLargo, true, 500),
             ]),
     ];
+        foreach (var tipo in tipos.Where(tipo => tipo.Id == AnaliticoParcialId || tipo.Id == JustificacionInasistenciaId))
+        {
+            tipo.CambiarActivo(false);
+        }
+
+        return tipos;
+    }
 }

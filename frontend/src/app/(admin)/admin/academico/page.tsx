@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
@@ -77,6 +78,9 @@ export default function AdministracionAcademica() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-10 sm:px-6">
       <div className="flex flex-col gap-1">
+        <Link href="/admin" className="text-sm text-indigo-700 hover:underline dark:text-indigo-300">
+          ← Administración
+        </Link>
         <h1 className="text-3xl font-semibold tracking-tight">Plan de estudios</h1>
         <p className="text-zinc-600 dark:text-zinc-400">Carreras, planes y materias del instituto.</p>
       </div>
@@ -89,8 +93,8 @@ export default function AdministracionAcademica() {
 
       <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
         <aside className="flex flex-col gap-4">
-          <section aria-labelledby="carreras-titulo" className="flex flex-col gap-2">
-            <h2 id="carreras-titulo" className="font-semibold">
+          <section aria-labelledby="carreras-titulo" className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-superficie p-3 shadow-sm dark:border-zinc-800">
+            <h2 id="carreras-titulo" className="px-3 pt-1 font-semibold">
               Carreras
             </h2>
             <ul className="flex flex-col gap-1">
@@ -263,7 +267,7 @@ function Formulario({ titulo, children, onSubmit }: { titulo: string; children: 
     setEnviando(false);
   }
   return (
-    <form onSubmit={enviar} aria-label={titulo} className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <form onSubmit={enviar} aria-label={titulo} className="flex flex-col gap-3 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
       <h3 className="font-semibold">{titulo}</h3>
       {children}
       <fieldset disabled={enviando} className="contents">

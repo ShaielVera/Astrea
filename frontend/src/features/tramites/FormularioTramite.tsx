@@ -11,10 +11,12 @@ type Props = {
   tipo: TramiteTipo;
   carreras: Carrera[];
   onEnviar: (datos: Record<string, string>) => Promise<void>;
+  /** Descarta el formulario sin enviar nada. */
+  onCancelar?: () => void;
 };
 
 /** Formulario armado a partir de los campos del tipo de trámite (su "esquema"). */
-export function FormularioTramite({ tipo, carreras, onEnviar }: Props) {
+export function FormularioTramite({ tipo, carreras, onEnviar, onCancelar }: Props) {
   const [valores, setValores] = useState<Record<string, string>>({});
   const [enviando, setEnviando] = useState(false);
 
@@ -36,10 +38,20 @@ export function FormularioTramite({ tipo, carreras, onEnviar }: Props) {
       {tipo.campos.map((definicion) => (
         <Campo key={definicion.clave} definicion={definicion} carreras={carreras} valor={valores[definicion.clave] ?? ""} onCambiar={cambiar} />
       ))}
-      <div>
+      <div className="flex flex-wrap gap-3">
         <button type="submit" className={botonPrimario} disabled={enviando}>
           {enviando ? "Enviando…" : "Enviar solicitud"}
         </button>
+        {onCancelar && (
+          <button
+            type="button"
+            onClick={onCancelar}
+            disabled={enviando}
+            className="rounded-md border border-zinc-300 px-4 py-2 font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          >
+            Cancelar
+          </button>
+        )}
       </div>
     </form>
   );

@@ -10,6 +10,17 @@ public interface IUserRepository
 
     void Agregar(Usuario usuario);
 
+    /// <summary>Si otra cuenta ya tiene ese DNI (para que dos cuentas no se adjudiquen la misma persona).</summary>
+    Task<bool> ExisteOtroConDniAsync(string dni, Guid excluirUsuarioId, CancellationToken cancellationToken);
+
+    /// <summary>El último código pedido por el usuario para ese canal (el único que se puede validar).</summary>
+    Task<CodigoVerificacion?> UltimoCodigoAsync(Guid usuarioId, CanalContacto canal, CancellationToken cancellationToken);
+
+    void Agregar(CodigoVerificacion codigo);
+
+    /// <summary>Borra los códigos vencidos hace más de un día. Devuelve cuántos borró.</summary>
+    Task<int> BorrarCodigosVencidosAsync(DateTimeOffset antesDe, CancellationToken cancellationToken);
+
     /// <summary>Cantidad de usuarios activos por código de rol.</summary>
     Task<IReadOnlyDictionary<string, int>> ContarActivosPorRolAsync(CancellationToken cancellationToken);
 }

@@ -1,3 +1,4 @@
+import { dniUnico } from "./entorno";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { ingresarComoAdministrador, ingresarComoEstudianteNuevo } from "./sesiones";
 
@@ -64,7 +65,7 @@ test.describe("Trámites", () => {
     const datos = enBandeja.getByRole("form", { name: "Datos oficiales del titular" });
     await datos.getByLabel("Nombre").fill("Ana");
     await datos.getByLabel("Apellido").fill("Pérez");
-    await datos.getByLabel("DNI").fill("30123456");
+    await datos.getByLabel("DNI").fill(dniUnico());
     await datos.getByRole("button", { name: "Guardar datos oficiales" }).click();
     await expect(admin.getByRole("status")).toContainText("Datos oficiales guardados");
     await enBandeja.getByRole("textbox", { name: /^Indicación para el estudiante/ }).fill("Retirala en Secretaría de 18 a 21 h");
