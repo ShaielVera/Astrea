@@ -63,6 +63,8 @@ public sealed class IniciarSesionHandler(
             return ErroresAuth.CuentaDesactivada;
         }
 
+        usuario.RegistrarIngreso(ahora);
+
         // Sin email verificado cualquiera podría registrarse con el email de otra persona.
         if (currentUser.EmailVerificado && configuracion.EsAdministradorInicial(usuario.Email))
         {

@@ -38,6 +38,13 @@ export default function PanelAdministracion() {
 
       <nav aria-label="Secciones de administración" className="flex flex-wrap gap-3">
         <Link
+          href="/admin/usuarios"
+          className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
+        >
+          Usuarios y roles
+          <span className="block text-sm font-normal text-zinc-500">Administradores, docentes y sus materias</span>
+        </Link>
+        <Link
           href="/admin/academico"
           className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
         >
@@ -85,13 +92,6 @@ export default function PanelAdministracion() {
         >
           Métricas del asistente
           <span className="block text-sm font-normal text-zinc-500">Uso, temas frecuentes y sin respuesta</span>
-        </Link>
-        <Link
-          href="/admin/docentes"
-          className="rounded-xl border bg-superficie border-zinc-200 px-5 py-4 font-medium hover:border-indigo-400 dark:border-zinc-800"
-        >
-          Docentes
-          <span className="block text-sm font-normal text-zinc-500">Profesores y las materias que dictan</span>
         </Link>
         <Link
           href="/admin/asistencia"

@@ -37,5 +37,8 @@ public interface IDocumentoRagRepository
     /// <summary>Los <paramref name="cantidad"/> fragmentos más parecidos (similitud coseno) entre los documentos indexados.</summary>
     Task<IReadOnlyList<FragmentoEncontrado>> BuscarSimilaresAsync(float[] consulta, int cantidad, CancellationToken cancellationToken);
 
+    /// <summary>El horario vigente de la carrera: el más nuevo que no fue retirado ni reemplazado (aunque no se haya podido indexar).</summary>
+    Task<DocumentoRag?> HorarioDeCarreraAsync(Guid carreraId, CancellationToken cancellationToken);
+
     Task<IReadOnlyDictionary<Guid, PersonaDto>> ObtenerPersonasAsync(IEnumerable<Guid> usuarioIds, CancellationToken cancellationToken);
 }

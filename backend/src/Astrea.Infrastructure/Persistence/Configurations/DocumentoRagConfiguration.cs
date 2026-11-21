@@ -1,3 +1,4 @@
+using Astrea.Domain.Academic;
 using Astrea.Domain.Knowledge;
 using Astrea.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -28,10 +29,12 @@ internal sealed class DocumentoRagConfiguration : IEntityTypeConfiguration<Docum
 
         builder.HasOne<Usuario>().WithMany().HasForeignKey(documento => documento.CargadoPorUsuarioId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<Usuario>().WithMany().HasForeignKey(documento => documento.RetiradoPorUsuarioId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Carrera>().WithMany().HasForeignKey(documento => documento.CarreraId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(documento => new { documento.SerieId, documento.Version }).IsUnique();
         builder.HasIndex(documento => new { documento.Estado, documento.FechaCarga });
         builder.HasIndex(documento => documento.HashSha256);
+        builder.HasIndex(documento => new { documento.CarreraId, documento.Tipo });
     }
 }
 

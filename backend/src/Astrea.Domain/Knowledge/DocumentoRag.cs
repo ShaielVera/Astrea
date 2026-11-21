@@ -9,6 +9,9 @@ public enum TipoDocumentoRag
     Cronograma = 3,
     Comunicado = 4,
     Otro = 5,
+
+    /// <summary>Horarios de cursada de una carrera (se muestran en Plan de estudios).</summary>
+    Horario = 6,
 }
 
 /// <summary>
@@ -58,6 +61,11 @@ public sealed class DocumentoRag : Entity
             throw new DomainException("El tipo de documento no es válido.");
         }
 
+        if (datos.Tipo == TipoDocumentoRag.Horario && datos.CarreraId is null)
+        {
+            throw new DomainException("Elegí la carrera de los horarios.");
+        }
+
         if (string.IsNullOrWhiteSpace(hashSha256) || hashSha256.Length != 64)
         {
             throw new DomainException("El hash del archivo no es válido.");
@@ -67,6 +75,7 @@ public sealed class DocumentoRag : Entity
         Version = version;
         Titulo = Texto.Requerido(datos.Titulo, "título", 150);
         Tipo = datos.Tipo;
+        CarreraId = datos.Tipo == TipoDocumentoRag.Horario ? datos.CarreraId : null;
         Fuente = Texto.Opcional(datos.Fuente, "texto de la fuente", 200);
         FechaDocumento = datos.FechaDocumento;
         StoragePath = Texto.Requerido(storagePath, "ruta del archivo", 300);
@@ -84,6 +93,9 @@ public sealed class DocumentoRag : Entity
     public string Titulo { get; private set; } = null!;
 
     public TipoDocumentoRag Tipo { get; private set; }
+
+    /// <summary>La carrera, si es un horario de cursada.</summary>
+    public Guid? CarreraId { get; private set; }
 
     /// <summary>De dónde sale (ej. "Resolución 1234/2024", "Secretaría"). Se cita en las respuestas del asistente.</summary>
     public string? Fuente { get; private set; }
@@ -242,7 +254,8 @@ public sealed class DocumentoRag : Entity
     }
 }
 
-public sealed record DatosDocumentoRag(string Titulo, TipoDocumentoRag Tipo, string? Fuente, DateOnly? FechaDocumento);
+/// <param name="CarreraId">Solo para los horarios: la carrera a la que pertenecen (obligatoria en ese caso).</param>
+public sealed record DatosDocumentoRag(string Titulo, TipoDocumentoRag Tipo, string? Fuente, DateOnly? FechaDocumento, Guid? CarreraId = null);
 
 /// <summary>
 /// Pedazo de un documento con su embedding. Lleva copiados los metadatos que el asistente necesita para citar

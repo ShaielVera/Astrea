@@ -59,6 +59,15 @@ internal sealed class EfDocumentoRagRepository(AppDbContext db) : IDocumentoRagR
             .OrderByDescending(documento => documento.Version)
             .ToListAsync(cancellationToken);
 
+    public Task<DocumentoRag?> HorarioDeCarreraAsync(Guid carreraId, CancellationToken cancellationToken) =>
+        db.DocumentosRag.AsNoTracking()
+            .Where(documento => documento.Tipo == TipoDocumentoRag.Horario
+                && documento.CarreraId == carreraId
+                && documento.Estado != EstadoIndexacion.Retirado
+                && documento.Estado != EstadoIndexacion.Reemplazado)
+            .OrderByDescending(documento => documento.FechaCarga)
+            .FirstOrDefaultAsync(cancellationToken);
+
     public Task<DocumentoRag?> BuscarPorHashAsync(string hashSha256, CancellationToken cancellationToken) =>
         db.DocumentosRag.AsNoTracking()
             .Where(documento => documento.HashSha256 == hashSha256 && documento.Estado != EstadoIndexacion.Retirado)

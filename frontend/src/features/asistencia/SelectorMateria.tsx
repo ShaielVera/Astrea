@@ -17,7 +17,10 @@ export function SelectorMateria({
   ocupado = false,
   soloMisCarreras,
   yaElegidas = [],
+  textoYaElegida = "Ya anotada",
 }: {
+  /** Cómo se marcan las ya elegidas ("Ya anotada" para el estudiante, "Ya asignada" para Secretaría). */
+  textoYaElegida?: string;
   /** Materias en las que ya está anotado: se marcan con un tilde y no se pueden volver a elegir. */
   yaElegidas?: string[];
   /**
@@ -111,7 +114,7 @@ export function SelectorMateria({
                     data-ya-anotada={yaElegidas.includes(materia.planMateriaId) || undefined}
                   >
                     {materia.nombre}
-                    {yaElegidas.includes(materia.planMateriaId) && <span className="ya-anotada"> ✓ Ya anotada</span>}
+                    {yaElegidas.includes(materia.planMateriaId) && <span className="ya-anotada"> ✓ {textoYaElegida}</span>}
                   </option>
                 ))}
             </optgroup>

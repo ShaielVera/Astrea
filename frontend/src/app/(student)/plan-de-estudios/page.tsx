@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
 import { academicoApi, type Carrera, type MateriaDePlan, type PlanEstudio } from "@/features/academico/api";
+import { HorariosDeCarrera } from "@/features/academico/HorariosDeCarrera";
 import { ListaMateriasPorAnio } from "@/features/academico/ListaMateriasPorAnio";
 import { OpcionesCarrera, useMisCarreras } from "@/features/perfil/OpcionesCarrera";
 
@@ -76,6 +77,8 @@ export default function PlanDeEstudiosPage() {
           {carrera.codigo} · {plan.nombre} · {carrera.duracionAnios} años
         </p>
       )}
+
+      {carrera && <HorariosDeCarrera key={carrera.id} carreraId={carrera.id} carrera={carrera.nombre} />}
 
       {carreraId && !materias && !error && (
         <p role="status" className="text-zinc-500">

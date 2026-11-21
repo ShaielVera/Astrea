@@ -11,6 +11,21 @@ internal static class DocumentoRagEndpoints
 {
     public static RouteGroupBuilder MapDocumentoRagEndpoints(this RouteGroupBuilder api)
     {
+        // Cualquier usuario con sesión: los horarios de cursada de una carrera (Plan de estudios).
+        var horarios = api.MapGroup("/carreras/{carreraId:guid}/horarios").WithTags("Catálogo académico");
+
+        horarios.MapGet("", async (Guid carreraId, HorariosDeCursada servicio, CancellationToken ct) =>
+                (await servicio.ObtenerAsync(carreraId, ct)).AHttp())
+            .WithName("ObtenerHorariosDeCarrera")
+            .Produces<HorarioCarreraDto>()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        horarios.MapGet("/archivo", async (Guid carreraId, HorariosDeCursada servicio, CancellationToken ct) =>
+                (await servicio.DescargarAsync(carreraId, ct)).AArchivo())
+            .WithName("DescargarHorariosDeCarrera")
+            .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         // Solo la Secretaría: documentos institucionales que va a consultar el asistente.
         var documentos = api.MapGroup("/admin/documentos-rag")
             .RequireAuthorization(Politicas.Administrador)
@@ -24,19 +39,20 @@ internal static class DocumentoRagEndpoints
                 [FromForm] string? fuente,
                 [FromForm] DateOnly? fechaDocumento,
                 [FromForm] Guid? nuevaVersionDe,
+                [FromForm] Guid? carreraId,
                 IFormFile? archivo,
                 AdministracionDocumentosRag servicio,
                 CancellationToken ct) =>
             {
                 var contenido = await LeerArchivoAsync(archivo, ct);
-                var comando = new CargarDocumentoRagCommand(titulo, tipo, fuente, fechaDocumento, nuevaVersionDe);
+                var comando = new CargarDocumentoRagCommand(titulo, tipo, fuente, fechaDocumento, nuevaVersionDe, carreraId);
                 return (await servicio.CargarAsync(comando, contenido, ct)).ACreado(documento => $"/api/v1/admin/documentos-rag/{documento.Id}");
             })
             .DisableAntiforgery() // Autenticación por token Bearer, no por cookie: no hay riesgo de CSRF.
             .WithMetadata(new RequestSizeLimitAttribute(DocumentoRag.TamanioMaximoBytes + (1024 * 1024)))
             .Accepts<IFormFile>("multipart/form-data")
             .WithName("CargarDocumentoRag")
-            .WithDescription("Formulario multipart: archivo (PDF hasta 20 MB), titulo, tipo, fuente, fechaDocumento y nuevaVersionDe (opcional). Queda Pendiente y se indexa en segundo plano.")
+            .WithDescription("Formulario multipart: archivo (PDF hasta 20 MB), titulo, tipo, fuente, fechaDocumento, nuevaVersionDe (opcional) y carreraId (obligatoria si el tipo es Horario). Queda Pendiente y se indexa en segundo plano.")
             .Produces<DocumentoRagDto>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status409Conflict);
 

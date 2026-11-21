@@ -59,6 +59,9 @@ public sealed class Usuario : Entity
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    /// <summary>Cuándo inició sesión por última vez (null si nunca, por ejemplo una cuenta anterior a este dato).</summary>
+    public DateTimeOffset? UltimoIngresoEn { get; private set; }
+
     public IReadOnlyCollection<UsuarioRol> Roles => _roles.AsReadOnly();
 
     /// <summary>
@@ -117,6 +120,9 @@ public sealed class Usuario : Entity
             .OfType<string>()
             .Order(StringComparer.Ordinal)
             .ToList();
+
+    /// <summary>Anota el inicio de sesión (Administración ordena las cuentas por este dato).</summary>
+    public void RegistrarIngreso(DateTimeOffset ahora) => UltimoIngresoEn = ahora;
 
     /// <summary>Sincroniza el email si cambió en Firebase.</summary>
     public void ActualizarEmail(string email, DateTimeOffset ahora)

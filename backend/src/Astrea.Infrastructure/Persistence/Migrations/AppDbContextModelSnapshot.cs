@@ -702,6 +702,10 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("cargado_por_usuario_id");
 
+                    b.Property<Guid?>("CarreraId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("carrera_id");
+
                     b.Property<uint>("Concurrencia")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -788,6 +792,9 @@ namespace Astrea.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("RetiradoPorUsuarioId")
                         .HasDatabaseName("ix_documentos_rag_retirado_por_usuario_id");
+
+                    b.HasIndex("CarreraId", "Tipo")
+                        .HasDatabaseName("ix_documentos_rag_carrera_id_tipo");
 
                     b.HasIndex("Estado", "FechaCarga")
                         .HasDatabaseName("ix_documentos_rag_estado_fecha_carga");
@@ -1568,6 +1575,10 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("nombre");
 
+                    b.Property<DateTimeOffset?>("UltimoIngresoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ultimo_ingreso_en");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -1781,6 +1792,12 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_documentos_rag_usuarios_cargado_por_usuario_id");
+
+                    b.HasOne("Astrea.Domain.Academic.Carrera", null)
+                        .WithMany()
+                        .HasForeignKey("CarreraId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_documentos_rag_carreras_carrera_id");
 
                     b.HasOne("Astrea.Domain.Users.Usuario", null)
                         .WithMany()

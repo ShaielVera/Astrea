@@ -34,12 +34,11 @@ test.describe("Confirmación de asistencia", () => {
     const contextoAdmin = await browser.newContext();
     const admin = await contextoAdmin.newPage();
     await ingresarComoAdministrador(admin);
-    await admin.goto("/admin/docentes");
-    await admin.getByLabel("Email, apellido o DNI").fill(emailProfe);
-    await admin.getByRole("button", { name: "Buscar" }).click();
-    await admin.getByRole("button", { name: `Hacer docente a ${emailProfe}` }).click();
+    await admin.goto("/admin/usuarios");
+    await admin.getByLabel("Buscar por apellido, nombre o DNI").fill(emailProfe);
+    const docente = admin.getByRole("list", { name: "Cuentas" }).getByRole("listitem", { name: emailProfe, exact: true });
+    await docente.getByRole("checkbox", { name: "Docente" }).check();
     await expect(admin.getByRole("status")).toContainText("ahora es docente");
-    const docente = admin.getByRole("article", { name: `Docente ${emailProfe}` });
     const asignar = await elegirMateria(admin, `Asignar materia a ${emailProfe}`);
     await asignar.getByRole("button", { name: "Asignar" }).click();
     await expect(docente.getByRole("list", { name: `Materias de ${emailProfe}` })).toContainText(MATERIA);
@@ -85,7 +84,7 @@ test.describe("Confirmación de asistencia", () => {
 
   test("un estudiante no entra al área docente ni a la de asistencia", async ({ page }) => {
     await ingresarComoEstudianteNuevo(page);
-    for (const ruta of ["/docente", "/admin/docentes", "/admin/asistencia"]) {
+    for (const ruta of ["/docente", "/admin/usuarios", "/admin/asistencia"]) {
       await page.goto(ruta);
       await expect(page.getByRole("heading", { name: "No tenés acceso a esta sección" }), ruta).toBeVisible();
     }

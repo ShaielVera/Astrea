@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
-import type { Pagina } from "@/features/academico/api";
+import { academicoApi, type Carrera, type Pagina } from "@/features/academico/api";
 import { Paginacion } from "@/features/mesas/Paginacion";
 import { fechaHora } from "@/features/tramites/api";
 import {
@@ -223,6 +223,22 @@ function FormularioCarga({
   const [fecha, setFecha] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [carreraId, setCarreraId] = useState(versionDe?.carreraId ?? "");
+  const [carreras, setCarreras] = useState<Carrera[] | null>(null);
+  const esHorario = tipo === "Horario";
+
+  // Las carreras se cargan solo si se va a subir un horario.
+  useEffect(() => {
+    if (!esHorario || carreras) return;
+    let vigente = true;
+    obtenerToken()
+      .then((token) => academicoApi.carreras(token, "admin"))
+      .then((lista) => vigente && setCarreras(lista))
+      .catch((e) => vigente && setError(mensajeDeError(e)));
+    return () => {
+      vigente = false;
+    };
+  }, [esHorario, carreras, obtenerToken]);
 
   function elegir(elegido: File | undefined) {
     setError(null);
@@ -256,12 +272,14 @@ function FormularioCarga({
         fuente: fuente.trim() || undefined,
         fechaDocumento: fecha || undefined,
         nuevaVersionDe: versionDe?.id,
+        carreraId: esHorario ? carreraId : undefined,
       });
       referencia.current?.reset();
       setArchivo(null);
       setTitulo("");
       setFuente("");
       setFecha("");
+      setCarreraId("");
       await onCargado(documento);
     } catch (e) {
       setError(mensajeDeError(e));
@@ -320,6 +338,20 @@ function FormularioCarga({
             ))}
           </select>
         </label>
+        {esHorario && (
+          <label className="flex min-w-0 flex-col gap-1 text-sm font-medium sm:col-span-2">
+            Carrera
+            <select value={carreraId} onChange={(e) => setCarreraId(e.target.value)} required className={campo}>
+              <option value="">{carreras ? "Elegí la carrera de estos horarios" : "Cargando carreras…"}</option>
+              {carreras?.map((carrera) => (
+                <option key={carrera.id} value={carrera.id}>
+                  {carrera.nombre}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs font-normal text-zinc-500">Los estudiantes lo ven en Plan de estudios, con el botón &quot;Ver horarios&quot; de esta carrera.</span>
+          </label>
+        )}
         <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
           Fuente (opcional)
           <input value={fuente} onChange={(e) => setFuente(e.target.value)} maxLength={200} placeholder="Ej.: Resolución 4043/09" className={campo} />

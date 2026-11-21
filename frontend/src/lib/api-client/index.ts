@@ -135,3 +135,20 @@ export async function apiDescargar(ruta: string, token: string, nombrePorDefecto
   enlace.remove();
   URL.revokeObjectURL(url);
 }
+
+/** Trae un archivo privado (con el token) y devuelve una URL local para mostrarlo en la página. Hay que liberarla con URL.revokeObjectURL. */
+export async function apiUrlDeArchivo(ruta: string, token: string): Promise<string> {
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(`${API_URL}${ruta}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  } catch {
+    throw new ApiError(0, "red", "No se pudo conectar con el servidor de Astrea.");
+  }
+
+  if (!respuesta.ok) {
+    const problema = (await respuesta.json().catch(() => ({}))) as ProblemDetails;
+    throw new ApiError(respuesta.status, problema.code, problema.detail ?? problema.title ?? `Error ${respuesta.status} al abrir el archivo.`);
+  }
+
+  return URL.createObjectURL(await respuesta.blob());
+}

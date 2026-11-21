@@ -1,7 +1,7 @@
 import { apiDescargar, apiEnviarFormulario, apiFetch } from "@/lib/api-client";
 import type { Pagina } from "@/features/academico/api";
 
-export type TipoDocumentoRag = "Reglamento" | "PlanDeEstudio" | "Cronograma" | "Comunicado" | "Otro";
+export type TipoDocumentoRag = "Reglamento" | "PlanDeEstudio" | "Cronograma" | "Comunicado" | "Horario" | "Otro";
 export type EstadoIndexacion = "Pendiente" | "Procesando" | "Indexado" | "Error" | "Reemplazado" | "Retirado";
 
 export const TIPOS: Record<TipoDocumentoRag, string> = {
@@ -9,6 +9,7 @@ export const TIPOS: Record<TipoDocumentoRag, string> = {
   PlanDeEstudio: "Plan de estudio",
   Cronograma: "Cronograma o calendario",
   Comunicado: "Comunicado",
+  Horario: "Horario de cursada (de una carrera)",
   Otro: "Otro",
 };
 
@@ -42,6 +43,8 @@ export type DocumentoRag = {
   cantidadPaginas: number | null;
   cantidadFragmentos: number | null;
   fechaIndexacion: string | null;
+  /** Solo los horarios: la carrera a la que pertenecen. */
+  carreraId: string | null;
 };
 
 export type DetalleDocumentoRag = { documento: DocumentoRag; versiones: DocumentoRag[] };
@@ -55,6 +58,7 @@ export type NuevoDocumento = {
   fuente?: string;
   fechaDocumento?: string;
   nuevaVersionDe?: string;
+  carreraId?: string;
 };
 
 function consulta(parametros: Record<string, string | number | undefined>): string {
@@ -84,6 +88,7 @@ export const documentosRagApi = {
     if (datos.fuente) formulario.set("fuente", datos.fuente);
     if (datos.fechaDocumento) formulario.set("fechaDocumento", datos.fechaDocumento);
     if (datos.nuevaVersionDe) formulario.set("nuevaVersionDe", datos.nuevaVersionDe);
+    if (datos.carreraId) formulario.set("carreraId", datos.carreraId);
     return apiEnviarFormulario<DocumentoRag>(BASE, token, formulario);
   },
 

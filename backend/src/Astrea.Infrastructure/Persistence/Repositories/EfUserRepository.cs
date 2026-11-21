@@ -1,4 +1,5 @@
 using Astrea.Application.Abstractions.Persistence;
+using Astrea.Application.Contracts.Pagination;
 using Astrea.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,5 +39,31 @@ internal sealed class EfUserRepository(AppDbContext db) : IUserRepository
             .ToListAsync(cancellationToken);
 
         return conteo.ToDictionary(item => item.Codigo, item => item.Cantidad);
+    }
+
+    public async Task<PagedResult<Usuario>> ListarCuentasAsync(string? texto, PageRequest pagina, CancellationToken cancellationToken)
+    {
+        var consulta = db.Usuarios.AsNoTracking();
+        foreach (var palabra in (texto ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Take(5))
+        {
+            var patron = $"%{palabra.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal)}%";
+            consulta = consulta.Where(usuario =>
+                EF.Functions.ILike(usuario.Email, patron)
+                || (usuario.Apellido != null && EF.Functions.ILike(EF.Functions.Unaccent(usuario.Apellido), EF.Functions.Unaccent(patron)))
+                || (usuario.Nombre != null && EF.Functions.ILike(EF.Functions.Unaccent(usuario.Nombre), EF.Functions.Unaccent(patron)))
+                || (usuario.Dni != null && EF.Functions.ILike(usuario.Dni, patron)));
+        }
+
+        var total = await consulta.CountAsync(cancellationToken);
+        var items = await consulta
+            .OrderBy(usuario => usuario.UltimoIngresoEn == null)
+            .ThenByDescending(usuario => usuario.UltimoIngresoEn)
+            .ThenByDescending(usuario => usuario.CreatedAt)
+            .ThenBy(usuario => usuario.Id)
+            .Skip(pagina.Skip)
+            .Take(pagina.PageSize)
+            .ToListAsync(cancellationToken);
+
+        return PagedResult<Usuario>.From(items, pagina, total);
     }
 }

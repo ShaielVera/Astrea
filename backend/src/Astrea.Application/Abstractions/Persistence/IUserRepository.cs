@@ -1,3 +1,4 @@
+using Astrea.Application.Contracts.Pagination;
 using Astrea.Domain.Users;
 
 namespace Astrea.Application.Abstractions.Persistence;
@@ -23,4 +24,10 @@ public interface IUserRepository
 
     /// <summary>Cantidad de usuarios activos por código de rol.</summary>
     Task<IReadOnlyDictionary<string, int>> ContarActivosPorRolAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Las cuentas para Administración: las que iniciaron sesión más recientemente primero. Cada palabra de
+    /// <paramref name="texto"/> tiene que aparecer en el apellido, el nombre, el DNI o el email (sin importar tildes).
+    /// </summary>
+    Task<PagedResult<Usuario>> ListarCuentasAsync(string? texto, PageRequest pagina, CancellationToken cancellationToken);
 }

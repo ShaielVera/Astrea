@@ -28,7 +28,8 @@ public sealed class AdministracionDocumentosRag(
     IFileStorage archivos,
     IUnitOfWork unitOfWork,
     IClock clock,
-    IAvisoIngesta aviso)
+    IAvisoIngesta aviso,
+    IAcademicRepository academico)
 {
     public async Task<Result<DocumentoRagDto>> CargarAsync(CargarDocumentoRagCommand comando, byte[] contenido, CancellationToken cancellationToken)
     {
@@ -48,17 +49,24 @@ public sealed class AdministracionDocumentosRag(
         var ahora = clock.UtcNow;
         var id = Guid.CreateVersion7();
         var ruta = $"documentos-rag/{ahora:yyyy}/{id}.pdf";
-        var datos = new DatosDocumentoRag(comando.Titulo, comando.Tipo, comando.Fuente, comando.FechaDocumento);
+        var anterior = comando.NuevaVersionDe is { } anteriorId ? await documentos.ObtenerAsync(anteriorId, cancellationToken) : null;
+        if (comando.NuevaVersionDe is not null && anterior is null)
+        {
+            return ErroresDocumentosRag.NoEncontrado;
+        }
+
+        // Una versión nueva de un horario sigue siendo de la misma carrera si no se elige otra.
+        var carreraId = comando.Tipo == TipoDocumentoRag.Horario ? comando.CarreraId ?? anterior?.CarreraId : null;
+        if (carreraId is { } idCarrera && await academico.ObtenerCarreraAsync(idCarrera, cancellationToken) is null)
+        {
+            return ErroresDocumentosRag.CarreraNoEncontrada;
+        }
+
+        var datos = new DatosDocumentoRag(comando.Titulo, comando.Tipo, comando.Fuente, comando.FechaDocumento, carreraId);
 
         DocumentoRag documento;
-        if (comando.NuevaVersionDe is { } anteriorId)
+        if (anterior is not null)
         {
-            var anterior = await documentos.ObtenerAsync(anteriorId, cancellationToken);
-            if (anterior is null)
-            {
-                return ErroresDocumentosRag.NoEncontrado;
-            }
-
             var serie = await documentos.ObtenerSerieAsync(anterior.SerieId, cancellationToken);
             documento = serie[0].NuevaVersion(id, serie[0].Version, datos, ruta, hash, administrador.Valor.Id, ahora);
         }
@@ -203,7 +211,8 @@ public sealed class AdministracionDocumentosRag(
                 documento.Intentos,
                 documento.CantidadPaginas,
                 documento.CantidadFragmentos,
-                documento.FechaIndexacion))
+                documento.FechaIndexacion,
+                documento.CarreraId))
             .ToList();
     }
 }
@@ -344,4 +353,35 @@ public sealed class IngestaDocumentos(
         texto.Seccion is null
             ? $"{documento.Titulo}\n\n{texto.Contenido}"
             : $"{documento.Titulo} — {texto.Seccion}\n\n{texto.Contenido}";
+}
+
+/// <summary>El horario de cursada de una carrera (PDF oficial que carga Secretaría), para verlo desde Plan de estudios.</summary>
+public sealed record HorarioCarreraDto(Guid DocumentoId, string Titulo, int Anio, DateTimeOffset FechaCarga);
+
+/// <summary>Los horarios de cursada que carga Secretaría como documentos de tipo "Horario", uno por carrera.</summary>
+public sealed class HorariosDeCursada(IDocumentoRagRepository documentos, IFileStorage archivos)
+{
+    public static readonly Error SinHorario = Error.NoEncontrado("horario_no_disponible", "Todavía no se cargaron los horarios de esta carrera.");
+
+    public async Task<Result<HorarioCarreraDto>> ObtenerAsync(Guid carreraId, CancellationToken cancellationToken)
+    {
+        var horario = await documentos.HorarioDeCarreraAsync(carreraId, cancellationToken);
+        return horario is null
+            ? SinHorario
+            : new HorarioCarreraDto(horario.Id, horario.Titulo, horario.FechaDocumento?.Year ?? horario.FechaCarga.Year, horario.FechaCarga);
+    }
+
+    public async Task<Result<ArchivoDto>> DescargarAsync(Guid carreraId, CancellationToken cancellationToken)
+    {
+        var horario = await documentos.HorarioDeCarreraAsync(carreraId, cancellationToken);
+        if (horario is null)
+        {
+            return SinHorario;
+        }
+
+        var contenido = await archivos.LeerAsync(horario.StoragePath, cancellationToken);
+        return contenido is null
+            ? ErroresDocumentosRag.ArchivoNoEncontrado
+            : new ArchivoDto(AdministracionDocumentosRag.NombreArchivo(horario), "application/pdf", contenido);
+    }
 }

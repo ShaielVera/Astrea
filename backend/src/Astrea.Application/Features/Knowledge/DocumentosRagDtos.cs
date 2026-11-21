@@ -18,7 +18,8 @@ public sealed record DocumentoRagDto(
     int Intentos,
     int? CantidadPaginas,
     int? CantidadFragmentos,
-    DateTimeOffset? FechaIndexacion);
+    DateTimeOffset? FechaIndexacion,
+    Guid? CarreraId = null);
 
 /// <summary>Un documento con todas sus versiones (la primera es la más nueva).</summary>
 public sealed record DetalleDocumentoRagDto(DocumentoRagDto Documento, IReadOnlyList<DocumentoRagDto> Versiones);
@@ -39,12 +40,14 @@ public sealed record FragmentoEncontrado(
 public sealed record FiltroDocumentosRag(IReadOnlyCollection<EstadoIndexacion>? Estados = null, string? Texto = null, TipoDocumentoRag? Tipo = null);
 
 /// <param name="NuevaVersionDe">Id de cualquier versión del documento que se reemplaza; null si es un documento nuevo.</param>
+/// <param name="CarreraId">Solo para los horarios: la carrera a la que pertenecen.</param>
 public sealed record CargarDocumentoRagCommand(
     string Titulo,
     TipoDocumentoRag Tipo,
     string? Fuente,
     DateOnly? FechaDocumento,
-    Guid? NuevaVersionDe);
+    Guid? NuevaVersionDe,
+    Guid? CarreraId = null);
 
 /// <summary>Cómo terminó el procesamiento de un documento (para el registro del servidor).</summary>
 public sealed record ResultadoIngesta(Guid DocumentoId, string Titulo, bool Indexado, int Fragmentos, string? Error, Exception? Excepcion);
@@ -55,6 +58,9 @@ public static class ErroresDocumentosRag
 
     public static readonly Error NoEncontrado =
         Error.NoEncontrado("documento_rag_no_encontrado", "El documento no existe.");
+
+    public static readonly Error CarreraNoEncontrada =
+        Error.Validacion("carrera_no_encontrada", "La carrera elegida no existe.");
 
     public static readonly Error ArchivoNoEncontrado =
         Error.NoEncontrado("documento_rag_sin_archivo", "No se encontró el archivo del documento.");

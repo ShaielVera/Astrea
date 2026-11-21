@@ -7,6 +7,7 @@ using Astrea.Application.Contracts.Results;
 using Astrea.Application.Features.Auth;
 using Astrea.Application.Features.Knowledge;
 using Astrea.Application.Features.Procedures;
+using Astrea.Domain.Academic;
 using Astrea.Domain.Common;
 using Astrea.Domain.Knowledge;
 using Astrea.Domain.Users;
@@ -28,6 +29,7 @@ public class DocumentosRagTests
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IClock _clock = Substitute.For<IClock>();
     private readonly IAvisoIngesta _aviso = Substitute.For<IAvisoIngesta>();
+    private readonly IAcademicRepository _academico = Substitute.For<IAcademicRepository>();
     private readonly ICurrentUser _sesion = Substitute.For<ICurrentUser>();
     private readonly IUserRepository _usuarios = Substitute.For<IUserRepository>();
     private readonly Usuario _secretaria = Usuario.Registrar(Guid.NewGuid(), "uid-secretaria", "secretaria@astrea.test", Ahora);
@@ -53,7 +55,7 @@ public class DocumentosRagTests
         DocumentoRag.Cargar(Guid.NewGuid(), new DatosDocumentoRag("Reglamento Académico", TipoDocumentoRag.Reglamento, null, null), "documentos-rag/2026/x.pdf", new string(hash[0], 64), Guid.NewGuid(), Ahora);
 
     private AdministracionDocumentosRag Administracion() =>
-        new(new UsuarioActual(_sesion, _usuarios), _documentos, _archivos, _unitOfWork, _clock, _aviso);
+        new(new UsuarioActual(_sesion, _usuarios), _documentos, _archivos, _unitOfWork, _clock, _aviso, _academico);
 
     private IngestaDocumentos Ingesta() => new(_documentos, _archivos, _extractor, _embeddings, _unitOfWork, _clock);
 
@@ -88,6 +90,37 @@ public class DocumentosRagTests
         resultado.Error!.Tipo.Should().Be(TipoError.Conflicto);
         resultado.Error.Mensaje.Should().Contain("Reglamento Académico");
         await _archivos.DidNotReceiveWithAnyArgs().GuardarAsync(default!, default!, default);
+    }
+
+    [Fact]
+    public async Task Un_horario_queda_ligado_a_su_carrera()
+    {
+        var carrera = Carrera.Crear(Guid.NewGuid(), "TSDS", "Tecnicatura Superior en Desarrollo de Software", 3, Ahora);
+        _academico.ObtenerCarreraAsync(carrera.Id, Arg.Any<CancellationToken>()).Returns(carrera);
+
+        var resultado = await Administracion().CargarAsync(
+            new CargarDocumentoRagCommand("Horarios 2026 - TSDS", TipoDocumentoRag.Horario, null, null, null, carrera.Id), Pdf, CancellationToken.None);
+
+        resultado.Valor.CarreraId.Should().Be(carrera.Id);
+    }
+
+    [Fact]
+    public async Task Un_horario_sin_carrera_se_rechaza()
+    {
+        var cargar = () => Administracion().CargarAsync(new CargarDocumentoRagCommand("Horarios", TipoDocumentoRag.Horario, null, null, null), Pdf, CancellationToken.None);
+
+        await cargar.Should().ThrowAsync<DomainException>().WithMessage("*carrera*");
+        await _archivos.DidNotReceiveWithAnyArgs().GuardarAsync(default!, default!, default);
+    }
+
+    [Fact]
+    public async Task Solo_los_horarios_guardan_la_carrera()
+    {
+        var resultado = await Administracion().CargarAsync(
+            new CargarDocumentoRagCommand("Reglamento", TipoDocumentoRag.Reglamento, null, null, null, Guid.NewGuid()), Pdf, CancellationToken.None);
+
+        resultado.Valor.CarreraId.Should().BeNull();
+        await _academico.DidNotReceiveWithAnyArgs().ObtenerCarreraAsync(default, default);
     }
 
     [Fact]
