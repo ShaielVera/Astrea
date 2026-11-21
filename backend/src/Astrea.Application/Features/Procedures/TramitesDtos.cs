@@ -3,7 +3,7 @@ using Astrea.Domain.Procedures;
 
 namespace Astrea.Application.Features.Procedures;
 
-public sealed record CampoTramiteDto(string Clave, string Etiqueta, TipoCampo Tipo, bool Obligatorio, int LargoMaximo, string? Ayuda);
+public sealed record CampoTramiteDto(string Clave, string Etiqueta, TipoCampo Tipo, bool Obligatorio, int LargoMaximo, string? Ayuda, bool SinFechasFuturas = false);
 
 public sealed record TramiteTipoDto(Guid Id, string Codigo, string Nombre, string Descripcion, bool Activo, IReadOnlyList<CampoTramiteDto> Campos)
 {
@@ -14,7 +14,7 @@ public sealed record TramiteTipoDto(Guid Id, string Codigo, string Nombre, strin
             tipo.Nombre,
             tipo.Descripcion,
             tipo.Activo,
-            tipo.Campos.Select(campo => new CampoTramiteDto(campo.Clave, campo.Etiqueta, campo.Tipo, campo.Obligatorio, campo.LargoMaximo, campo.Ayuda)).ToList());
+            tipo.Campos.Select(campo => new CampoTramiteDto(campo.Clave, campo.Etiqueta, campo.Tipo, campo.Obligatorio, campo.LargoMaximo, campo.Ayuda, campo.SinFechasFuturas)).ToList());
 }
 
 /// <summary>

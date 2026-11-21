@@ -17,7 +17,8 @@ public enum TipoCampo
 }
 
 /// <summary>Campo variable que pide un tipo de trámite. Es el "esquema" con el que se validan los datos de la solicitud.</summary>
-public sealed record CampoTramite(string Clave, string Etiqueta, TipoCampo Tipo, bool Obligatorio, int LargoMaximo = 120, string? Ayuda = null);
+/// <param name="SinFechasFuturas">Para las fechas de algo que ya pasó (ej. el día del examen rendido): no acepta días posteriores a hoy.</param>
+public sealed record CampoTramite(string Clave, string Etiqueta, TipoCampo Tipo, bool Obligatorio, int LargoMaximo = 120, string? Ayuda = null, bool SinFechasFuturas = false);
 
 /// <summary>
 /// Trámite que un estudiante puede pedir (ej. constancia de alumno regular), con el formulario que lo acompaña.
@@ -76,7 +77,8 @@ public sealed class TramiteTipo : Entity
     /// Valida los datos de una solicitud contra los campos del tipo y los devuelve normalizados (sin espacios
     /// sobrantes y sin campos opcionales vacíos). Rechaza campos que el tipo no pide.
     /// </summary>
-    public IReadOnlyDictionary<string, string> ValidarDatos(IReadOnlyDictionary<string, string?>? datos)
+    /// <param name="hoy">El día de hoy en el instituto, para los campos que no aceptan fechas futuras.</param>
+    public IReadOnlyDictionary<string, string> ValidarDatos(IReadOnlyDictionary<string, string?>? datos, DateOnly hoy)
     {
         datos ??= new Dictionary<string, string?>();
 
@@ -100,20 +102,25 @@ public sealed class TramiteTipo : Entity
                 continue;
             }
 
-            validados[campo.Clave] = ValidarValor(campo, valor);
+            validados[campo.Clave] = ValidarValor(campo, valor, hoy);
         }
 
         return validados;
     }
 
-    private static string ValidarValor(CampoTramite campo, string valor)
+    private static string ValidarValor(CampoTramite campo, string valor, DateOnly hoy)
     {
         switch (campo.Tipo)
         {
             case TipoCampo.Fecha:
-                return DateOnly.TryParseExact(valor, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha)
-                    ? fecha.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
-                    : throw new DomainException($"\"{campo.Etiqueta}\" no es una fecha válida.");
+                if (!DateOnly.TryParseExact(valor, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
+                {
+                    throw new DomainException($"\"{campo.Etiqueta}\" no es una fecha válida.");
+                }
+
+                return campo.SinFechasFuturas && fecha > hoy
+                    ? throw new DomainException($"\"{campo.Etiqueta}\" no puede ser una fecha futura.")
+                    : fecha.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
             case TipoCampo.Carrera:
                 return Guid.TryParse(valor, out var carreraId) && carreraId != Guid.Empty

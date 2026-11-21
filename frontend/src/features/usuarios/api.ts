@@ -31,7 +31,8 @@ export const usuariosApi = {
 
 /** "hace 5 minutos", "ayer", "21/11/2026"… Para saber de un vistazo quién entró hace poco. */
 export function haceCuanto(fecha: string | null, ahora = Date.now()): string {
-  if (!fecha) return "Todavía no inició sesión desde que se registra este dato";
+  // Cuentas que no volvieron a entrar desde que Astrea empezó a anotar los ingresos.
+  if (!fecha) return "Sin registro";
   const minutos = Math.floor((ahora - new Date(fecha).getTime()) / 60_000);
   if (minutos < 1) return "Recién";
   if (minutos < 60) return `Hace ${minutos} ${minutos === 1 ? "minuto" : "minutos"}`;

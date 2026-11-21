@@ -8,8 +8,6 @@ public static class CatalogoTramites
 {
     public static readonly Guid AlumnoRegularId = new("0193a5d0-0000-7000-8000-000000000001");
     public static readonly Guid ConstanciaExamenId = new("0193a5d0-0000-7000-8000-000000000002");
-    public static readonly Guid AnaliticoParcialId = new("0193a5d0-0000-7000-8000-000000000003");
-    public static readonly Guid JustificacionInasistenciaId = new("0193a5d0-0000-7000-8000-000000000004");
 
     public static readonly Guid PlantillaAlumnoRegularV1Id = new("0193a5d0-0000-7000-8000-000000000101");
     public static readonly Guid PlantillaConstanciaExamenV1Id = new("0193a5d0-0000-7000-8000-000000000102");
@@ -17,8 +15,7 @@ public static class CatalogoTramites
     private static readonly CampoTramite Carrera = new("carrera", "Carrera", TipoCampo.Carrera, true);
 
     /// <summary>
-    /// Versión 1 de las plantillas de los trámites que emiten PDF. El analítico parcial y la justificación
-    /// de inasistencia no tienen: Astrea no guarda notas ni comprobantes, así que se resuelven en Secretaría.
+    /// Versión 1 de las plantillas de los dos trámites.
     /// </summary>
     public static IReadOnlyList<PlantillaDocumento> PlantillasIniciales()
     {
@@ -49,13 +46,8 @@ public static class CatalogoTramites
         ];
     }
 
-    /// <summary>
-    /// El analítico parcial y la justificación de inasistencia quedan desactivados: el instituto los resuelve
-    /// en Secretaría. No se borran para que los pedidos que pudiera haber conserven su tipo.
-    /// </summary>
-    public static IReadOnlyList<TramiteTipo> Tipos()
-    {
-        TramiteTipo[] tipos =
+    /// <summary>Los trámites que se piden por Astrea: los dos que emiten una constancia en PDF.</summary>
+    public static IReadOnlyList<TramiteTipo> Tipos() =>
     [
         TramiteTipo.Crear(
             AlumnoRegularId,
@@ -71,32 +63,8 @@ public static class CatalogoTramites
             [
                 Carrera,
                 new("materia", "Materia", TipoCampo.Texto, true, 200),
-                new("fechaExamen", "Fecha del examen", TipoCampo.Fecha, true),
+                new("fechaExamen", "Fecha del examen", TipoCampo.Fecha, true, SinFechasFuturas: true),
                 new("presentarAnte", "Para presentar ante", TipoCampo.Texto, false, 120),
             ]),
-        TramiteTipo.Crear(
-            AnaliticoParcialId,
-            "ANALITICO_PARCIAL",
-            "Certificado analítico parcial",
-            "Detalle de las materias aprobadas hasta hoy, con nota y fecha.",
-            [Carrera, new("motivo", "¿Para qué lo necesitás?", TipoCampo.Texto, true, 200, "Ej.: pase a otra institución, beca.")]),
-        TramiteTipo.Crear(
-            JustificacionInasistenciaId,
-            "JUSTIFICACION_INASISTENCIA",
-            "Justificación de inasistencia",
-            "Pedí que se justifiquen tus faltas por un motivo de salud, laboral u otro previsto en el reglamento. Presentá el comprobante original en Secretaría.",
-            [
-                Carrera,
-                new("desde", "Desde", TipoCampo.Fecha, true),
-                new("hasta", "Hasta", TipoCampo.Fecha, true),
-                new("motivo", "Motivo", TipoCampo.TextoLargo, true, 500),
-            ]),
     ];
-        foreach (var tipo in tipos.Where(tipo => tipo.Id == AnaliticoParcialId || tipo.Id == JustificacionInasistenciaId))
-        {
-            tipo.CambiarActivo(false);
-        }
-
-        return tipos;
-    }
 }

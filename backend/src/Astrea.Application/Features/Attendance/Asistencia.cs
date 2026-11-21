@@ -230,7 +230,8 @@ public sealed class ConfirmacionesDocente(UsuarioActual usuarioActual, IAsistenc
                 materia.Materia,
                 materia.Anio,
                 materia.Carrera,
-                estudiantes.Select(estudiante => new EstudianteAConfirmarDto(
+                // Un docente que también cursa no se confirma a sí mismo.
+                estudiantes.Where(estudiante => estudiante.Id != docente.Valor.Id).Select(estudiante => new EstudianteAConfirmarDto(
                     estudiante.Id,
                     estudiante.Nombre,
                     estudiante.Email,
@@ -279,6 +280,11 @@ public sealed class ConfirmacionesDocente(UsuarioActual usuarioActual, IAsistenc
         if (items.Any(item => !inscriptos.Contains(item.EstudianteId)))
         {
             return ErroresAsistencia.EstudianteNoInscripto;
+        }
+
+        if (items.Any(item => item.EstudianteId == docente.Valor.Id))
+        {
+            return ErroresAsistencia.AutoConfirmacion;
         }
 
         var existentes = (await asistencia.ConfirmacionesDeMateriaAsync(relevamiento.Id, planMateriaId, cancellationToken))

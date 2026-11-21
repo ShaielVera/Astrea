@@ -99,7 +99,12 @@ export default function AdministracionHallazgos() {
           Estado
           <select
             value={filtro.estado ?? ""}
-            onChange={(e) => setFiltro((f) => ({ ...f, estado: (e.target.value || undefined) as EstadoObjeto | undefined }))}
+            onChange={(e) => {
+              // El estado se aplica en el momento (la búsqueda por texto, con "Filtrar").
+              const nuevo = { ...filtro, estado: (e.target.value || undefined) as EstadoObjeto | undefined };
+              setFiltro(nuevo);
+              void cargar(nuevo, 1);
+            }}
             className={campo}
           >
             <option value="">Todos</option>

@@ -92,6 +92,10 @@ public static class ErroresAsistencia
 
     public static readonly Error MateriaNoAsignada = Error.NoEncontrado("materia_no_asignada", "No tenés asignada esa materia.");
 
+    public static readonly Error AutoConfirmacion = Error.Validacion(
+        "auto_confirmacion",
+        "No podés confirmar tu propia asistencia: la confirma otro profesor de la materia o Secretaría.");
+
     public static readonly Error SinConfirmaciones = Error.Validacion("sin_confirmaciones", "No hay confirmaciones para guardar.");
 
     public static readonly Error EstudianteNoInscripto = Error.Validacion("estudiante_no_inscripto", "Hay estudiantes que no están inscriptos en la materia.");

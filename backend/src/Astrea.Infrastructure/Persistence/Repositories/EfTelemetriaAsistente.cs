@@ -44,6 +44,7 @@ internal sealed class EfTelemetriaAsistente(AppDbContext db) : ITelemetriaAsiste
             .ToListAsync(cancellationToken);
 
         var frecuentes = await periodo
+            .Where(consulta => !consulta.RespondeAclaracion)
             .GroupBy(consulta => consulta.Tema)
             .Where(grupo => grupo.Count() >= minimoFrecuencia)
             .OrderByDescending(grupo => grupo.Count())
@@ -55,7 +56,7 @@ internal sealed class EfTelemetriaAsistente(AppDbContext db) : ITelemetriaAsiste
 
         // Lo que el asistente no supo responder: señala qué documento falta cargar.
         var sinRespuesta = await periodo
-            .Where(consulta => consulta.Resultado == ResultadoConsulta.SinEvidencia)
+            .Where(consulta => consulta.Resultado == ResultadoConsulta.SinEvidencia && !consulta.RespondeAclaracion)
             .GroupBy(consulta => consulta.Tema)
             .OrderByDescending(grupo => grupo.Count())
             .ThenByDescending(grupo => grupo.Max(consulta => consulta.Fecha))

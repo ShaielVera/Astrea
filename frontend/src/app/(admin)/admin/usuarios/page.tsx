@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
 import { ROLES } from "@/features/auth/tipos";
@@ -31,6 +31,8 @@ export default function UsuariosYRoles() {
   const [trabajando, setTrabajando] = useState(false);
   // La casilla cambia en el momento; cuando llega la lista actualizada (o un error) vuelve a mostrar lo guardado.
   const [marcados, setMarcados] = useState<Record<string, boolean>>({});
+  // Solo la lista que llega después de guardar reemplaza a las casillas marcadas (no una búsqueda que estaba en camino).
+  const limpiarAlCargar = useRef(false);
 
   // Busca mientras se escribe (con una pausa corta para no consultar en cada tecla).
   useEffect(() => {
@@ -48,7 +50,10 @@ export default function UsuariosYRoles() {
       .then((resultado) => {
         if (vigente) {
           setCuentas(resultado);
-          setMarcados({});
+          if (limpiarAlCargar.current) {
+            limpiarAlCargar.current = false;
+            setMarcados({});
+          }
           setError(null);
         }
       })
@@ -66,6 +71,7 @@ export default function UsuariosYRoles() {
       await accion();
       setAviso(mensaje);
       setAQuitar(null);
+      limpiarAlCargar.current = true;
       setRecarga((n) => n + 1);
     } catch (e) {
       setError(mensajeDeError(e));
@@ -136,7 +142,7 @@ export default function UsuariosYRoles() {
         <>
           <p className="text-sm text-zinc-500">
             {cuentas.totalItems} {cuentas.totalItems === 1 ? "cuenta" : "cuentas"}
-            {buscado.trim() ? " encontradas" : ""}.
+            {buscado.trim() ? (cuentas.totalItems === 1 ? " encontrada" : " encontradas") : ""}.
           </p>
           <ul aria-label="Cuentas" className="flex flex-col gap-3">
             {cuentas.items.map((cuenta) => {

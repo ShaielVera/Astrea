@@ -90,7 +90,8 @@ public sealed class AsistenciaTests(AstreaApiFactory factory)
         // Los estudiantes declaran qué cursan.
         var cumplidora = await SesionAsync();
         var ausente = await SesionAsync();
-        foreach (var (estudiante, materia) in new[] { (cumplidora, materiaA), (cumplidora, materiaB), (ausente, materiaA) })
+        // El profesor también cursa su propia materia: no se va a ver en su lista ni puede confirmarse.
+        foreach (var (estudiante, materia) in new[] { (cumplidora, materiaA), (cumplidora, materiaB), (ausente, materiaA), (profe, materiaA) })
         {
             await LeerAsync<object>(await estudiante.Cliente.PostAsJsonAsync("/api/v1/me/cursada", new { planMateriaId = materia }));
         }
@@ -115,6 +116,11 @@ public sealed class AsistenciaTests(AstreaApiFactory factory)
                 new { estudianteId = cumplidora.Id, valor = "AsisteRegularmente" },
                 new { estudianteId = ausente.Id, valor = "NoAsiste", observacion = "No vino desde abril" }))
             .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var propia = await ConfirmarAsync(profe, relevamiento.Id, materiaA, new { estudianteId = profe.Id, valor = "AsisteRegularmente" });
+        propia.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await propia.Content.ReadAsStringAsync()).Should().Contain("tu propia asistencia");
+        (await profe.Cliente.DeleteAsync($"/api/v1/me/cursada/{materiaA}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // No puede confirmar en una materia ajena ni sobre alguien que no está inscripto.
         (await ConfirmarAsync(profe, relevamiento.Id, materiaB, new { estudianteId = cumplidora.Id, valor = "NoAsiste" })).StatusCode.Should().Be(HttpStatusCode.NotFound);

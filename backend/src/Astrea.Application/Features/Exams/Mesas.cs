@@ -78,7 +78,13 @@ public sealed class AdministracionMesas(IExamRepository mesas, IAcademicReposito
             return ErroresMesas.MateriaNoEncontrada;
         }
 
-        var mesa = MesaExamen.Crear(Guid.CreateVersion7(), planMateriaId.Value, ADatos(comando), clock.UtcNow);
+        var nuevos = ADatos(comando);
+        if (YaPaso(nuevos))
+        {
+            return ErroresMesas.FechaPasada;
+        }
+
+        var mesa = MesaExamen.Crear(Guid.CreateVersion7(), planMateriaId.Value, nuevos, clock.UtcNow);
         if (await mesas.ExisteMesaVigenteEnHorarioAsync(mesa.PlanMateriaId, mesa.Fecha, mesa.Hora, null, cancellationToken))
         {
             return ErroresMesas.HorarioOcupado;
@@ -104,6 +110,11 @@ public sealed class AdministracionMesas(IExamRepository mesas, IAcademicReposito
         }
 
         var datos = ADatos(comando);
+        if (YaPaso(datos) && (datos.Fecha != mesa.Fecha || datos.Hora != mesa.Hora))
+        {
+            return ErroresMesas.FechaPasada;
+        }
+
         if (await mesas.ExisteMesaVigenteEnHorarioAsync(planMateriaId.Value, datos.Fecha, datos.Hora, mesa.Id, cancellationToken))
         {
             return ErroresMesas.HorarioOcupado;
@@ -113,6 +124,9 @@ public sealed class AdministracionMesas(IExamRepository mesas, IAcademicReposito
         await unitOfWork.GuardarCambiosAsync(cancellationToken);
         return await DetalleAsync(mesa.Id, cancellationToken);
     }
+
+    /// <summary>Desde Administración no se cargan mesas en una fecha y hora que ya pasaron (el sembrado histórico sí puede).</summary>
+    private bool YaPaso(DatosMesa datos) => ZonaHorariaInstitucional.AInstante(datos.Fecha, datos.Hora) <= clock.UtcNow;
 
     public Task<Result<MesaExamenDto>> PublicarAsync(Guid mesaId, CancellationToken cancellationToken) =>
         CambiarEstadoAsync(mesaId, mesa => mesa.Publicar(clock.UtcNow), cancellationToken);

@@ -11,6 +11,8 @@ export type CampoTramite = {
   obligatorio: boolean;
   largoMaximo: number;
   ayuda: string | null;
+  /** Fecha de algo que ya pasó (ej. el examen rendido): no se puede elegir un día posterior a hoy. */
+  sinFechasFuturas?: boolean;
 };
 
 export type TramiteTipo = { id: string; codigo: string; nombre: string; descripcion: string; activo: boolean; campos: CampoTramite[] };

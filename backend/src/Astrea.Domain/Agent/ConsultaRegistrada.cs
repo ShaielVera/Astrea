@@ -67,6 +67,9 @@ public sealed class ConsultaRegistrada : Entity
 
     public bool ConPropuesta { get; private set; }
 
+    /// <summary>Era la respuesta a una repregunta del asistente (ej. "tsds" a "¿De qué carrera sos?"): no cuenta como tema propio.</summary>
+    public bool RespondeAclaracion { get; private set; }
+
     public int FuentesDocumentos { get; private set; }
 
     public int FuentesDatos { get; private set; }
@@ -85,7 +88,8 @@ public sealed class ConsultaRegistrada : Entity
         IEnumerable<string>? herramientas = null,
         int fuentesDocumentos = 0,
         int fuentesDatos = 0,
-        bool conPropuesta = false)
+        bool conPropuesta = false,
+        bool respondeAclaracion = false)
     {
         if (!Enum.IsDefined(resultado) || !Enum.IsDefined(motivo))
         {
@@ -112,6 +116,7 @@ public sealed class ConsultaRegistrada : Entity
             Resultado = resultado,
             Motivo = motivo,
             ConPropuesta = conPropuesta,
+            RespondeAclaracion = respondeAclaracion,
             FuentesDocumentos = fuentesDocumentos,
             FuentesDatos = fuentesDatos,
             Herramientas = herramientas?.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList() ?? [],

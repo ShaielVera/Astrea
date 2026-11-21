@@ -110,6 +110,8 @@ public sealed class Asistente(
             return ErroresAsistente.NoDisponible;
         }
 
+        // Si el asistente había repreguntado (ej. "¿De qué carrera sos?"), este mensaje es la respuesta, no un tema nuevo.
+        var respondeAclaracion = conversacion.UltimosMensajes(1) is [{ EsAclaracion: true }];
         var (mensajePregunta, mensajeRespuesta) = conversacion.Registrar(pregunta, respuesta.Texto, respuesta.Fuentes, respuesta.Tipo, clock.UtcNow, respuesta.Propuesta);
         if (nueva)
         {
@@ -131,7 +133,8 @@ public sealed class Asistente(
             contexto.HerramientasPedidas,
             respuesta.Fuentes.Count(fuente => fuente.Tipo == TipoFuente.Documento),
             respuesta.Fuentes.Count(fuente => fuente.Tipo == TipoFuente.DatosDeAstrea),
-            respuesta.Propuesta is not null));
+            respuesta.Propuesta is not null,
+            respondeAclaracion));
 
         await unitOfWork.GuardarCambiosAsync(cancellationToken);
         return new IntercambioDto(conversacion.Id, conversacion.Titulo, MensajeDto.Desde(mensajePregunta), MensajeDto.Desde(mensajeRespuesta));
@@ -347,7 +350,8 @@ public sealed class Asistente(
             texto,
             Argumentos.ListaDeTextos(argumentos, "fuentes"),
             Argumentos.Booleano(argumentos, "sinEvidencia"),
-            Argumentos.Booleano(argumentos, "esAclaracion"));
+            Argumentos.Booleano(argumentos, "esAclaracion"),
+            Argumentos.Booleano(argumentos, "fueraDeTema"));
     }
 
     private async Task<Result<Conversacion>> PropiaAsync(Guid id, CancellationToken cancellationToken)

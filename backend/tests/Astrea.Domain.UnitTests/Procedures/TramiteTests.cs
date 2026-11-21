@@ -67,7 +67,7 @@ public class TramiteTests
             Guid.NewGuid(),
             Estudiante,
             ConstanciaExamen(),
-            new Dictionary<string, string?> { ["carrera"] = CarreraId, ["materia"] = "  Programación II ", ["fechaExamen"] = "2026-12-10", ["presentarAnte"] = " " },
+            new Dictionary<string, string?> { ["carrera"] = CarreraId, ["materia"] = "  Programación II ", ["fechaExamen"] = "2026-11-10", ["presentarAnte"] = " " },
             null,
             Ahora);
 
@@ -75,7 +75,7 @@ public class TramiteTests
         {
             ["carrera"] = CarreraId,
             ["materia"] = "Programación II",
-            ["fechaExamen"] = "2026-12-10",
+            ["fechaExamen"] = "2026-11-10",
         });
     }
 
@@ -205,12 +205,22 @@ public class TramiteTests
     }
 
     [Fact]
-    public void El_catalogo_inicial_tiene_los_cuatro_tramites_del_SDD_y_todos_piden_carrera()
+    public void El_catalogo_tiene_los_dos_tramites_que_emiten_constancia_y_ambos_piden_carrera()
     {
         var tipos = CatalogoTramites.Tipos();
 
-        tipos.Select(tipo => tipo.Codigo).Should().BeEquivalentTo("ALUMNO_REGULAR", "CONSTANCIA_EXAMEN", "ANALITICO_PARCIAL", "JUSTIFICACION_INASISTENCIA");
-        tipos.Should().OnlyContain(tipo => tipo.Campos.Any(campo => campo.Tipo == TipoCampo.Carrera && campo.Obligatorio));
-        tipos.Where(tipo => tipo.Activo).Select(tipo => tipo.Codigo).Should().BeEquivalentTo("ALUMNO_REGULAR", "CONSTANCIA_EXAMEN");
+        tipos.Select(tipo => tipo.Codigo).Should().BeEquivalentTo("ALUMNO_REGULAR", "CONSTANCIA_EXAMEN");
+        tipos.Should().OnlyContain(tipo => tipo.Activo && tipo.Campos.Any(campo => campo.Tipo == TipoCampo.Carrera && campo.Obligatorio));
+    }
+
+    [Fact]
+    public void La_constancia_de_examen_no_acepta_un_examen_futuro()
+    {
+        var datos = new Dictionary<string, string?> { ["carrera"] = CarreraId, ["materia"] = "Física" };
+        Tramite Pedir(string fecha) =>
+            Tramite.Solicitar(Guid.NewGuid(), Estudiante, ConstanciaExamen(), new Dictionary<string, string?>(datos) { ["fechaExamen"] = fecha }, null, Ahora);
+
+        ((Action)(() => Pedir("2026-11-16"))).Should().Throw<DomainException>().WithMessage("*no puede ser una fecha futura*");
+        Pedir("2026-11-15").Datos["fechaExamen"].Should().Be("2026-11-15");
     }
 }

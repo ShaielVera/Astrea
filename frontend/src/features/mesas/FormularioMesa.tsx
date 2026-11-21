@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
 import { academicoApi, type Carrera, type MateriaDePlan, type PlanEstudio } from "@/features/academico/api";
-import { horaCorta, type DatosMesa, type MesaExamen } from "./api";
+import { horaCorta, hoyEnElInstituto, type DatosMesa, type MesaExamen } from "./api";
 
 const campo = "w-full min-w-0 rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-normal dark:border-zinc-700 dark:bg-zinc-900";
 const botonPrimario = "rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-60";
@@ -167,7 +167,7 @@ export function FormularioMesa({ carreras, mesa, onGuardar, onCancelar }: Props)
         </label>
         <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
           Fecha
-          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required className={campo} />
+          <input type="date" value={fecha} min={mesa ? undefined : hoyEnElInstituto()} onChange={(e) => setFecha(e.target.value)} required className={campo} />
         </label>
         <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
           Hora

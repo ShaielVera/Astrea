@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { academicoApi, NOMBRE_ANIO, type Carrera, type MateriaDePlan } from "@/features/academico/api";
+import { hoyEnElInstituto } from "@/features/mesas/api";
 import type { CampoTramite, TramiteTipo } from "./api";
 
 const campo = "w-full min-w-0 rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-normal dark:border-zinc-700 dark:bg-zinc-900";
@@ -185,6 +186,7 @@ function Campo({
           {...comunes}
           type={definicion.tipo === "Fecha" ? "date" : "text"}
           maxLength={definicion.tipo === "Fecha" ? undefined : definicion.largoMaximo}
+          max={definicion.tipo === "Fecha" && definicion.sinFechasFuturas ? hoyEnElInstituto() : undefined}
           onChange={(e) => onCambiar(definicion.clave, e.target.value)}
         />
       )}

@@ -41,7 +41,7 @@ export function FotoHallazgo({ id, titulo }: { id: string; titulo: string }) {
     <>
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
         {url && (
-          // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- blob protegido; con teclado se usa el botón "Ver en grande".
+          // eslint-disable-next-line @next/next/no-img-element -- blob protegido; con teclado se usa el botón "Ver en grande".
           <img
             src={url}
             alt={`Foto de ${titulo}`}

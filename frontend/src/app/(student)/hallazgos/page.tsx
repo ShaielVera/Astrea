@@ -30,6 +30,13 @@ type Filtro = { texto?: string; categoria?: CategoriaObjeto; punto?: PuntoResgua
 /** Hoy en el instituto (AAAA-MM-DD). */
 const hoy = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date());
 
+/** El turno según la hora del instituto: casi siempre el objeto se publica el mismo rato en que se encuentra. */
+function franjaActual(): FranjaHoraria {
+  const hora = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Argentina/Buenos_Aires", hour: "numeric", hourCycle: "h23" }).format(new Date()));
+  if (hora >= 6 && hora < 13) return "Manana";
+  return hora >= 13 && hora < 19 ? "Tarde" : "Noche";
+}
+
 export default function HallazgosPage() {
   const { obtenerToken } = useAuth();
   const [filtro, setFiltro] = useState<Filtro>({});
@@ -275,7 +282,7 @@ function FormularioPublicacion({
   const [categoria, setCategoria] = useState<CategoriaObjeto>("Otro");
   const [sector, setSector] = useState("");
   const [fecha, setFecha] = useState(hoy());
-  const [franja, setFranja] = useState<FranjaHoraria>("Manana");
+  const [franja, setFranja] = useState<FranjaHoraria>(franjaActual);
   const [punto, setPunto] = useState<PuntoResguardo>("Direccion");
   const [descripcion, setDescripcion] = useState("");
   const [foto, setFoto] = useState<{ archivo: File; vistaPrevia: string } | null>(null);

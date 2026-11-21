@@ -25,6 +25,7 @@ export default function AdministracionMesas() {
   const [pagina, setPagina] = useState<Pagina<MesaExamen> | null>(null);
   const [editando, setEditando] = useState<MesaExamen | null>(null);
   const [cancelando, setCancelando] = useState<string | null>(null);
+  const [eliminando, setEliminando] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Numera las cargas del listado: una respuesta vieja no pisa a la más reciente.
@@ -129,7 +130,12 @@ export default function AdministracionMesas() {
           Estado
           <select
             value={filtro.estado ?? ""}
-            onChange={(e) => setFiltro((f) => ({ ...f, estado: (e.target.value || undefined) as EstadoMesa | undefined }))}
+            onChange={(e) => {
+              // El estado se aplica en el momento (la búsqueda por texto, con "Filtrar").
+              const nuevo = { ...filtro, estado: (e.target.value || undefined) as EstadoMesa | undefined };
+              setFiltro(nuevo);
+              void cargar(nuevo, 1);
+            }}
             className={campo}
           >
             <option value="">Todos</option>
@@ -164,7 +170,28 @@ export default function AdministracionMesas() {
             mesas={pagina.items}
             mostrarEstado
             acciones={(mesa) =>
-              cancelando === mesa.id ? (
+              eliminando === mesa.id ? (
+                <div role="alertdialog" aria-label={`Eliminar el borrador de ${mesa.materiaNombre}`} className="flex flex-wrap items-center gap-2 text-sm">
+                  ¿Eliminar este borrador? No se puede deshacer.
+                  <button
+                    type="button"
+                    className={botonPeligroChico}
+                    onClick={() =>
+                      ejecutar(async (token) => {
+                        await mesasApi.eliminar(token, mesa.id);
+                        setEliminando(null);
+                        // Si se estaba editando esa mesa, el formulario vuelve a "Nueva mesa".
+                        if (editando?.id === mesa.id) setEditando(null);
+                      }, "Borrador eliminado.")
+                    }
+                  >
+                    Sí, eliminar
+                  </button>
+                  <button type="button" className={botonChico} onClick={() => setEliminando(null)}>
+                    No
+                  </button>
+                </div>
+              ) : cancelando === mesa.id ? (
                 <FormularioCancelacion
                   mesa={mesa}
                   onDescartar={() => setCancelando(null)}
@@ -205,7 +232,7 @@ export default function AdministracionMesas() {
                       type="button"
                       className={botonPeligroChico}
                       aria-label={`Eliminar ${mesa.materiaNombre}`}
-                      onClick={() => ejecutar((token) => mesasApi.eliminar(token, mesa.id), "Borrador eliminado.")}
+                      onClick={() => setEliminando(mesa.id)}
                     >
                       Eliminar
                     </button>

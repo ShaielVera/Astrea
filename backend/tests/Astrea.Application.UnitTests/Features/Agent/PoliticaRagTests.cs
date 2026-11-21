@@ -65,6 +65,16 @@ public class PoliticaRagTests
     }
 
     [Fact]
+    public void Una_pregunta_ajena_al_instituto_recibe_un_aviso_propio_y_no_el_de_secretaria()
+    {
+        var validada = PoliticaRag.Validar(new RespuestaPropuesta("Argentina.", [], false, FueraDeTema: true), []);
+
+        validada.Texto.Should().Be(PoliticaRag.RespuestaFueraDeTema);
+        validada.SinEvidencia.Should().BeTrue();
+        validada.Fuentes.Should().BeEmpty();
+    }
+
+    [Fact]
     public void Acepta_una_respuesta_con_citas_validas_y_las_renumera_en_orden_de_aparicion()
     {
         var evidencias = PoliticaRag.SeleccionarEvidencias([Fragmento(0.9, "uno"), Fragmento(0.8, "dos"), Fragmento(0.7, "tres")], Configuracion);

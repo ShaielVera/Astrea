@@ -306,6 +306,10 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(30)")
                         .HasColumnName("motivo");
 
+                    b.Property<bool>("RespondeAclaracion")
+                        .HasColumnType("boolean")
+                        .HasColumnName("responde_aclaracion");
+
                     b.Property<string>("Resultado")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1350,7 +1354,7 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         {
                             Id = new Guid("0193a5d0-0000-7000-8000-000000000001"),
                             Activo = true,
-                            Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"presentarAnte\",\"etiqueta\":\"Para presentar ante\",\"tipo\":1,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":\"Ej.: ANSES, empleador, obra social.\"}]",
+                            Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null,\"sinFechasFuturas\":false},{\"clave\":\"presentarAnte\",\"etiqueta\":\"Para presentar ante\",\"tipo\":1,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":\"Ej.: ANSES, empleador, obra social.\",\"sinFechasFuturas\":false}]",
                             Codigo = "ALUMNO_REGULAR",
                             Descripcion = "Certifica que sos estudiante regular del instituto, para presentar en el trabajo, ANSES, obra social u otros organismos.",
                             Nombre = "Constancia de alumno regular",
@@ -1360,30 +1364,10 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         {
                             Id = new Guid("0193a5d0-0000-7000-8000-000000000002"),
                             Activo = true,
-                            Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"materia\",\"etiqueta\":\"Materia\",\"tipo\":1,\"obligatorio\":true,\"largoMaximo\":200,\"ayuda\":null},{\"clave\":\"fechaExamen\",\"etiqueta\":\"Fecha del examen\",\"tipo\":3,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"presentarAnte\",\"etiqueta\":\"Para presentar ante\",\"tipo\":1,\"obligatorio\":false,\"largoMaximo\":120,\"ayuda\":null}]",
+                            Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null,\"sinFechasFuturas\":false},{\"clave\":\"materia\",\"etiqueta\":\"Materia\",\"tipo\":1,\"obligatorio\":true,\"largoMaximo\":200,\"ayuda\":null,\"sinFechasFuturas\":false},{\"clave\":\"fechaExamen\",\"etiqueta\":\"Fecha del examen\",\"tipo\":3,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null,\"sinFechasFuturas\":true},{\"clave\":\"presentarAnte\",\"etiqueta\":\"Para presentar ante\",\"tipo\":1,\"obligatorio\":false,\"largoMaximo\":120,\"ayuda\":null,\"sinFechasFuturas\":false}]",
                             Codigo = "CONSTANCIA_EXAMEN",
                             Descripcion = "Certifica que te presentaste a rendir un examen final, para justificar la ausencia en el trabajo.",
                             Nombre = "Constancia de examen",
-                            RequiereAdjunto = false
-                        },
-                        new
-                        {
-                            Id = new Guid("0193a5d0-0000-7000-8000-000000000003"),
-                            Activo = false,
-                            Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"motivo\",\"etiqueta\":\"\\u00BFPara qu\\u00E9 lo necesit\\u00E1s?\",\"tipo\":1,\"obligatorio\":true,\"largoMaximo\":200,\"ayuda\":\"Ej.: pase a otra instituci\\u00F3n, beca.\"}]",
-                            Codigo = "ANALITICO_PARCIAL",
-                            Descripcion = "Detalle de las materias aprobadas hasta hoy, con nota y fecha.",
-                            Nombre = "Certificado analítico parcial",
-                            RequiereAdjunto = false
-                        },
-                        new
-                        {
-                            Id = new Guid("0193a5d0-0000-7000-8000-000000000004"),
-                            Activo = false,
-                            Campos = "[{\"clave\":\"carrera\",\"etiqueta\":\"Carrera\",\"tipo\":4,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"desde\",\"etiqueta\":\"Desde\",\"tipo\":3,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"hasta\",\"etiqueta\":\"Hasta\",\"tipo\":3,\"obligatorio\":true,\"largoMaximo\":120,\"ayuda\":null},{\"clave\":\"motivo\",\"etiqueta\":\"Motivo\",\"tipo\":2,\"obligatorio\":true,\"largoMaximo\":500,\"ayuda\":null}]",
-                            Codigo = "JUSTIFICACION_INASISTENCIA",
-                            Descripcion = "Pedí que se justifiquen tus faltas por un motivo de salud, laboral u otro previsto en el reglamento. Presentá el comprobante original en Secretaría.",
-                            Nombre = "Justificación de inasistencia",
                             RequiereAdjunto = false
                         });
                 });

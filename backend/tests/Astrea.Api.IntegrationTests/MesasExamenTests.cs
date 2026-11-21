@@ -190,6 +190,18 @@ public sealed class MesasExamenTests(AstreaApiFactory factory)
     }
 
     [Fact]
+    public async Task No_se_carga_una_mesa_en_una_fecha_que_ya_paso()
+    {
+        var admin = await AdminAsync();
+        var plan = await CrearPlanAsync(admin, "Historia");
+
+        var response = await admin.PostAsJsonAsync("/api/v1/admin/mesas", NuevaMesa(plan, 0, DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-10)));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("ya pasaron");
+    }
+
+    [Fact]
     public async Task Un_rango_de_fechas_invertido_devuelve_400()
     {
         var estudiante = await EstudianteAsync();

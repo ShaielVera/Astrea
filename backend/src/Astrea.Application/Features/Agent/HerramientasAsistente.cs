@@ -147,6 +147,7 @@ public sealed class HerramientasAsistente(
                 new("fuentes", TipoParametro.ListaDeTextos, "Ids de los fragmentos (F…) y datos (D…) que usaste.", true),
                 new("sinEvidencia", TipoParametro.Booleano, "true si no tenés información confirmada para responder.", true),
                 new("esAclaracion", TipoParametro.Booleano, "true si en lugar de responder le preguntás un dato que falta.", true),
+                new("fueraDeTema", TipoParametro.Booleano, "true si la pregunta no tiene nada que ver con el instituto (fútbol, recetas, etc.).", false),
             ]),
         ];
     }

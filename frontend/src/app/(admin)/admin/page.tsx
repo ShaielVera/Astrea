@@ -6,7 +6,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
 import { apiFetch } from "@/lib/api-client";
 
-type ResumenUsuarios = { estudiantes: number; administradores: number };
+type ResumenUsuarios = { estudiantes: number; administradores: number; docentes: number };
 
 type Estado = { tipo: "cargando" } | { tipo: "ok"; resumen: ResumenUsuarios } | { tipo: "error"; mensaje: string };
 
@@ -117,7 +117,7 @@ export default function PanelAdministracion() {
           </p>
         )}
         {estado.tipo === "ok" && (
-          <dl className="grid max-w-md grid-cols-2 gap-4">
+          <dl className="grid max-w-xl grid-cols-2 gap-4 sm:grid-cols-3">
             <div className="rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
               <dt className="text-sm text-zinc-500">Estudiantes</dt>
               <dd className="text-3xl font-semibold" data-testid="total-estudiantes">
@@ -128,6 +128,12 @@ export default function PanelAdministracion() {
               <dt className="text-sm text-zinc-500">Administradores</dt>
               <dd className="text-3xl font-semibold" data-testid="total-administradores">
                 {estado.resumen.administradores}
+              </dd>
+            </div>
+            <div className="rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
+              <dt className="text-sm text-zinc-500">Docentes</dt>
+              <dd className="text-3xl font-semibold" data-testid="total-docentes">
+                {estado.resumen.docentes}
               </dd>
             </div>
           </dl>

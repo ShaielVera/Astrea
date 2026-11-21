@@ -104,7 +104,11 @@ test.describe("Trámites", () => {
     const numero = await pedir(estudiante, "Constancia de examen", async (formulario) => {
       // La materia se elige de la lista de la carrera (todos los años).
       await formulario.getByRole("combobox", { name: /^Materia/ }).selectOption({ label: "Programación II" });
-      await formulario.getByLabel("Fecha del examen").fill("2026-12-10");
+      // Una fecha futura no se acepta: la constancia es de un examen que ya se rindió.
+      const fecha = formulario.getByLabel("Fecha del examen");
+      await fecha.fill("2099-12-10");
+      expect(await fecha.evaluate((campo: HTMLInputElement) => campo.validity.rangeOverflow)).toBe(true);
+      await fecha.fill("2026-01-15");
     });
 
     const enBandeja = await abrirEnBandeja(admin, numero);

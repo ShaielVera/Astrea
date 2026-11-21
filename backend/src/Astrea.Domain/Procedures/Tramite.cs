@@ -1,4 +1,5 @@
 using Astrea.Domain.Common;
+using Astrea.Domain.Exams;
 
 namespace Astrea.Domain.Procedures;
 
@@ -89,7 +90,7 @@ public sealed class Tramite : Entity
             throw new DomainException($"El trámite \"{tipo.Nombre}\" no se puede pedir por ahora.");
         }
 
-        var tramite = new Tramite(id, usuarioId, tipo.Id, tipo.ValidarDatos(datos), claveIdempotencia, ahora);
+        var tramite = new Tramite(id, usuarioId, tipo.Id, tipo.ValidarDatos(datos, ZonaHorariaInstitucional.Hoy(ahora)), claveIdempotencia, ahora);
         tramite.Registrar(null, EstadoTramite.Pendiente, null, usuarioId, ahora);
         return tramite;
     }

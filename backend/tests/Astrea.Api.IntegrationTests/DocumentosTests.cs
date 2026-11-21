@@ -196,18 +196,17 @@ public sealed class DocumentosTests(AstreaApiFactory factory)
 
         var (_, estudiante, tramite) = await PedirConstanciaAsync(
             CatalogoTramites.ConstanciaExamenId,
-            new Dictionary<string, string?> { ["materia"] = "Didáctica General", ["fechaExamen"] = "2026-12-10" });
+            new Dictionary<string, string?> { ["materia"] = "Didáctica General", ["fechaExamen"] = "2026-11-10" });
         await CargarDatosOficialesAsync(admin, tramite);
         var documento = (await LeerAsync<Detalle>(await AprobarAsync(admin, tramite.Id))).Documento!;
 
         documento.VersionPlantilla.Should().BeGreaterThan(1);
         documento.TipoDocumento.Should().Be("Constancia de examen final");
         using var leido = PdfDocument.Open(await (await estudiante.GetAsync($"/api/v1/tramites/{tramite.Id}/documento")).Content.ReadAsByteArrayAsync());
-        string.Join(" ", leido.GetPages().Select(pagina => pagina.Text)).Should().Contain("rindió Didáctica General").And.Contain("10/12/2026");
+        string.Join(" ", leido.GetPages().Select(pagina => pagina.Text)).Should().Contain("rindió Didáctica General").And.Contain("10/11/2026");
 
         var plantillas = (await admin.GetFromJsonAsync<List<PlantillaDeTipo>>("/api/v1/admin/plantillas", Json))!;
         plantillas.Single(p => p.TipoId == CatalogoTramites.ConstanciaExamenId).Vigente!.Version.Should().Be(documento.VersionPlantilla);
-        plantillas.Single(p => p.TipoId == CatalogoTramites.AnaliticoParcialId).Vigente.Should().BeNull();
     }
 
     [Fact]

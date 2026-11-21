@@ -76,6 +76,9 @@ public static class ErroresMesas
     public static readonly Error TextoDemasiadoLargo =
         Error.Validacion("texto_demasiado_largo", $"La búsqueda no puede superar los {LargoMaximoTexto} caracteres.");
 
+    public static readonly Error FechaPasada =
+        Error.Validacion("mesa_fecha_pasada", "La fecha y hora de la mesa ya pasaron. Revisá el día que cargaste.");
+
     public static readonly Error HorarioOcupado =
         Error.Conflicto("mesa_duplicada", "Ya hay una mesa vigente de esa materia en el mismo día y horario.");
 }
