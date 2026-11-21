@@ -4,11 +4,13 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   type User,
 } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ApiError, apiFetch } from "@/lib/api-client";
 import { obtenerAuth } from "@/lib/firebase/client";
@@ -30,6 +32,8 @@ type AuthContextValue = {
   ingresarConEmail: (email: string, password: string) => Promise<void>;
   crearCuenta: (email: string, password: string) => Promise<void>;
   ingresarConGoogle: () => Promise<void>;
+  /** Firebase manda un correo (gratis) con un enlace para elegir una contraseña nueva. */
+  recuperarPassword: (email: string) => Promise<void>;
   cerrarSesion: () => Promise<void>;
   /** Vuelve a conectar con la API cuando no respondió. */
   reintentar: () => void;
@@ -106,6 +110,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithPopup(obtenerAuth(), new GoogleAuthProvider());
   }, []);
 
+  const recuperarPassword = useCallback(async (email: string) => {
+    const auth = obtenerAuth();
+    auth.languageCode = "es";
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      // No se avisa si el email no tiene cuenta: así nadie puede averiguar qué emails están registrados.
+      if (error instanceof FirebaseError && error.code === "auth/user-not-found") return;
+      throw error;
+    }
+  }, []);
+
   const cerrarSesion = useCallback(async () => {
     await signOut(obtenerAuth());
   }, []);
@@ -124,11 +140,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ingresarConEmail,
       crearCuenta,
       ingresarConGoogle,
+      recuperarPassword,
       cerrarSesion,
       reintentar,
       obtenerToken,
     }),
-    [sesion, errorSesion, ingresarConEmail, crearCuenta, ingresarConGoogle, cerrarSesion, reintentar, obtenerToken],
+    [sesion, errorSesion, ingresarConEmail, crearCuenta, ingresarConGoogle, recuperarPassword, cerrarSesion, reintentar, obtenerToken],
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

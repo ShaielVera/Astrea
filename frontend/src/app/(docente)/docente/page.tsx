@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
-import { NOMBRE_ANIO } from "@/features/academico/api";
+import { academicoApi, agruparPorAnio, NOMBRE_ANIO, type Carrera, type MateriaDePlan } from "@/features/academico/api";
+import { OpcionesCarrera } from "@/features/perfil/OpcionesCarrera";
 import {
   asistenciaApi,
   fechaCorta,
   VALORES,
+  type MateriaCursada,
   type MateriaAConfirmar,
   type PanelDocente,
   type Relevamiento,
@@ -20,6 +22,8 @@ export default function AsistenciaDocente() {
   const [elegido, setElegido] = useState("");
   const [panel, setPanel] = useState<PanelDocente | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Sube cada vez que el docente cambia sus materias: el panel se vuelve a pedir para mostrarlas. */
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     let vigente = true;
@@ -46,7 +50,7 @@ export default function AsistenciaDocente() {
     return () => {
       vigente = false;
     };
-  }, [elegido, obtenerToken]);
+  }, [elegido, obtenerToken, version]);
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-10 sm:px-6">
@@ -62,6 +66,8 @@ export default function AsistenciaDocente() {
           {error}
         </p>
       )}
+
+      <MisMaterias onCambio={() => setVersion((actual) => actual + 1)} />
 
       {relevamientos?.length === 0 && <p className="text-zinc-500">No hay pedidos de confirmación de asistencia este año.</p>}
 
@@ -88,13 +94,156 @@ export default function AsistenciaDocente() {
       )}
 
       {panel && panel.materias.length === 0 && (
-        <p className="text-zinc-500">No tenés materias asignadas. Pedile a Secretaría que te las asigne.</p>
+        <p className="text-zinc-500">Todavía no marcaste las materias que das: elegilas arriba, en “Las materias que doy”.</p>
       )}
 
       {panel?.materias.map((materia) => (
         <TablaMateria key={`${panel.relevamiento.id}-${materia.planMateriaId}`} relevamiento={panel.relevamiento} materia={materia} />
       ))}
     </main>
+  );
+}
+
+/**
+ * El docente marca con un tilde las materias que da (y se lo saca a las que eligió por error). Cada tilde se guarda al
+ * tocarlo; Secretaría ve lo elegido en "Usuarios y roles" y lo puede corregir.
+ */
+function MisMaterias({ onCambio }: { onCambio: () => void }) {
+  const { obtenerToken } = useAuth();
+  const [mias, setMias] = useState<MateriaCursada[] | null>(null);
+  const [carreras, setCarreras] = useState<Carrera[] | null>(null);
+  const [carreraId, setCarreraId] = useState("");
+  const [materias, setMaterias] = useState<MateriaDePlan[] | null>(null);
+  /** El tilde cambia al tocarlo, sin esperar al servidor; si no se pudo guardar, vuelve como estaba. */
+  const [pendientes, setPendientes] = useState<Record<string, boolean>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  const elegirCarrera = useCallback(
+    async (id: string) => {
+      setCarreraId(id);
+      setMaterias(null);
+      if (!id) return;
+      try {
+        const token = await obtenerToken();
+        const planes = await academicoApi.planes(token, id);
+        const vigente = planes.find((plan) => plan.activo) ?? planes[0];
+        setMaterias(vigente ? await academicoApi.materias(token, vigente.id) : []);
+      } catch (e) {
+        setError(mensajeDeError(e));
+      }
+    },
+    [obtenerToken],
+  );
+
+  useEffect(() => {
+    let vigente = true;
+    obtenerToken()
+      .then((token) => Promise.all([asistenciaApi.misMaterias(token), academicoApi.carreras(token)]))
+      .then(([propias, todas]) => {
+        if (!vigente) return;
+        setMias(propias);
+        setCarreras(todas);
+        // Abre directamente la carrera en la que ya da clases.
+        if (propias[0]) void elegirCarrera(propias[0].carreraId);
+      })
+      .catch((e) => vigente && setError(mensajeDeError(e)));
+    return () => {
+      vigente = false;
+    };
+  }, [obtenerToken, elegirCarrera]);
+
+  async function cambiar(materia: MateriaDePlan, marcar: boolean) {
+    const id = materia.planMateriaId;
+    setError(null);
+    setPendientes((actuales) => ({ ...actuales, [id]: marcar }));
+    try {
+      const token = await obtenerToken();
+      if (marcar) await asistenciaApi.marcarMateria(token, id);
+      else await asistenciaApi.desmarcarMateria(token, id);
+      setMias(await asistenciaApi.misMaterias(token));
+      onCambio();
+    } catch (e) {
+      setError(mensajeDeError(e));
+    } finally {
+      setPendientes((actuales) => Object.fromEntries(Object.entries(actuales).filter(([clave]) => clave !== id)));
+    }
+  }
+
+  const marcadas = new Set(mias?.map((materia) => materia.planMateriaId));
+  const marcada = (id: string) => pendientes[id] ?? marcadas.has(id);
+
+  return (
+    <section aria-labelledby="mis-materias-titulo" className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-superficie p-5 shadow-sm dark:border-zinc-800">
+      <div className="flex flex-col gap-1">
+        <h2 id="mis-materias-titulo" className="text-lg font-semibold">
+          Las materias que doy
+        </h2>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Elegí la carrera y marcá con un tilde las materias que das. Si marcaste una por error, tocala de nuevo para sacarle el tilde. Se guarda solo.
+        </p>
+      </div>
+
+      {mias && mias.length > 0 && (
+        <ul aria-label="Materias que doy" className="flex flex-wrap gap-2">
+          {mias.map((materia) => (
+            <li key={materia.planMateriaId} className="rounded-full bg-emerald-100 px-3 py-1 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+              ✓ {materia.materia} <span className="text-emerald-800/80 dark:text-emerald-300/80">· {materia.carrera}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <label className="flex max-w-md flex-col gap-1 text-sm font-medium">
+        Carrera
+        <select
+          value={carreraId}
+          onChange={(e) => void elegirCarrera(e.target.value)}
+          disabled={!carreras}
+          className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+        >
+          <option value="">Elegí una carrera</option>
+          <OpcionesCarrera carreras={carreras} mias={mias?.map((materia) => materia.carreraId) ?? null} />
+        </select>
+      </label>
+
+      {carreraId && !materias && !error && (
+        <p role="status" className="text-sm text-zinc-500">
+          Cargando materias…
+        </p>
+      )}
+      {materias?.length === 0 && <p className="text-sm text-zinc-500">Esta carrera todavía no tiene materias cargadas.</p>}
+
+      {materias && materias.length > 0 && (
+        <div className="flex flex-col gap-4">
+          {agruparPorAnio(materias).map(([anio, delAnio]) => (
+            <fieldset key={anio} className="flex flex-col gap-1">
+              <legend className="mb-1 text-sm font-semibold text-zinc-700 dark:text-zinc-300">{NOMBRE_ANIO[anio] ?? `Año ${anio}`}</legend>
+              {delAnio.map((materia) => (
+                <label
+                  key={materia.planMateriaId}
+                  className="flex min-h-11 items-center gap-3 rounded-md px-2 py-1.5 hover:bg-zinc-100 has-[:checked]:bg-emerald-50 dark:hover:bg-zinc-800 dark:has-[:checked]:bg-emerald-950/50"
+                >
+                  <input
+                    type="checkbox"
+                    className="size-5 accent-emerald-600"
+                    checked={marcada(materia.planMateriaId)}
+                    disabled={!mias || materia.planMateriaId in pendientes}
+                    onChange={(e) => void cambiar(materia, e.target.checked)}
+                  />
+                  <span>{materia.nombre}</span>
+                </label>
+              ))}
+            </fieldset>
+          ))}
+        </div>
+      )}
+
+      {error && (
+        <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+          {error}
+        </p>
+      )}
+    </section>
   );
 }
 

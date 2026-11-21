@@ -81,6 +81,9 @@ export const asistenciaApi = {
   darseDeBaja: (token: string, planMateriaId: string) => apiFetch<void>(`/me/cursada/${planMateriaId}`, { method: "DELETE", token }),
 
   // Docente
+  misMaterias: (token: string) => apiFetch<MateriaCursada[]>("/docente/materias", { token }),
+  marcarMateria: (token: string, planMateriaId: string) => apiFetch<MateriaCursada>(`/docente/materias/${planMateriaId}`, { method: "PUT", token }),
+  desmarcarMateria: (token: string, planMateriaId: string) => apiFetch<void>(`/docente/materias/${planMateriaId}`, { method: "DELETE", token }),
   relevamientosDocente: (token: string) => apiFetch<Relevamiento[]>("/docente/relevamientos", { token }),
   panel: (token: string, relevamientoId: string) => apiFetch<PanelDocente>(`/docente/relevamientos/${relevamientoId}`, { token }),
   confirmar: (token: string, relevamientoId: string, planMateriaId: string, confirmaciones: Confirmacion[]) =>

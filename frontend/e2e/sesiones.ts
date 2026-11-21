@@ -5,7 +5,7 @@ import { E2E, dniUnico, emailUnico } from "./entorno";
 export async function ingresarComoEstudianteNuevo(page: Page): Promise<string> {
   const email = emailUnico("estudiante");
   await page.goto("/login");
-  await page.getByRole("button", { name: "¿No tenés cuenta? Creá una" }).click();
+  await page.getByRole("button", { name: "Crear mi cuenta" }).click();
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill(E2E.passwordEstudiantes);
   await page.getByRole("button", { name: "Crear cuenta" }).click();

@@ -169,6 +169,33 @@ public sealed class AsistenciaTests(AstreaApiFactory factory)
     }
 
     [Fact]
+    public async Task El_docente_marca_y_desmarca_sus_materias_y_secretaria_las_ve()
+    {
+        var admin = await SesionAsync(AstreaApiFactory.AdministradorInicial);
+        var estudiante = await SesionAsync();
+        var profe = await SesionAsync();
+        var (materiaA, materiaB) = await CrearMateriasAsync(admin.Cliente);
+        (await admin.Cliente.PostAsync($"/api/v1/admin/docentes/{profe.Id}", null)).EnsureSuccessStatusCode();
+
+        // Solo un docente elige materias propias.
+        (await estudiante.Cliente.PutAsync($"/api/v1/docente/materias/{materiaA}", null)).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+        // Marca dos (una dos veces: no se duplica), y quita la que eligió por error.
+        (await profe.Cliente.PutAsync($"/api/v1/docente/materias/{materiaA}", null)).EnsureSuccessStatusCode();
+        (await profe.Cliente.PutAsync($"/api/v1/docente/materias/{materiaA}", null)).EnsureSuccessStatusCode();
+        (await profe.Cliente.PutAsync($"/api/v1/docente/materias/{materiaB}", null)).EnsureSuccessStatusCode();
+        (await profe.Cliente.DeleteAsync($"/api/v1/docente/materias/{materiaB}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await profe.Cliente.PutAsync($"/api/v1/docente/materias/{Guid.NewGuid()}", null)).StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var mias = await LeerAsync<List<MateriaPanel>>(await profe.Cliente.GetAsync("/api/v1/docente/materias"));
+        mias.Select(materia => materia.PlanMateriaId).Should().Equal(materiaA);
+
+        // Secretaría ve lo que eligió el docente y lo puede corregir.
+        var docentes = await LeerAsync<List<Docente>>(await admin.Cliente.GetAsync("/api/v1/admin/docentes"));
+        docentes.Single(docente => docente.Id == profe.Id).Materias.Select(materia => materia.PlanMateriaId).Should().Equal(materiaA);
+    }
+
+    [Fact]
     public async Task Validaciones_de_secretaria()
     {
         var admin = await SesionAsync(AstreaApiFactory.AdministradorInicial);

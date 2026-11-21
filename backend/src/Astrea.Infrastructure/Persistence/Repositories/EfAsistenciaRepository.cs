@@ -58,6 +58,9 @@ internal sealed class EfAsistenciaRepository(AppDbContext db) : IAsistenciaRepos
     public Task<AsignacionDocente?> ObtenerAsignacionAsync(Guid asignacionId, CancellationToken cancellationToken) =>
         db.AsignacionesDocentes.SingleOrDefaultAsync(asignacion => asignacion.Id == asignacionId, cancellationToken);
 
+    public Task<AsignacionDocente?> ObtenerAsignacionAsync(Guid docenteId, Guid planMateriaId, CancellationToken cancellationToken) =>
+        db.AsignacionesDocentes.SingleOrDefaultAsync(asignacion => asignacion.DocenteId == docenteId && asignacion.PlanMateriaId == planMateriaId, cancellationToken);
+
     public Task<bool> ExisteAsignacionAsync(Guid docenteId, Guid planMateriaId, CancellationToken cancellationToken) =>
         db.AsignacionesDocentes.AnyAsync(asignacion => asignacion.DocenteId == docenteId && asignacion.PlanMateriaId == planMateriaId, cancellationToken);
 

@@ -40,3 +40,50 @@ export function ListasDesplegables() {
 
   return null;
 }
+
+/** Campos que abren el teclado del celular (los tildes, radios, fechas y botones no). */
+function abreTeclado(elemento: Element | null): elemento is HTMLElement {
+  if (elemento instanceof HTMLTextAreaElement) return true;
+  if (!(elemento instanceof HTMLInputElement)) return false;
+  return ["text", "search", "email", "tel", "url", "number", "password"].includes(elemento.type);
+}
+
+/**
+ * En el celular, al abrirse el teclado el campo que se está escribiendo queda a la vista: si el teclado lo tapa
+ * (o la página se quedó mostrando lo de arriba), la página baja lo justo para centrarlo en lo que queda de pantalla.
+ */
+export function CampoVisibleConTeclado() {
+  useEffect(() => {
+    const pantalla = window.visualViewport;
+    if (!pantalla) return;
+    const visor = pantalla;
+
+    function mostrarCampo() {
+      const campo = document.activeElement;
+      if (!abreTeclado(campo)) return;
+      const { top, bottom } = campo.getBoundingClientRect();
+      const arriba = visor.offsetTop;
+      const abajo = visor.offsetTop + visor.height;
+      if (top >= arriba + 8 && bottom <= abajo - 8) return;
+      campo.scrollIntoView({ block: "center", behavior: "instant" });
+    }
+
+    // El teclado tarda en abrirse: se revisa cuando la pantalla visible cambia de alto, y un rato después de enfocar.
+    let espera: ReturnType<typeof setTimeout> | undefined;
+    function alEnfocar(evento: FocusEvent) {
+      if (!abreTeclado(evento.target as Element)) return;
+      clearTimeout(espera);
+      espera = setTimeout(mostrarCampo, 350);
+    }
+
+    visor.addEventListener("resize", mostrarCampo);
+    document.addEventListener("focusin", alEnfocar);
+    return () => {
+      clearTimeout(espera);
+      visor.removeEventListener("resize", mostrarCampo);
+      document.removeEventListener("focusin", alEnfocar);
+    };
+  }, []);
+
+  return null;
+}

@@ -18,7 +18,7 @@ test.describe("Identidad y acceso", () => {
     const email = emailUnico("estudiante");
 
     await page.goto("/login");
-    await page.getByRole("button", { name: "¿No tenés cuenta? Creá una" }).click();
+    await page.getByRole("button", { name: "Crear mi cuenta" }).click();
     await completarFormulario(page, email, E2E.passwordEstudiantes);
     await page.getByRole("button", { name: "Crear cuenta" }).click();
 
@@ -37,7 +37,7 @@ test.describe("Identidad y acceso", () => {
   test("un estudiante no puede entrar al área de administración", async ({ page }) => {
     const email = emailUnico("curioso");
     await page.goto("/login");
-    await page.getByRole("button", { name: "¿No tenés cuenta? Creá una" }).click();
+    await page.getByRole("button", { name: "Crear mi cuenta" }).click();
     await completarFormulario(page, email, E2E.passwordEstudiantes);
     await page.getByRole("button", { name: "Crear cuenta" }).click();
     await expect(page).toHaveURL(/\/inicio$/);
@@ -80,6 +80,23 @@ test.describe("Identidad y acceso", () => {
     await page.unroute("**/api/v1/auth/sesion");
     await expect(page.getByRole("heading", { level: 1, name: /^(Buen día|Buenas tardes|Buenas noches)/ })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId("email-usuario")).toHaveText(email);
+  });
+
+  test("quien olvidó su contraseña pide el enlace sin que se revele si el email tiene cuenta", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page.getByRole("heading", { name: "¿Es tu primera vez en Astrea?" })).toBeVisible();
+    await page.getByRole("button", { name: "Olvidé mi contraseña" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Recuperar tu contraseña" })).toBeVisible();
+    await expect(page.getByLabel("Contraseña", { exact: true })).toHaveCount(0);
+
+    for (const email of [E2E.admin.email, emailUnico("sin-cuenta")]) {
+      await page.getByLabel("Email").fill(email);
+      await page.getByRole("button", { name: "Enviarme el enlace" }).click();
+      await expect(page.getByRole("main").getByRole("status")).toContainText(`Si hay una cuenta con ${email}`);
+    }
+
+    await page.getByRole("button", { name: "Volver a ingresar" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Ingresar a Astrea" })).toBeVisible();
   });
 
   test("sin sesión, el área de administración redirige al login", async ({ page }) => {

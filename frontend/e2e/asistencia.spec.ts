@@ -82,6 +82,41 @@ test.describe("Confirmación de asistencia", () => {
     await contextoAdmin.close();
   });
 
+  test("el docente marca con un tilde las materias que da y quita la que eligió por error", async ({ page, browser }) => {
+    const emailProfe = await ingresarComoEstudianteNuevo(page);
+
+    const contextoAdmin = await browser.newContext();
+    const admin = await contextoAdmin.newPage();
+    await ingresarComoAdministrador(admin);
+    await admin.goto("/admin/usuarios");
+    await admin.getByLabel("Buscar por apellido, nombre o DNI").fill(emailProfe);
+    const cuenta = admin.getByRole("list", { name: "Cuentas" }).getByRole("listitem", { name: emailProfe, exact: true });
+    await cuenta.getByRole("checkbox", { name: "Docente" }).check();
+    await expect(admin.getByRole("status")).toContainText("ahora es docente");
+
+    await page.goto("/docente");
+    const seccion = page.getByRole("region", { name: "Las materias que doy" });
+    await seccion.getByRole("combobox", { name: "Carrera" }).selectOption({ label: CARRERA });
+    const programacion = seccion.getByRole("checkbox", { name: MATERIA, exact: true });
+    const otra = seccion.getByRole("checkbox", { name: "Programación I", exact: true });
+    await programacion.check();
+    await expect(seccion.getByRole("list", { name: "Materias que doy" })).toContainText(MATERIA);
+    await otra.check();
+    await expect(seccion.getByRole("list", { name: "Materias que doy" })).toContainText("Programación I");
+    await otra.uncheck();
+    await expect(seccion.getByRole("list", { name: "Materias que doy" }).getByRole("listitem")).toHaveCount(1);
+
+    // Queda guardado y Secretaría lo ve.
+    await page.reload();
+    await expect(page.getByRole("region", { name: "Las materias que doy" }).getByRole("checkbox", { name: MATERIA, exact: true })).toBeChecked();
+    await admin.reload();
+    await admin.getByLabel("Buscar por apellido, nombre o DNI").fill(emailProfe);
+    await cuenta.getByRole("button", { name: "Materias que dicta (1)" }).click();
+    await expect(cuenta.getByRole("list", { name: `Materias de ${emailProfe}` })).toContainText(MATERIA);
+
+    await contextoAdmin.close();
+  });
+
   test("un estudiante no entra al área docente ni a la de asistencia", async ({ page }) => {
     await ingresarComoEstudianteNuevo(page);
     for (const ruta of ["/docente", "/admin/usuarios", "/admin/asistencia"]) {

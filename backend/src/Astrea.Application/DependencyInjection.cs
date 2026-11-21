@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<MetricasAsistente>();
         services.AddScoped<DepuracionTelemetria>();
         services.AddScoped<GestionDocentes>();
+        services.AddScoped<MateriasDelDocente>();
         services.AddScoped<Features.Users.GestionUsuarios>();
         services.AddScoped<Features.Knowledge.HorariosDeCursada>();
         services.AddScoped<CursadaEstudiante>();

@@ -115,6 +115,67 @@ public sealed class GestionDocentes(UsuarioActual usuarioActual, IUserRepository
 }
 
 /// <summary>
+/// El docente elige él mismo las materias que dicta (y quita las que marcó por error), así Secretaría no tiene que cargarlas.
+/// Secretaría las sigue viendo en "Usuarios y roles" y en el avance de cada relevamiento, y puede quitarlas.
+/// </summary>
+public sealed class MateriasDelDocente(UsuarioActual usuarioActual, IAsistenciaRepository asistencia, IUnitOfWork unitOfWork, IClock clock)
+{
+    public async Task<Result<IReadOnlyList<MateriaCursadaDto>>> ListarAsync(CancellationToken cancellationToken)
+    {
+        var docente = await usuarioActual.ObtenerAsync(cancellationToken);
+        if (!docente.EsExitoso)
+        {
+            return docente.Error!;
+        }
+
+        return Result<IReadOnlyList<MateriaCursadaDto>>.Exito(await asistencia.MateriasDelDocenteAsync(docente.Valor.Id, cancellationToken));
+    }
+
+    /// <summary>Marca una materia como propia. Si ya estaba marcada, no cambia nada (el tilde se puede tocar dos veces).</summary>
+    public async Task<Result<MateriaCursadaDto>> AgregarAsync(Guid planMateriaId, CancellationToken cancellationToken)
+    {
+        var docente = await usuarioActual.ObtenerAsync(cancellationToken);
+        if (!docente.EsExitoso)
+        {
+            return docente.Error!;
+        }
+
+        var materia = await asistencia.ObtenerMateriaDelPlanAsync(planMateriaId, cancellationToken);
+        if (materia is null)
+        {
+            return ErroresAsistencia.MateriaNoEncontrada;
+        }
+
+        if (!await asistencia.ExisteAsignacionAsync(docente.Valor.Id, planMateriaId, cancellationToken))
+        {
+            asistencia.Agregar(AsignacionDocente.Crear(Guid.CreateVersion7(), docente.Valor.Id, planMateriaId, docente.Valor.Id, clock.UtcNow));
+            await unitOfWork.GuardarCambiosAsync(cancellationToken);
+        }
+
+        return materia;
+    }
+
+    /// <summary>Desmarca una materia. Las confirmaciones que ya hizo en ella se conservan.</summary>
+    public async Task<Result<bool>> QuitarAsync(Guid planMateriaId, CancellationToken cancellationToken)
+    {
+        var docente = await usuarioActual.ObtenerAsync(cancellationToken);
+        if (!docente.EsExitoso)
+        {
+            return docente.Error!;
+        }
+
+        var asignacion = await asistencia.ObtenerAsignacionAsync(docente.Valor.Id, planMateriaId, cancellationToken);
+        if (asignacion is not null)
+        {
+            asistencia.Eliminar(asignacion);
+            await unitOfWork.GuardarCambiosAsync(cancellationToken);
+        }
+
+        return true;
+    }
+}
+
+/// <summary>
 /// El estudiante declara qué materias cursa este año; con eso aparece en la lista de su profesor. Ve lo que los profesores
 /// confirmaron sobre él (transparencia: si no está de acuerdo, lo habla con Secretaría antes de que se use el dato).
 /// </summary>

@@ -17,6 +17,8 @@ public interface IAsistenciaRepository
 
     Task<AsignacionDocente?> ObtenerAsignacionAsync(Guid asignacionId, CancellationToken cancellationToken);
 
+    Task<AsignacionDocente?> ObtenerAsignacionAsync(Guid docenteId, Guid planMateriaId, CancellationToken cancellationToken);
+
     Task<bool> ExisteAsignacionAsync(Guid docenteId, Guid planMateriaId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<MateriaCursadaDto>> MateriasDelDocenteAsync(Guid docenteId, CancellationToken cancellationToken);

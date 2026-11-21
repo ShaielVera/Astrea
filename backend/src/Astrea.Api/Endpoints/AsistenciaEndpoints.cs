@@ -95,6 +95,26 @@ internal static class AsistenciaEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        var misMaterias = api.MapGroup("/docente/materias").RequireAuthorization(Politicas.Docente).WithTags("Asistencia");
+
+        misMaterias.MapGet("", async (MateriasDelDocente servicio, CancellationToken ct) => (await servicio.ListarAsync(ct)).AHttp())
+            .WithName("MisMateriasDocente")
+            .WithDescription("Las materias que el docente marcó como propias (o que le asignó Secretaría).")
+            .Produces<IReadOnlyList<MateriaCursadaDto>>();
+
+        misMaterias.MapPut("/{planMateriaId:guid}", async (Guid planMateriaId, MateriasDelDocente servicio, CancellationToken ct) =>
+                (await servicio.AgregarAsync(planMateriaId, ct)).AHttp())
+            .WithName("MarcarMateriaDocente")
+            .WithDescription("El docente marca una materia que dicta. Si ya la tenía, no cambia nada.")
+            .Produces<MateriaCursadaDto>()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        misMaterias.MapDelete("/{planMateriaId:guid}", async (Guid planMateriaId, MateriasDelDocente servicio, CancellationToken ct) =>
+                (await servicio.QuitarAsync(planMateriaId, ct)).ASinContenido())
+            .WithName("DesmarcarMateriaDocente")
+            .WithDescription("El docente quita una materia que marcó por error. Las confirmaciones que ya hizo se conservan.")
+            .Produces(StatusCodes.Status204NoContent);
+
         var docente = api.MapGroup("/docente/relevamientos").RequireAuthorization(Politicas.Docente).WithTags("Asistencia");
 
         docente.MapGet("", (ConfirmacionesDocente servicio, CancellationToken ct) => servicio.RelevamientosAsync(ct))

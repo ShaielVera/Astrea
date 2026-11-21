@@ -7,6 +7,7 @@ const MENSAJES_FIREBASE: Record<string, string> = {
   "auth/wrong-password": "El email o la contraseña no son correctos.",
   "auth/user-not-found": "El email o la contraseña no son correctos.",
   "auth/invalid-email": "El email no tiene un formato válido.",
+  "auth/missing-email": "Escribí el email de tu cuenta.",
   "auth/user-disabled": "La cuenta está deshabilitada.",
   "auth/email-already-in-use": "Ya existe una cuenta con ese email. Probá iniciar sesión.",
   "auth/weak-password": "La contraseña debe tener al menos 6 caracteres.",
