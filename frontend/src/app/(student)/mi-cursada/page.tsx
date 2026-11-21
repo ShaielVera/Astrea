@@ -5,6 +5,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
 import { NOMBRE_ANIO } from "@/features/academico/api";
 import { SelectorMateria } from "@/features/asistencia/SelectorMateria";
+import { useMisCarreras } from "@/features/perfil/OpcionesCarrera";
 import { asistenciaApi, ETIQUETA_VALOR, fechaCorta, type MiAsistencia } from "@/features/asistencia/api";
 
 const ESTILO_VALOR = {
@@ -15,6 +16,7 @@ const ESTILO_VALOR = {
 
 export default function MiCursada() {
   const { obtenerToken } = useAuth();
+  const misCarreras = useMisCarreras();
   const [datos, setDatos] = useState<MiAsistencia | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -67,6 +69,11 @@ export default function MiCursada() {
         </p>
       </div>
 
+      <p role="note" className="rounded-xl border border-dorado-500/40 bg-dorado-100/60 px-4 py-3 text-sm text-indigo-950 dark:bg-indigo-900/50 dark:text-indigo-100">
+        <span className="font-semibold">Completala, por favor:</span> la dirección usa esta información para saber cuántos estudiantes
+        cursan cada materia y para organizar la asistencia. Si no anotás tus materias, tus profesores no te ven en su lista.
+      </p>
+
       {aviso && (
         <p role="status" className="rounded-md bg-emerald-50 px-4 py-2 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
           {aviso}
@@ -82,7 +89,7 @@ export default function MiCursada() {
         <h2 id="materias-titulo" className="text-lg font-semibold">
           Materias que curso {datos ? `en ${datos.cicloLectivo}` : ""}
         </h2>
-        <SelectorMateria titulo="Anotarme en una materia" textoBoton="Anotarme" onElegir={inscribirse} ocupado={ocupado} />
+        <SelectorMateria soloMisCarreras={misCarreras} titulo="Anotarme en una materia" textoBoton="Anotarme" onElegir={inscribirse} ocupado={ocupado} />
         {!datos ? (
           !error && (
             <p role="status" className="text-zinc-500">

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ingresarComoAdministrador, ingresarComoEstudianteNuevo } from "./sesiones";
+import { completarPerfil, ingresarComoAdministrador, ingresarComoEstudianteNuevo } from "./sesiones";
 
 const CARRERA = "Tecnicatura Superior en Desarrollo de Software";
 const MATERIA = "Programación II";
@@ -15,8 +15,11 @@ test.describe("Confirmación de asistencia", () => {
   test("el profesor confirma quién asiste, el estudiante lo ve y la dirección lo encuentra en el informe", async ({ page, browser }) => {
     const marca = `${Date.now()}`.slice(-6);
 
-    // 1. El estudiante anota la materia que cursa.
+    // 1. El estudiante carga su carrera en el perfil (solo se anota en materias de sus carreras) y anota la materia que cursa.
     const estudiante = await ingresarComoEstudianteNuevo(page);
+    const apellido = `Prueba${marca}`;
+    await completarPerfil(page, { nombre: "Ana", apellido });
+    const nombreVisible = `${apellido}, Ana`;
     await page.goto("/mi-cursada");
     const anotarme = await elegirMateria(page, "Anotarme en una materia");
     await anotarme.getByRole("button", { name: "Anotarme" }).click();
@@ -54,8 +57,8 @@ test.describe("Confirmación de asistencia", () => {
     const opcion = pedido.locator("option", { hasText: `Receso ${marca}` });
     await pedido.selectOption(await opcion.getAttribute("value"));
     const materia = profe.getByRole("region", { name: new RegExp(`^${MATERIA} \\(`) });
-    await materia.getByRole("group", { name: `Asistencia de ${estudiante}` }).getByLabel("No asiste").check();
-    await materia.getByRole("textbox", { name: `Observación sobre ${estudiante}` }).fill("No vino desde abril");
+    await materia.getByRole("group", { name: `Asistencia de ${nombreVisible}` }).getByLabel("No asiste").check();
+    await materia.getByRole("textbox", { name: `Observación sobre ${nombreVisible}` }).fill("No vino desde abril");
     await materia.getByRole("button", { name: "Guardar" }).click();
     await expect(materia.getByRole("status")).toContainText("Guardado: 1 estudiante");
 
@@ -72,7 +75,7 @@ test.describe("Confirmación de asistencia", () => {
     await relevamiento.selectOption(await relevamiento.locator("option", { hasText: `Receso ${marca}` }).getAttribute("value"));
     await admin.getByLabel("Buscar por nombre, email o DNI (opcional)").fill(estudiante);
     await admin.getByRole("button", { name: "Ver informe" }).click();
-    const fila = admin.getByRole("list", { name: "Estudiantes del informe" }).getByRole("listitem", { name: estudiante });
+    const fila = admin.getByRole("list", { name: "Estudiantes del informe" }).getByRole("listitem", { name: nombreVisible });
     await expect(fila).toContainText("1 no asiste");
     await expect(fila).toContainText("No vino desde abril");
 

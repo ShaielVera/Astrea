@@ -1509,6 +1509,11 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("apellido");
 
+                    b.PrimitiveCollection<List<Guid>>("CarrerasIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("carreras_ids");
+
                     b.Property<string>("Celular")
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)")
@@ -1521,10 +1526,6 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
-
-                    b.Property<DateTimeOffset?>("DatosConfirmadosEn")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("datos_confirmados_en");
 
                     b.Property<string>("Dni")
                         .HasMaxLength(20)
@@ -1556,6 +1557,11 @@ namespace Astrea.Infrastructure.Persistence.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("legajo");
+
+                    b.Property<string>("Localidad")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("localidad");
 
                     b.Property<string>("Nombre")
                         .HasMaxLength(100)

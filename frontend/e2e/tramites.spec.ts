@@ -1,6 +1,6 @@
 import { dniUnico } from "./entorno";
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { ingresarComoAdministrador, ingresarComoEstudianteNuevo } from "./sesiones";
+import { completarPerfil, ingresarComoAdministrador, ingresarComoEstudianteNuevo } from "./sesiones";
 
 const TSDS = "Tecnicatura Superior en Desarrollo de Software";
 
@@ -8,6 +8,7 @@ async function sesiones(browser: Browser): Promise<{ estudiante: Page; admin: Pa
   const estudiante = await (await browser.newContext()).newPage();
   const admin = await (await browser.newContext()).newPage();
   await ingresarComoEstudianteNuevo(estudiante);
+  await completarPerfil(estudiante);
   await ingresarComoAdministrador(admin);
   return { estudiante, admin };
 }
@@ -61,7 +62,7 @@ test.describe("Trámites", () => {
     await expect(enBandeja).toContainText("ANSES");
     await enBandeja.getByRole("button", { name: "Tomar trámite" }).click();
     await expect(admin.getByRole("status")).toContainText(`${numero} quedó en proceso`);
-    // La constancia de alumno regular emite PDF: Secretaría confirma antes los datos oficiales del titular.
+    // La constancia de alumno regular emite PDF: Secretaría puede corregir los datos del titular antes de aprobar.
     const datos = enBandeja.getByRole("form", { name: "Datos oficiales del titular" });
     await datos.getByLabel("Nombre").fill("Ana");
     await datos.getByLabel("Apellido").fill("Pérez");

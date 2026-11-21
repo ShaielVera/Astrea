@@ -31,7 +31,7 @@ public sealed class PerfilTests(AstreaApiFactory factory)
         var estudiante = await EstudianteAsync();
         var emailContacto = $"contacto-{Guid.NewGuid():N}@gmail.com";
 
-        var datos = await estudiante.PutAsJsonAsync("/api/v1/me/perfil/datos", new { nombre = "Brenda", apellido = "Vera", dni = DniNuevo() });
+        var datos = await estudiante.PutAsJsonAsync("/api/v1/me/perfil/datos", new { nombre = "Brenda", apellido = "Vera", dni = DniNuevo(), localidad = "nare", carrerasIds = new[] { await CarreraAsync() } });
         var contacto = await estudiante.PutAsJsonAsync("/api/v1/me/perfil/contacto", new { emailContacto, celular = "0342 15 412-3456" });
         var envio = await estudiante.PostAsync("/api/v1/me/perfil/verificaciones/email", null);
         var reenvioInmediato = await estudiante.PostAsync("/api/v1/me/perfil/verificaciones/email", null);
@@ -39,7 +39,7 @@ public sealed class PerfilTests(AstreaApiFactory factory)
         var correcto = await estudiante.PostAsJsonAsync("/api/v1/me/perfil/verificaciones/email/confirmacion", new { codigo = factory.Codigos.Ultimo(emailContacto) });
 
         datos.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await LeerAsync<Perfil>(datos)).DatosConfirmados.Should().BeFalse("los confirma Secretaría");
+        (await LeerAsync<Perfil>(datos)).Localidad.Should().Be("Naré");
         (await LeerAsync<Perfil>(contacto)).Celular.Valor.Should().Be("3424123456");
         envio.StatusCode.Should().Be(HttpStatusCode.OK);
         (await LeerAsync<CodigoEnviado>(envio)).Destino.Should().StartWith("co•••@gmail.com");
@@ -59,7 +59,7 @@ public sealed class PerfilTests(AstreaApiFactory factory)
     }
 
     [Fact]
-    public async Task Despues_de_que_Secretaria_confirma_los_datos_el_estudiante_ya_no_los_cambia()
+    public async Task El_estudiante_corrige_sus_datos_aunque_Secretaria_los_haya_cargado()
     {
         var admin = await SesionAsync(AstreaApiFactory.AdministradorInicial);
         var estudiante = await EstudianteAsync();
@@ -67,15 +67,25 @@ public sealed class PerfilTests(AstreaApiFactory factory)
         await estudiante.PutAsJsonAsync("/api/v1/me/perfil/datos", new { nombre = "Brenda", apellido = "Vera", dni });
         var id = (await estudiante.GetFromJsonAsync<Yo>("/api/v1/me", Json))!.Id;
 
-        var confirmar = await admin.PutAsJsonAsync($"/api/v1/admin/usuarios/{id}/datos-oficiales", new { nombre = "Brenda Shaiel", apellido = "Vera", dni, legajo = (string?)null });
-        var cambiar = await estudiante.PutAsJsonAsync("/api/v1/me/perfil/datos", new { nombre = "Otra", apellido = "Persona", dni });
+        var deSecretaria = await admin.PutAsJsonAsync($"/api/v1/admin/usuarios/{id}/datos-oficiales", new { nombre = "Brenda", apellido = "Vera", dni, legajo = "L-1" });
+        var corregido = await estudiante.PutAsJsonAsync("/api/v1/me/perfil/datos", new { nombre = "Brenda Shaiel", apellido = "Vera", dni, localidad = "Sanjusto" });
+        var conLocalidad = await estudiante.PutAsJsonAsync("/api/v1/me/perfil/datos", new { nombre = "Brenda Shaiel", apellido = "Vera", dni, localidad = "San Justo", carrerasIds = new[] { Guid.NewGuid() } });
+        var bien = await estudiante.PutAsJsonAsync("/api/v1/me/perfil/datos", new { nombre = "Brenda Shaiel", apellido = "Vera", dni, localidad = "San Justo" });
 
-        confirmar.StatusCode.Should().Be(HttpStatusCode.OK);
-        cambiar.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await cambiar.Content.ReadAsStringAsync()).Should().Contain("Secretaría ya confirmó");
-        var perfil = await estudiante.GetFromJsonAsync<Perfil>("/api/v1/me/perfil", Json);
-        perfil!.Nombre.Should().Be("Brenda Shaiel");
-        perfil.DatosConfirmados.Should().BeTrue();
+        deSecretaria.StatusCode.Should().Be(HttpStatusCode.OK);
+        corregido.StatusCode.Should().Be(HttpStatusCode.BadRequest, "la localidad se elige de la lista");
+        conLocalidad.StatusCode.Should().Be(HttpStatusCode.BadRequest, "la carrera no existe");
+        bien.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await LeerAsync<Perfil>(bien)).Nombre.Should().Be("Brenda Shaiel");
+    }
+
+    [Fact]
+    public async Task Las_localidades_se_listan_para_elegir()
+    {
+        var localidades = await (await EstudianteAsync()).GetFromJsonAsync<List<LocalidadDto>>("/api/v1/localidades", Json);
+
+        localidades!.Select(l => (l.Nombre, l.Departamento)).Should().Contain(("San Justo", "San Justo")).And.Contain(("Los Saladillos", "San Justo")).And.NotContain(l => l.Nombre == "Reconquista");
+        localidades!.Single(l => l.Nombre == "Esther").OtrosNombres.Should().Equal("Colonia Esther");
     }
 
     [Fact]
@@ -105,7 +115,21 @@ public sealed class PerfilTests(AstreaApiFactory factory)
 
     private sealed record Contacto(string? Valor, bool Verificado, DateTimeOffset? VenceEl, bool Vencido);
 
-    private sealed record Perfil(string? Nombre, string? Apellido, string? Dni, bool DatosConfirmados, Contacto EmailContacto, Contacto Celular, bool Completo);
+    private sealed record Perfil(string? Nombre, string? Apellido, string? Dni, string? Localidad, List<Guid> CarrerasIds, Contacto EmailContacto, Contacto Celular, bool Completo);
+
+    private sealed record LocalidadDto(string Nombre, string Departamento, List<string> OtrosNombres);
+
+    private sealed record CarreraCreada(Guid Id);
+
+    /// <summary>Crea una carrera activa (como administrador) para elegirla en el perfil.</summary>
+    private async Task<Guid> CarreraAsync()
+    {
+        var admin = await SesionAsync(AstreaApiFactory.AdministradorInicial);
+        var codigo = $"P{Guid.NewGuid():N}"[..8].ToUpperInvariant();
+        var respuesta = await admin.PostAsJsonAsync("/api/v1/admin/carreras", new { codigo, nombre = $"Carrera {codigo}", duracionAnios = 3 });
+        respuesta.EnsureSuccessStatusCode();
+        return (await LeerAsync<CarreraCreada>(respuesta)).Id;
+    }
 
     private sealed record CodigoEnviado(string Destino, DateTimeOffset VenceEl, bool Simulado);
 

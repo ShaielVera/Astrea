@@ -42,6 +42,15 @@ test.describe("Hallazgos", () => {
     await expect(tarjeta).toContainText("Aula de Infraestructura");
     await expect(tarjeta).toContainText("Aula 3, planta baja");
     await expect(tarjeta.getByRole("img", { name: `Foto de ${titulo}` })).toBeVisible();
+    await tarjeta.getByRole("button", { name: "Ver en grande" }).click();
+    const ampliada = duenio.getByRole("dialog", { name: `Foto de ${titulo}` });
+    await expect(ampliada.getByRole("img")).toBeVisible();
+    await ampliada.getByRole("button", { name: "Acercar" }).click();
+    await expect(ampliada).toContainText("150 %");
+    await ampliada.getByRole("button", { name: "Alejar" }).click();
+    await expect(ampliada).toContainText("100 %");
+    await ampliada.getByRole("button", { name: "Cerrar" }).click();
+    await expect(ampliada).toBeHidden();
     await expect(duenio.getByRole("main")).not.toContainText("Racing");
     await expect(duenio.getByRole("note", { name: "Cómo retirar un objeto" })).toContainText("ticket de compra");
 

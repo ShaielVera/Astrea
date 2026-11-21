@@ -22,6 +22,8 @@ export default function TramitesPage() {
   const [seleccionado, setSeleccionado] = useState<TramiteDetalle | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [sinDatos, setSinDatos] = useState(false);
+  // Las carreras cargadas en "Mi perfil": son las únicas que se pueden elegir en un trámite (null mientras carga).
+  const [misCarreras, setMisCarreras] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Una clave por solicitud: si el envío se repite (doble clic, reintento), el backend crea un solo trámite.
   const claveIdempotencia = useRef<string | null>(null);
@@ -39,7 +41,11 @@ export default function TramitesPage() {
       .catch((e) => vigente && setError(mensajeDeError(e)));
     obtenerToken()
       .then((token) => perfilApi.obtener(token))
-      .then((miPerfil) => vigente && setSinDatos(!miPerfil.nombre || !miPerfil.apellido || !miPerfil.dni))
+      .then((miPerfil) => {
+        if (!vigente) return;
+        setSinDatos(!miPerfil.nombre || !miPerfil.apellido || !miPerfil.dni);
+        setMisCarreras(miPerfil.carrerasIds);
+      })
       .catch((e) => vigente && setError(mensajeDeError(e)));
     return () => {
       vigente = false;
@@ -104,6 +110,8 @@ export default function TramitesPage() {
   }
 
   const tipo = tipos?.find((t) => t.id === tipoId);
+  const carrerasDelPerfil = carreras.filter((c) => misCarreras?.includes(c.id));
+  const faltaCarrera = misCarreras !== null && misCarreras.length === 0 && Boolean(tipo?.campos.some((c) => c.tipo === "Carrera"));
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-10 sm:px-6">
@@ -155,11 +163,20 @@ export default function TramitesPage() {
             : son los que van impresos.
           </p>
         )}
-        {tipo && (
+        {faltaCarrera && (
+          <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+            Para pedir este trámite, primero cargá la carrera que cursás en{" "}
+            <Link href="/mi-perfil" className="font-semibold underline">
+              Mi perfil
+            </Link>
+            .
+          </p>
+        )}
+        {tipo && !faltaCarrera && (
           <FormularioTramite
             key={tipo.id}
             tipo={tipo}
-            carreras={carreras}
+            carreras={carrerasDelPerfil}
             onEnviar={solicitar}
             onCancelar={() => {
               setTipoId("");

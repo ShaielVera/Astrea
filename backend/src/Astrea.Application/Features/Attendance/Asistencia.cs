@@ -149,6 +149,12 @@ public sealed class CursadaEstudiante(UsuarioActual usuarioActual, IAsistenciaRe
             return ErroresAsistencia.MateriaNoEncontrada;
         }
 
+        // Como en los trámites: si cargó sus carreras en "Mi perfil", solo se anota en materias de esas.
+        if (estudiante.Valor.CarrerasIds.Count > 0 && !estudiante.Valor.CarrerasIds.Contains(materia.CarreraId))
+        {
+            return ErroresAsistencia.CarreraAjena;
+        }
+
         var ahora = clock.UtcNow;
         if (await asistencia.ObtenerInscripcionAsync(estudiante.Valor.Id, planMateriaId, InscripcionCursada.CicloActual(ahora), cancellationToken) is not null)
         {

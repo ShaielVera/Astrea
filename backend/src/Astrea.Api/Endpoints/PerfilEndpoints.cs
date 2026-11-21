@@ -3,13 +3,19 @@ using Astrea.Domain.Users;
 
 namespace Astrea.Api.Endpoints;
 
-/// <summary>"Mi perfil": datos personales (los confirma Secretaría) y email y celular de contacto validados con un código.</summary>
+/// <summary>"Mi perfil": datos personales, localidad, carreras y email y celular de contacto validados con un código.</summary>
 internal static class PerfilEndpoints
 {
     public static RouteGroupBuilder MapPerfilEndpoints(this RouteGroupBuilder api)
     {
         // Cualquier usuario con sesión (la política por defecto exige sesión): cada uno ve y cambia solo lo suyo.
         var perfil = api.MapGroup("/me/perfil").WithTags("Mi perfil").ProducesProblem(StatusCodes.Status400BadRequest);
+
+        api.MapGet("/localidades", () => Results.Ok(Perfil.ListarLocalidades()))
+            .WithTags("Mi perfil")
+            .WithName("ListarLocalidades")
+            .WithDescription("Localidades y parajes a 100 km o menos de San Justo, para elegir en Mi perfil.")
+            .Produces<IReadOnlyList<LocalidadDto>>();
 
         perfil.MapGet("", async (Perfil servicio, CancellationToken ct) => (await servicio.ObtenerAsync(ct)).AHttp())
             .WithName("ObtenerMiPerfil")
@@ -18,7 +24,7 @@ internal static class PerfilEndpoints
         perfil.MapPut("/datos", async (DatosPersonalesCommand comando, Perfil servicio, CancellationToken ct) =>
                 (await servicio.GuardarDatosAsync(comando, ct)).AHttp())
             .WithName("GuardarMisDatos")
-            .WithDescription("Nombre, apellido y DNI. Una vez que Secretaría los confirma, solo ella los cambia.")
+            .WithDescription("Nombre, apellido, DNI, localidad (de la lista de /localidades) y carreras que cursa.")
             .Produces<MiPerfilDto>()
             .ProducesProblem(StatusCodes.Status409Conflict);
 

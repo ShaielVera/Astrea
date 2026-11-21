@@ -66,13 +66,13 @@ public sealed class DocumentosTests(AstreaApiFactory factory)
         admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramiteId}/aprobar", new { comentario = "Ya podés descargarla" });
 
     [Fact]
-    public async Task Sin_datos_oficiales_no_se_aprueba_y_con_ellos_se_emite_el_pdf()
+    public async Task Sin_nombre_apellido_y_DNI_no_se_aprueba_y_con_ellos_se_emite_el_pdf()
     {
         var (admin, _, tramite) = await PedirConstanciaAsync();
 
         var sinDatos = await AprobarAsync(admin, tramite.Id);
         sinDatos.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await sinDatos.Content.ReadAsStringAsync()).Should().Contain("datos oficiales");
+        (await sinDatos.Content.ReadAsStringAsync()).Should().Contain("completá los datos del estudiante");
 
         await CargarDatosOficialesAsync(admin, tramite);
         var aprobado = await LeerAsync<Detalle>(await AprobarAsync(admin, tramite.Id));

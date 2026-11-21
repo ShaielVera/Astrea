@@ -26,6 +26,8 @@ internal sealed class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         builder.HasIndex(usuario => usuario.Dni);
         builder.Property(usuario => usuario.EmailContacto).HasMaxLength(320);
         builder.Property(usuario => usuario.Celular).HasMaxLength(15);
+        builder.Property(usuario => usuario.Localidad).HasMaxLength(100);
+        builder.PrimitiveCollection(usuario => usuario.CarrerasIds);
 
         builder.HasMany(usuario => usuario.Roles)
             .WithOne()

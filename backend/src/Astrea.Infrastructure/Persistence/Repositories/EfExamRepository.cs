@@ -48,6 +48,13 @@ internal sealed class EfExamRepository(AppDbContext db) : IExamRepository
             consulta = consulta.Where(fila => fila.CarreraId == carreraId);
         }
 
+        // Varias carreras a la vez (las del perfil del estudiante).
+        if (filtro.Carreras is { Count: > 0 } elegidas)
+        {
+            var carreras = elegidas.ToArray();
+            consulta = consulta.Where(fila => carreras.Contains(fila.CarreraId));
+        }
+
         if (filtro.MateriaId is { } materiaId)
         {
             consulta = consulta.Where(fila => fila.MateriaId == materiaId);

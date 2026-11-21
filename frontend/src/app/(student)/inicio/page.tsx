@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { ROLES, tieneRol } from "@/features/auth/tipos";
 import { pendientesDelPerfil, perfilApi } from "@/features/perfil/api";
@@ -64,10 +64,10 @@ const modulos = [
 /** Las otras páginas y aplicaciones del instituto (se abren en otra pestaña). */
 const sitiosDelInstituto = [
   { titulo: "Instituto", descripcion: "Sitio oficial del ISP N.º 20.", href: "https://isp20.edu.ar/nuevo/" },
-  { titulo: "Mesas", descripcion: "Inscripción a mesas de examen.", href: "https://app.isp20.edu.ar/" },
+  { titulo: "Mesas", descripcion: "Inscripción a mesas y horarios de cursada de tu carrera.", href: "https://app.isp20.edu.ar/" },
   { titulo: "Ágora", descripcion: "Capacitaciones.", href: "https://agora.isp20.edu.ar/capacitaciones" },
-  { titulo: "Atenea", descripcion: "Aula virtual.", href: "https://atenea.isp20.edu.ar/" },
-  { titulo: "Préstamos", descripcion: "Préstamo de equipos y materiales.", href: "https://prestamos.isp20.edu.ar/admin" },
+  { titulo: "Atenea", descripcion: "Biblioteca del instituto: pedí libros.", href: "https://atenea.isp20.edu.ar/" },
+  { titulo: "Préstamos", descripcion: "Préstamo de equipos y materiales.", href: "https://prestamos.isp20.edu.ar/" },
 ];
 
 function saludo(hora: number): string {
@@ -87,13 +87,16 @@ function momentoDelDia(hora: number): Momento {
 }
 
 /** La hora actual, que se actualiza sola cada minuto (el panel cambia sin recargar la página). */
-function useHoraActual(): number {
-  const [hora, setHora] = useState(() => new Date().getHours());
-  useEffect(() => {
-    const intervalo = setInterval(() => setHora(new Date().getHours()), 60_000);
-    return () => clearInterval(intervalo);
-  }, []);
-  return hora;
+function useHoraActual(): number | null {
+  // La hora es la de la computadora del estudiante: en el servidor no se sabe (null) y se completa al cargar en el navegador.
+  return useSyncExternalStore(
+    (avisar) => {
+      const intervalo = setInterval(avisar, 60_000);
+      return () => clearInterval(intervalo);
+    },
+    () => new Date().getHours(),
+    () => null,
+  );
 }
 
 /** Estrellas, resplandor del sol y la constelación de Astrea; los colores los pone el momento del día (globals.css). */
@@ -150,7 +153,7 @@ export default function InicioEstudiante() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
       <section
-        data-momento={momentoDelDia(hora)}
+        data-momento={hora === null ? "tarde" : momentoDelDia(hora)}
         className="cielo-astrea relative flex flex-col gap-5 overflow-hidden rounded-2xl border p-6 shadow-md sm:flex-row sm:items-center sm:p-7"
       >
         <DecoracionCielo />
@@ -159,7 +162,7 @@ export default function InicioEstudiante() {
         <div className="relative flex flex-1 flex-col gap-1">
           <p className="text-xs font-bold uppercase tracking-[0.16em] cielo-acento">Portal académico · ISP N.º 20</p>
           <h1 className="text-3xl font-bold sm:text-4xl">
-            {saludo(hora)}
+            {hora === null ? "Hola" : saludo(hora)}
             {nombre ? `, ${nombre}` : ""}
           </h1>
           <p className="cielo-texto-2">

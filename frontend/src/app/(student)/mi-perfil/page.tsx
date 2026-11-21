@@ -4,7 +4,11 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
 import { fechaCorta } from "@/features/asistencia/api";
-import { celularLegible, perfilApi, type Canal, type CodigoEnviado, type Contacto, type MiPerfil } from "@/features/perfil/api";
+import { academicoApi, type Carrera } from "@/features/academico/api";
+import { celularLegible, perfilApi, type Canal, type CodigoEnviado, type Contacto, type Localidad, type MiPerfil } from "@/features/perfil/api";
+import { BuscadorDeOpciones } from "@/components/ui/BuscadorDeOpciones";
+
+const CARRERAS_MAXIMAS = 5;
 
 const tarjeta = "flex flex-col gap-4 rounded-xl border border-zinc-200 bg-superficie p-5 shadow-sm dark:border-zinc-800";
 const campo = "w-full min-w-0 rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-normal dark:border-zinc-700 dark:bg-zinc-900";
@@ -64,16 +68,46 @@ function DatosPersonales({ perfil, onGuardado }: { perfil: MiPerfil; onGuardado:
   const [nombre, setNombre] = useState(perfil.nombre ?? "");
   const [apellido, setApellido] = useState(perfil.apellido ?? "");
   const [dni, setDni] = useState(perfil.dni ?? "");
+  const [localidad, setLocalidad] = useState<string | null>(perfil.localidad);
+  // Una fila por carrera; "" es una fila nueva todavía sin elegir.
+  const [carreras, setCarreras] = useState<string[]>(perfil.carrerasIds.length > 0 ? perfil.carrerasIds : [""]);
+  const [localidades, setLocalidades] = useState<Localidad[]>([]);
+  const [carrerasDisponibles, setCarrerasDisponibles] = useState<Carrera[]>([]);
   const [estado, setEstado] = useState<{ tipo: "ok" | "error"; mensaje: string } | null>(null);
   const [guardando, setGuardando] = useState(false);
 
+  useEffect(() => {
+    let vigente = true;
+    obtenerToken()
+      .then((token) => Promise.all([perfilApi.localidades(token), academicoApi.carreras(token)]))
+      .then(([listaLocalidades, listaCarreras]) => {
+        if (!vigente) return;
+        setLocalidades(listaLocalidades);
+        setCarrerasDisponibles(listaCarreras);
+      })
+      .catch((e) => vigente && setEstado({ tipo: "error", mensaje: mensajeDeError(e) }));
+    return () => {
+      vigente = false;
+    };
+  }, [obtenerToken]);
+
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    if (!localidad) {
+      setEstado({ tipo: "error", mensaje: "Elegí tu localidad de la lista." });
+      return;
+    }
+    const elegidas = carreras.filter(Boolean);
+    if (elegidas.length === 0) {
+      setEstado({ tipo: "error", mensaje: "Elegí al menos una carrera." });
+      return;
+    }
     setGuardando(true);
     setEstado(null);
     try {
-      onGuardado(await perfilApi.guardarDatos(await obtenerToken(), { nombre, apellido, dni }));
-      setEstado({ tipo: "ok", mensaje: "Guardado. Secretaría los va a confirmar cuando revise tu próximo trámite." });
+      onGuardado(await perfilApi.guardarDatos(await obtenerToken(), { nombre, apellido, dni, localidad, carrerasIds: elegidas }));
+      setCarreras(elegidas);
+      setEstado({ tipo: "ok", mensaje: "Guardado." });
     } catch (e) {
       setEstado({ tipo: "error", mensaje: mensajeDeError(e) });
     } finally {
@@ -81,64 +115,99 @@ function DatosPersonales({ perfil, onGuardado }: { perfil: MiPerfil; onGuardado:
     }
   }
 
+  const completos = Boolean(perfil.nombre && perfil.apellido && perfil.dni && perfil.localidad && perfil.carrerasIds.length > 0);
+
   return (
     <section aria-labelledby="datos-titulo" className={tarjeta}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="datos-titulo" className="text-lg font-semibold">
           Datos personales
         </h2>
-        {perfil.datosConfirmados ? (
-          <Etiqueta tono="ok">Confirmados por Secretaría</Etiqueta>
-        ) : perfil.dni ? (
-          <Etiqueta tono="aviso">Falta que Secretaría los confirme</Etiqueta>
-        ) : (
-          <Etiqueta tono="aviso">Incompletos</Etiqueta>
-        )}
+        {completos ? <Etiqueta tono="ok">Completos</Etiqueta> : <Etiqueta tono="aviso">Incompletos</Etiqueta>}
       </div>
 
-      {perfil.datosConfirmados ? (
-        <>
-          <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-[8rem_1fr]">
-            <dt className="text-zinc-500">Nombre</dt>
-            <dd>{perfil.nombre}</dd>
-            <dt className="text-zinc-500">Apellido</dt>
-            <dd>{perfil.apellido}</dd>
-            <dt className="text-zinc-500">DNI</dt>
-            <dd>{perfil.dni}</dd>
-            {perfil.legajo && (
-              <>
-                <dt className="text-zinc-500">Legajo</dt>
-                <dd>{perfil.legajo}</dd>
-              </>
-            )}
-          </dl>
-          <p className="text-sm text-zinc-500">Si algún dato está mal, pedí la corrección en Secretaría con tu DNI.</p>
-        </>
-      ) : (
-        <form onSubmit={guardar} aria-label="Datos personales" className="flex flex-col gap-3">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Escribilos como figuran en tu DNI: así salen en las constancias.</p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
-              Nombre
-              <input value={nombre} onChange={(e) => setNombre(e.target.value)} required maxLength={100} autoComplete="given-name" className={campo} />
-            </label>
-            <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
-              Apellido
-              <input value={apellido} onChange={(e) => setApellido(e.target.value)} required maxLength={100} autoComplete="family-name" className={campo} />
-            </label>
-            <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
-              DNI
-              <input value={dni} onChange={(e) => setDni(e.target.value)} required inputMode="numeric" maxLength={12} placeholder="Ej.: 40123456" className={campo} />
-            </label>
-          </div>
-          <div>
-            <button type="submit" disabled={guardando} className={botonPrimario}>
-              {guardando ? "Guardando…" : "Guardar datos"}
+      <form onSubmit={guardar} aria-label="Datos personales" className="flex flex-col gap-4">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Escribí tu nombre y apellido como figuran en tu DNI: así salen en las constancias.</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
+            Nombre
+            <input value={nombre} onChange={(e) => setNombre(e.target.value)} required maxLength={100} autoComplete="given-name" className={campo} />
+          </label>
+          <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
+            Apellido
+            <input value={apellido} onChange={(e) => setApellido(e.target.value)} required maxLength={100} autoComplete="family-name" className={campo} />
+          </label>
+          <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
+            DNI
+            <input value={dni} onChange={(e) => setDni(e.target.value)} required inputMode="numeric" maxLength={12} placeholder="Ej.: 40123456" className={campo} />
+          </label>
+          <BuscadorDeOpciones
+            etiqueta="Localidad"
+            opciones={localidades.map((l) => ({ valor: l.nombre, detalle: `Depto. ${l.departamento}`, otrosNombres: l.otrosNombres }))}
+            valor={localidad}
+            onElegir={setLocalidad}
+            placeholder={localidades.length ? "Escribí o abrí la lista" : "Cargando localidades…"}
+            ayuda="Escribí las primeras letras y elegí de la lista."
+            sinResultados="No está en la lista. Si falta tu localidad, avisale a Secretaría."
+          />
+        </div>
+
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 text-sm font-medium">Carreras que cursás</legend>
+          {carreras.map((carreraId, indice) => (
+            <div key={indice} className="flex items-center gap-2">
+              {carreraId ? (
+                // Ya elegida: queda fija. Para cambiarla se quita y se agrega otra.
+                <p aria-label={`Carrera ${indice + 1}`} className="w-full min-w-0 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 font-normal dark:border-zinc-700 dark:bg-zinc-900/60">
+                  {carrerasDisponibles.find((c) => c.id === carreraId)?.nombre ?? "Cargando…"}
+                </p>
+              ) : (
+                <select
+                  aria-label={`Carrera ${indice + 1}`}
+                  value=""
+                  onChange={(e) => setCarreras((actuales) => actuales.map((c, i) => (i === indice ? e.target.value : c)))}
+                  className={campo}
+                >
+                  <option value="">{carrerasDisponibles.length ? "Elegí una carrera" : "Cargando carreras…"}</option>
+                  {carrerasDisponibles
+                    .filter((c) => !carreras.includes(c.id))
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nombre}
+                      </option>
+                    ))}
+                </select>
+              )}
+              {(carreraId || carreras.length > 1) && (
+                <button
+                  type="button"
+                  className={botonSecundario}
+                  aria-label={`Quitar la carrera ${indice + 1}`}
+                  // Si quita la única, queda una fila vacía para elegir otra.
+                  onClick={() => setCarreras((actuales) => (actuales.length > 1 ? actuales.filter((_, i) => i !== indice) : [""]))}
+                >
+                  Quitar
+                </button>
+              )}
+            </div>
+          ))}
+          {carreras.length < CARRERAS_MAXIMAS && carreras.every(Boolean) && (
+            <button type="button" className={`${botonSecundario} self-start`} onClick={() => setCarreras((actuales) => [...actuales, ""])}>
+              + Agregar otra carrera
             </button>
-          </div>
-          <Mensaje estado={estado} />
-        </form>
-      )}
+          )}
+          <p className="text-xs text-zinc-500">
+            Son las carreras que vas a poder elegir al pedir un trámite. Para cambiar una, quitala, agregá la correcta y guardá.
+          </p>
+        </fieldset>
+
+        <div>
+          <button type="submit" disabled={guardando} className={botonPrimario}>
+            {guardando ? "Guardando…" : "Guardar datos"}
+          </button>
+        </div>
+        <Mensaje estado={estado} />
+      </form>
     </section>
   );
 }

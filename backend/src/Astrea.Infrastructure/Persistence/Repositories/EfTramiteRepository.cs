@@ -120,7 +120,6 @@ internal sealed class EfTramiteRepository(AppDbContext db) : ITramiteRepository
                 usuario.Apellido,
                 usuario.Legajo,
                 usuario.Dni,
-                usuario.DatosConfirmadosEn != null,
                 usuario.EmailContacto,
                 usuario.EmailContactoVerificadoEn,
                 usuario.Celular,

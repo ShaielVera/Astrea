@@ -17,7 +17,10 @@ type Props = {
 
 /** Formulario armado a partir de los campos del tipo de trámite (su "esquema"). */
 export function FormularioTramite({ tipo, carreras, onEnviar, onCancelar }: Props) {
-  const [valores, setValores] = useState<Record<string, string>>({});
+  // Con una sola carrera en el perfil, ya viene elegida.
+  const [valores, setValores] = useState<Record<string, string>>(() =>
+    carreras.length === 1 ? Object.fromEntries(tipo.campos.filter((c) => c.tipo === "Carrera").map((c) => [c.clave, carreras[0].id])) : {},
+  );
   const [enviando, setEnviando] = useState(false);
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {

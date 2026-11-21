@@ -36,7 +36,6 @@ export type Persona = {
   legajo: string | null;
   dni: string | null;
   /** Secretaría ya revisó nombre, apellido y DNI (si no, los cargó el estudiante en "Mi perfil"). */
-  datosConfirmados: boolean;
   emailContacto: string | null;
   emailContactoVerificadoEn: string | null;
   celular: string | null;

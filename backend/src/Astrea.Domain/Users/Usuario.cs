@@ -4,8 +4,8 @@ namespace Astrea.Domain.Users;
 
 /// <summary>
 /// Identidad institucional vinculada a una cuenta de Firebase Authentication.
-/// El estudiante completa nombre, apellido y DNI en "Mi perfil"; Secretaría los confirma y desde entonces solo ella los cambia
-/// (van impresos en las constancias). El email y el celular de contacto se validan con un código y se renuevan cada año.
+/// El estudiante completa en "Mi perfil" su nombre, apellido, DNI, localidad y carreras (Secretaría también puede corregirlos).
+/// El email y el celular de contacto se validan con un código y se renuevan cada año.
 /// </summary>
 public sealed class Usuario : Entity
 {
@@ -37,8 +37,11 @@ public sealed class Usuario : Entity
 
     public string? Legajo { get; private set; }
 
-    /// <summary>Cuándo Secretaría confirmó nombre, apellido y DNI. Null: los cargó el estudiante y falta confirmarlos.</summary>
-    public DateTimeOffset? DatosConfirmadosEn { get; private set; }
+    /// <summary>Ciudad o pueblo donde vive, tal como figura en <see cref="Localidades"/>.</summary>
+    public string? Localidad { get; private set; }
+
+    /// <summary>Carreras que cursa: son las que puede elegir al pedir un trámite.</summary>
+    public List<Guid> CarrerasIds { get; private set; } = [];
 
     /// <summary>Email donde el instituto se comunica con el estudiante (puede ser distinto del de la cuenta).</summary>
     public string? EmailContacto { get; private set; }
@@ -103,7 +106,7 @@ public sealed class Usuario : Entity
         }
     }
 
-    /// <summary>"Pérez, Ana" si Secretaría cargó los datos oficiales; si no, el email.</summary>
+    /// <summary>"Pérez, Ana" si hay nombre y apellido; si no, el email.</summary>
     public string NombreParaMostrar => Apellido is not null && Nombre is not null ? $"{Apellido}, {Nombre}" : Email;
 
     public bool TieneRol(Rol rol) => _roles.Any(asignacion => asignacion.RolId == rol.Id);
@@ -131,24 +134,29 @@ public sealed class Usuario : Entity
     /// <summary>Hay datos suficientes para emitir un documento oficial a su nombre.</summary>
     public bool TieneDatosOficiales => Nombre is not null && Apellido is not null && Dni is not null;
 
-    public bool DatosConfirmados => DatosConfirmadosEn is not null;
+    public const int CarrerasMaximas = 5;
 
     public static readonly TimeSpan VigenciaContacto = TimeSpan.FromDays(365);
 
     /// <summary>
-    /// El estudiante completa o corrige sus datos mientras Secretaría no los haya confirmado.
-    /// Después, solo Secretaría los cambia: así nadie altera lo que sale en una constancia.
+    /// El estudiante completa o corrige sus datos. La localidad se elige de <see cref="Localidades"/> y queda escrita
+    /// como figura ahí; las carreras (que existan y estén activas lo controla quien llama) se guardan sin repetir.
     /// </summary>
-    public void CompletarDatosPersonales(string nombre, string apellido, string dni, DateTimeOffset ahora)
+    public void CompletarDatosPersonales(string nombre, string apellido, string dni, string? localidad, IEnumerable<Guid> carrerasIds, DateTimeOffset ahora)
     {
-        if (DatosConfirmados)
+        var carreras = carrerasIds.Distinct().ToList();
+        if (carreras.Count > CarrerasMaximas)
         {
-            throw new DomainException("Secretaría ya confirmó tus datos: si hay un error, pedí la corrección en Secretaría.");
+            throw new DomainException($"Podés elegir hasta {CarrerasMaximas} carreras.");
         }
 
         Nombre = Texto.Requerido(nombre, "nombre", 100);
         Apellido = Texto.Requerido(apellido, "apellido", 100);
         Dni = NormalizarDni(dni);
+        Localidad = string.IsNullOrWhiteSpace(localidad)
+            ? null
+            : Localidades.Buscar(localidad)?.Nombre ?? throw new DomainException("Elegí tu localidad de la lista.");
+        CarrerasIds = carreras;
         UpdatedAt = ahora;
     }
 
@@ -209,7 +217,7 @@ public sealed class Usuario : Entity
         ContactoVerificadoEn(canal) is { } verificado && ahora - verificado < VigenciaContacto;
 
     /// <summary>
-    /// Secretaría carga los datos oficiales (los que van en constancias). El DNI se guarda solo con dígitos
+    /// Secretaría corrige los datos que van en las constancias. El DNI se guarda solo con dígitos
     /// ("30.123.456" → "30123456") para poder compararlo y mostrarlo enmascarado.
     /// </summary>
     public void ActualizarDatosOficiales(string nombre, string apellido, string dni, string? legajo, DateTimeOffset ahora)
@@ -218,7 +226,6 @@ public sealed class Usuario : Entity
         Apellido = Texto.Requerido(apellido, "apellido", 100);
         Dni = NormalizarDni(dni);
         Legajo = Texto.Opcional(legajo, "legajo", 30);
-        DatosConfirmadosEn = ahora;
         UpdatedAt = ahora;
     }
 

@@ -11,21 +11,41 @@ public class PerfilTests
     private static Usuario NuevoUsuario() => Usuario.Registrar(Guid.NewGuid(), "uid-1", "alumna@astrea.test", Ahora);
 
     [Fact]
-    public void El_estudiante_completa_sus_datos_hasta_que_Secretaria_los_confirma()
+    public void El_estudiante_completa_y_corrige_sus_datos_cuando_quiere()
     {
         var usuario = NuevoUsuario();
+        var tsds = Guid.NewGuid();
+        var pei = Guid.NewGuid();
 
-        usuario.CompletarDatosPersonales(" Brenda ", "Vera", "40.123.456", Ahora);
-        usuario.CompletarDatosPersonales("Brenda Shaiel", "Vera", "40123456", Ahora);
+        usuario.CompletarDatosPersonales(" Brenda ", "Vera", "40.123.456", "San Justo", [tsds], Ahora);
+        usuario.ActualizarDatosOficiales("Brenda", "Vera", "40123456", "L-12", Ahora);
+        usuario.CompletarDatosPersonales("Brenda Shaiel", "Vera", "40123456", "san  justo", [tsds, pei, tsds], Ahora);
 
         usuario.Nombre.Should().Be("Brenda Shaiel");
         usuario.Dni.Should().Be("40123456");
-        usuario.DatosConfirmados.Should().BeFalse();
+        usuario.Localidad.Should().Be("San Justo", "se guarda como figura en la lista");
+        usuario.CarrerasIds.Should().Equal(tsds, pei);
+    }
 
-        usuario.ActualizarDatosOficiales("Brenda Shaiel", "Vera", "40123456", null, Ahora);
-        usuario.DatosConfirmados.Should().BeTrue();
-        usuario.Invoking(u => u.CompletarDatosPersonales("Otra", "Persona", "40123456", Ahora))
-            .Should().Throw<DomainException>().WithMessage("*Secretaría ya confirmó*");
+    [Theory]
+    [InlineData("sAN jUSTO", "San Justo")]
+    [InlineData("nare", "Naré")]
+    [InlineData("Colonia Esther", "Esther")]
+    [InlineData("caastacito", "Cayastacito")]
+    [InlineData("  vera  y   pintado ", "Vera y Pintado")]
+    public void La_localidad_se_reconoce_sin_importar_mayusculas_ni_tildes_y_por_sus_otros_nombres(string escrita, string guardada)
+    {
+        Localidades.Buscar(escrita)!.Nombre.Should().Be(guardada);
+    }
+
+    [Fact]
+    public void Una_localidad_que_no_esta_en_la_lista_se_rechaza()
+    {
+        var completar = () => NuevoUsuario().CompletarDatosPersonales("Brenda", "Vera", "40123456", "Sanjusto", [], Ahora);
+
+        completar.Should().Throw<DomainException>().WithMessage("*de la lista*");
+        Localidades.Todas.Select(l => l.Nombre).Should().OnlyHaveUniqueItems();
+        Localidades.Todas.SelectMany(l => l.OtrosNombres.Prepend(l.Nombre)).Select(n => Localidades.Buscar(n)).Should().NotContainNulls();
     }
 
     [Theory]

@@ -68,6 +68,10 @@ public static class ErroresAsistencia
 
     public static readonly Error NoEsDocente = Error.Validacion("no_es_docente", "El usuario no tiene el rol de docente.");
 
+    public static readonly Error CarreraAjena = Error.Validacion(
+        "carrera_ajena",
+        "Esa materia es de una carrera que no figura en tu perfil. Agregá la carrera en Mi perfil para anotarte.");
+
     public static readonly Error MateriaNoEncontrada = Error.NoEncontrado("materia_no_encontrada", "La materia no existe en ningún plan.");
 
     public static readonly Error AsignacionNoEncontrada = Error.NoEncontrado("asignacion_no_encontrada", "La asignación no existe.");

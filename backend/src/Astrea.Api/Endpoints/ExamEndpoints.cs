@@ -12,8 +12,9 @@ internal static class ExamEndpoints
         // Consulta para cualquier usuario con sesión: mesas publicadas y canceladas.
         var mesas = api.MapGroup("/mesas").WithTags("Mesas de examen");
 
-        mesas.MapGet("", async (DateOnly? desde, DateOnly? hasta, Guid? carreraId, Guid? materiaId, string? texto, int? page, int? pageSize, ConsultasMesas consultas, CancellationToken ct) =>
-                (await consultas.BuscarAsync(new FiltroMesas(desde, hasta, carreraId, materiaId, texto), page, pageSize, ct)).AHttp())
+        // carreras: se puede repetir (?carreras=a&carreras=b) para ver las mesas de varias carreras juntas.
+        mesas.MapGet("", async (DateOnly? desde, DateOnly? hasta, Guid? carreraId, Guid[]? carreras, Guid? materiaId, string? texto, int? page, int? pageSize, ConsultasMesas consultas, CancellationToken ct) =>
+                (await consultas.BuscarAsync(new FiltroMesas(desde, hasta, carreraId, materiaId, texto, Carreras: carreras), page, pageSize, ct)).AHttp())
             .WithName("BuscarMesas")
             .WithDescription("Fechas en hora del instituto (Argentina), ambos extremos incluidos. Sin fechas, muestra desde hoy. 'texto' busca en materia y tribunal.")
             .Produces<PagedResult<MesaExamenDto>>()

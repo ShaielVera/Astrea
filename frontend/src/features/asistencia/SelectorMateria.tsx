@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
+import { OpcionesCarrera } from "@/features/perfil/OpcionesCarrera";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
 import { academicoApi, NOMBRE_ANIO, type Carrera, type MateriaDePlan } from "@/features/academico/api";
@@ -13,7 +15,12 @@ export function SelectorMateria({
   textoBoton,
   onElegir,
   ocupado = false,
+  soloMisCarreras,
 }: {
+  /**
+   * Para el estudiante: solo se eligen las carreras de su perfil (null mientras carga). Sin la prop (Secretaría), todas.
+   */
+  soloMisCarreras?: string[] | null;
   titulo: string;
   textoBoton: string;
   onElegir: (planMateriaId: string) => void | Promise<void>;
@@ -57,19 +64,29 @@ export function SelectorMateria({
     if (planMateriaId) void onElegir(planMateriaId);
   }
 
+  const disponibles = soloMisCarreras === undefined ? carreras : (carreras?.filter((c) => soloMisCarreras?.includes(c.id)) ?? null);
+
+  if (soloMisCarreras?.length === 0) {
+    return (
+      <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+        Para anotarte en tus materias, primero cargá la carrera que cursás en{" "}
+        <Link href="/mi-perfil" className="font-semibold underline">
+          Mi perfil
+        </Link>
+        .
+      </p>
+    );
+  }
+
   const anios = [...new Set((materias ?? []).map((materia) => materia.anio))].sort((a, b) => a - b);
 
   return (
     <form onSubmit={enviar} aria-label={titulo} className="flex flex-col gap-3 sm:flex-row sm:items-end">
       <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm font-medium">
         Carrera
-        <select value={carreraId} onChange={(e) => void elegirCarrera(e.target.value)} disabled={!carreras} className={campo}>
+        <select value={carreraId} onChange={(e) => void elegirCarrera(e.target.value)} disabled={!disponibles || soloMisCarreras === null} className={campo}>
           <option value="">Elegí una carrera</option>
-          {carreras?.map((carrera) => (
-            <option key={carrera.id} value={carrera.id}>
-              {carrera.nombre}
-            </option>
-          ))}
+          <OpcionesCarrera carreras={disponibles} mias={null} />
         </select>
       </label>
       <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm font-medium">

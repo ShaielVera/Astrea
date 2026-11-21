@@ -5,9 +5,11 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { mensajeDeError } from "@/features/auth/mensajes-error";
 import { academicoApi, type Carrera, type MateriaDePlan, type PlanEstudio } from "@/features/academico/api";
 import { ListaMateriasPorAnio } from "@/features/academico/ListaMateriasPorAnio";
+import { OpcionesCarrera, useMisCarreras } from "@/features/perfil/OpcionesCarrera";
 
 export default function PlanDeEstudiosPage() {
   const { obtenerToken } = useAuth();
+  const misCarreras = useMisCarreras();
   const [carreras, setCarreras] = useState<Carrera[] | null>(null);
   const [carreraId, setCarreraId] = useState("");
   const [plan, setPlan] = useState<PlanEstudio | null>(null);
@@ -59,11 +61,7 @@ export default function PlanDeEstudiosPage() {
           className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-normal dark:border-zinc-700 dark:bg-zinc-900"
         >
           <option value="">{carreras ? "Seleccioná una carrera" : "Cargando carreras…"}</option>
-          {carreras?.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nombre}
-            </option>
-          ))}
+          <OpcionesCarrera carreras={carreras} mias={misCarreras} />
         </select>
       </label>
 

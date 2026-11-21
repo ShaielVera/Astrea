@@ -52,6 +52,12 @@ public sealed class SolicitudesTramite(
             return ErroresTramites.CarreraInvalida;
         }
 
+        // Si cargó sus carreras en "Mi perfil", solo puede pedir trámites de esas.
+        if (usuario.Valor.CarrerasIds.Count > 0 && !DetalleTramites.CarrerasElegidas(tipo, tramite.Datos).All(usuario.Valor.CarrerasIds.Contains))
+        {
+            return ErroresTramites.CarreraAjena;
+        }
+
         tramites.Agregar(tramite);
         await unitOfWork.GuardarCambiosAsync(cancellationToken);
         return await detalles.ArmarAsync(tramite, usuario.Valor.Id, vistaAdministracion: false, cancellationToken);
@@ -313,10 +319,9 @@ public sealed class EmisionDocumentos(
             return Result<string?>.Exito(null);
         }
 
-        // El PDF solo se genera con los datos institucionales confirmados por Secretaría (SDD §9): los que carga el estudiante
-        // en "Mi perfil" se revisan antes de imprimirlos.
+        // El PDF lleva nombre, apellido y DNI: los carga el estudiante en "Mi perfil" (o Secretaría desde la bandeja).
         var titular = await usuarios.ObtenerPorIdAsync(tramite.UsuarioId, cancellationToken);
-        if (titular is not { TieneDatosOficiales: true, DatosConfirmados: true })
+        if (titular is not { TieneDatosOficiales: true })
         {
             return ErroresTramites.DatosOficialesIncompletos;
         }
@@ -414,7 +419,6 @@ public sealed class DatosOficiales(IUserRepository usuarios, IUnitOfWork unitOfW
             return ErroresTramites.DniEnUso;
         }
 
-        // Guardar es confirmar: Secretaría los revisó contra la documentación del estudiante.
         usuario.ActualizarDatosOficiales(comando.Nombre, comando.Apellido, comando.Dni, comando.Legajo, clock.UtcNow);
         await unitOfWork.GuardarCambiosAsync(cancellationToken);
         return new PersonaDto(
@@ -424,7 +428,6 @@ public sealed class DatosOficiales(IUserRepository usuarios, IUnitOfWork unitOfW
             usuario.Apellido,
             usuario.Legajo,
             usuario.Dni,
-            usuario.DatosConfirmados,
             usuario.EmailContacto,
             usuario.EmailContactoVerificadoEn,
             usuario.Celular,
@@ -500,6 +503,12 @@ public sealed class DetalleTramites(ITramiteRepository tramites, IAcademicReposi
 
         return true;
     }
+
+    /// <summary>Las carreras que eligió en los campos de tipo carrera del formulario.</summary>
+    public static IEnumerable<Guid> CarrerasElegidas(TramiteTipo tipo, IReadOnlyDictionary<string, string> datos) =>
+        tipo.Campos
+            .Where(campo => campo.Tipo == TipoCampo.Carrera && datos.ContainsKey(campo.Clave))
+            .Select(campo => Guid.Parse(datos[campo.Clave]));
 
     /// <summary>Datos del formulario listos para mostrar o imprimir: la carrera por su nombre, las fechas como dd/MM/aaaa.</summary>
     public async Task<IReadOnlyDictionary<string, string>> ValoresParaMostrarAsync(TramiteTipo tipo, Tramite tramite, CancellationToken cancellationToken)

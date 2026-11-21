@@ -47,6 +47,23 @@ public sealed class AsistenciaTests(AstreaApiFactory factory)
         return (a.PlanMateriaId, b.PlanMateriaId);
     }
 
+    [Fact]
+    public async Task Con_carreras_en_el_perfil_solo_se_anota_en_materias_de_esas_carreras()
+    {
+        var admin = await SesionAsync(AstreaApiFactory.AdministradorInicial);
+        var (materia, _) = await CrearMateriasAsync(admin.Cliente);
+        var otraCarrera = await LeerAsync<IdDto>(await admin.Cliente.PostAsJsonAsync("/api/v1/admin/carreras", new { codigo = $"O{_marca}"[..9], nombre = $"Otra {_marca}", duracionAnios = 3 }));
+        var estudiante = await SesionAsync();
+        var dni = Random.Shared.Next(20_000_000, 49_999_999).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        (await estudiante.Cliente.PutAsJsonAsync("/api/v1/me/perfil/datos", new { nombre = "Ana", apellido = "Gómez", dni, carrerasIds = new[] { otraCarrera.Id } }))
+            .EnsureSuccessStatusCode();
+
+        var ajena = await estudiante.Cliente.PostAsJsonAsync("/api/v1/me/cursada", new { planMateriaId = materia });
+
+        ajena.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await ajena.Content.ReadAsStringAsync()).Should().Contain("no figura en tu perfil");
+    }
+
     private async Task CargarDniAsync(HttpClient admin, Sesion estudiante, string apellido, string dni) =>
         (await admin.PutAsJsonAsync($"/api/v1/admin/usuarios/{estudiante.Id}/datos-oficiales", new { nombre = "Ana", apellido, dni, legajo = (string?)null }))
             .EnsureSuccessStatusCode();

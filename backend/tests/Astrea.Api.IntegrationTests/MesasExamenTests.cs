@@ -128,6 +128,24 @@ public sealed class MesasExamenTests(AstreaApiFactory factory)
     }
 
     [Fact]
+    public async Task Filtra_por_varias_carreras_a_la_vez()
+    {
+        var admin = await AdminAsync();
+        var tsds = await CrearPlanAsync(admin, "Redes");
+        var pei = await CrearPlanAsync(admin, "Juego");
+        var otra = await CrearPlanAsync(admin, "Química");
+        foreach (var plan in new[] { tsds, pei, otra })
+        {
+            await CrearMesaAsync(admin, NuevaMesa(plan, 0, DiaBase.AddDays(3)));
+        }
+
+        var dia = $"desde={DiaBase.AddDays(3):yyyy-MM-dd}&hasta={DiaBase.AddDays(3):yyyy-MM-dd}";
+        var mias = await BuscarAsync(await EstudianteAsync(), $"{dia}&carreras={tsds.CarreraId}&carreras={pei.CarreraId}");
+
+        mias.Items.Select(mesa => mesa.MateriaNombre).Should().BeEquivalentTo("Redes", "Juego");
+    }
+
+    [Fact]
     public async Task Busca_por_materia_o_tribunal_sin_distinguir_tildes_ni_mayusculas()
     {
         var admin = await AdminAsync();

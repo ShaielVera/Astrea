@@ -34,6 +34,8 @@ export type FiltroMesas = {
   desde?: string;
   hasta?: string;
   carreraId?: string;
+  /** Varias carreras juntas (las del perfil del estudiante). */
+  carreras?: string[];
   materiaId?: string;
   texto?: string;
   estado?: EstadoMesa;
@@ -59,7 +61,8 @@ export type DatosMesa = {
 function consulta(filtro: FiltroMesas): string {
   const parametros = new URLSearchParams();
   for (const [clave, valor] of Object.entries(filtro)) {
-    if (valor !== undefined && valor !== "") parametros.set(clave, String(valor));
+    if (Array.isArray(valor)) valor.forEach((item) => parametros.append(clave, String(item)));
+    else if (valor !== undefined && valor !== "") parametros.set(clave, String(valor));
   }
   const texto = parametros.toString();
   return texto ? `?${texto}` : "";

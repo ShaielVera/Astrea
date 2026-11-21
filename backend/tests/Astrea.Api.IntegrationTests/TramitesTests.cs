@@ -144,21 +144,23 @@ public sealed class TramitesTests(AstreaApiFactory factory)
     }
 
     [Fact]
-    public async Task Los_datos_que_cargo_el_estudiante_se_confirman_antes_de_emitir_la_constancia()
+    public async Task Con_los_datos_que_cargo_el_estudiante_se_emite_la_constancia_y_solo_pide_sus_carreras()
     {
         var admin = await AdminAsync();
         var estudiante = await EstudianteAsync();
+        var suya = await CrearCarreraAsync(admin);
+        var ajena = await CrearCarreraAsync(admin, "Otra Tecnicatura");
         var dni = Random.Shared.Next(20_000_000, 49_999_999).ToString(System.Globalization.CultureInfo.InvariantCulture);
-        (await estudiante.PutAsJsonAsync("/api/v1/me/perfil/datos", new { nombre = "Brenda", apellido = "Vera", dni })).EnsureSuccessStatusCode();
-        var tramite = await SolicitarOkAsync(estudiante, await CrearCarreraAsync(admin));
+        (await estudiante.PutAsJsonAsync("/api/v1/me/perfil/datos", new { nombre = "Brenda", apellido = "Vera", dni, localidad = "San Justo", carrerasIds = new[] { suya } }))
+            .EnsureSuccessStatusCode();
 
-        var sinConfirmar = await admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramite.Id}/aprobar", new { comentario = (string?)null });
-        await CargarDatosOficialesAsync(admin, tramite);
-        var confirmado = await admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramite.Id}/aprobar", new { comentario = (string?)null });
+        var deOtraCarrera = await SolicitarAsync(estudiante, ajena);
+        var tramite = await SolicitarOkAsync(estudiante, suya);
+        var aprobado = await admin.PostAsJsonAsync($"/api/v1/admin/tramites/{tramite.Id}/aprobar", new { comentario = (string?)null });
 
-        sinConfirmar.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await sinConfirmar.Content.ReadAsStringAsync()).Should().Contain("confirmá los datos oficiales");
-        confirmado.StatusCode.Should().Be(HttpStatusCode.OK, await confirmado.Content.ReadAsStringAsync());
+        deOtraCarrera.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await deOtraCarrera.Content.ReadAsStringAsync()).Should().Contain("carreras que figuran en tu perfil");
+        aprobado.StatusCode.Should().Be(HttpStatusCode.OK, await aprobado.Content.ReadAsStringAsync());
     }
 
     [Fact]

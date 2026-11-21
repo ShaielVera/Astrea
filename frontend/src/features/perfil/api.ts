@@ -17,18 +17,25 @@ export type MiPerfil = {
   apellido: string | null;
   dni: string | null;
   legajo: string | null;
-  datosConfirmados: boolean;
+  localidad: string | null;
+  carrerasIds: string[];
   emailContacto: Contacto;
   celular: Contacto;
   completo: boolean;
 };
+
+export type Localidad = { nombre: string; departamento: string; otrosNombres: string[] };
+
+export type DatosPersonales = { nombre: string; apellido: string; dni: string; localidad: string | null; carrerasIds: string[] };
 
 export type CodigoEnviado = { destino: string; venceEl: string; simulado: boolean };
 
 export const perfilApi = {
   obtener: (token: string) => apiFetch<MiPerfil>("/me/perfil", { token }),
 
-  guardarDatos: (token: string, datos: { nombre: string; apellido: string; dni: string }) =>
+  localidades: (token: string) => apiFetch<Localidad[]>("/localidades", { token }),
+
+  guardarDatos: (token: string, datos: DatosPersonales) =>
     apiFetch<MiPerfil>("/me/perfil/datos", { method: "PUT", token, body: datos }),
 
   guardarContacto: (token: string, datos: { emailContacto: string | null; celular: string | null }) =>
@@ -49,6 +56,8 @@ export function celularLegible(celular: string): string {
 export function pendientesDelPerfil(perfil: MiPerfil): string[] {
   const pendientes: string[] = [];
   if (!perfil.nombre || !perfil.apellido || !perfil.dni) pendientes.push("tu nombre, apellido y DNI");
+  if (!perfil.localidad) pendientes.push("tu localidad");
+  if (perfil.carrerasIds.length === 0) pendientes.push("la carrera que cursás");
   if (!perfil.emailContacto.valor) pendientes.push("un email de contacto");
   else if (!perfil.emailContacto.verificado) pendientes.push("validar tu email");
   else if (perfil.emailContacto.vencido) pendientes.push("renovar la validación de tu email (pasó un año)");

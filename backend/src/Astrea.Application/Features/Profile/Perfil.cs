@@ -16,12 +16,16 @@ public sealed record MiPerfilDto(
     string? Apellido,
     string? Dni,
     string? Legajo,
-    bool DatosConfirmados,
+    string? Localidad,
+    IReadOnlyList<Guid> CarrerasIds,
     ContactoDto EmailContacto,
     ContactoDto Celular,
     bool Completo);
 
-public sealed record DatosPersonalesCommand(string Nombre, string Apellido, string Dni);
+public sealed record DatosPersonalesCommand(string Nombre, string Apellido, string Dni, string? Localidad = null, IReadOnlyList<Guid>? CarrerasIds = null);
+
+/// <summary>Una localidad para elegir en "Mi perfil".</summary>
+public sealed record LocalidadDto(string Nombre, string Departamento, IReadOnlyList<string> OtrosNombres);
 
 public sealed record ContactoCommand(string? EmailContacto, string? Celular);
 
@@ -33,6 +37,9 @@ public static class ErroresPerfil
 {
     public static readonly Error DniEnUso =
         Error.Conflicto("dni_en_uso", "Ese DNI ya figura en otra cuenta de Astrea. Si es tuyo, consultalo en Secretaría.");
+
+    public static readonly Error CarreraInvalida =
+        Error.Validacion("carrera_invalida", "Alguna de las carreras elegidas no existe o no está activa.");
 
     public static readonly Error SinDato =
         Error.Validacion("contacto_vacio", "Primero guardá el dato que querés validar.");
@@ -60,11 +67,20 @@ public static class ErroresPerfil
 }
 
 /// <summary>
-/// "Mi perfil": el estudiante completa sus datos (Secretaría los confirma después) y valida su email y celular de contacto
+/// "Mi perfil": el estudiante completa sus datos (se guardan directamente) y valida su email y celular de contacto
 /// con un código. La validación dura un año: después se pide renovarla por si cambió de número o de email.
 /// </summary>
-public sealed class Perfil(UsuarioActual usuarioActual, IUserRepository usuarios, IEnviadorCodigos enviador, IUnitOfWork unitOfWork, IClock clock)
+public sealed class Perfil(
+    UsuarioActual usuarioActual,
+    IUserRepository usuarios,
+    IAcademicRepository academico,
+    IEnviadorCodigos enviador,
+    IUnitOfWork unitOfWork,
+    IClock clock)
 {
+    public static IReadOnlyList<LocalidadDto> ListarLocalidades() =>
+        Localidades.Todas.Select(localidad => new LocalidadDto(localidad.Nombre, localidad.Departamento, localidad.OtrosNombres)).ToList();
+
     public async Task<Result<MiPerfilDto>> ObtenerAsync(CancellationToken cancellationToken)
     {
         var usuario = await usuarioActual.ObtenerAsync(cancellationToken);
@@ -85,7 +101,16 @@ public sealed class Perfil(UsuarioActual usuarioActual, IUserRepository usuarios
             return ErroresPerfil.DniEnUso;
         }
 
-        usuario.Valor.CompletarDatosPersonales(comando.Nombre, comando.Apellido, dni, clock.UtcNow);
+        var carreras = comando.CarrerasIds ?? [];
+        foreach (var carreraId in carreras.Distinct())
+        {
+            if (await academico.ObtenerCarreraAsync(carreraId, cancellationToken) is not { Activa: true })
+            {
+                return ErroresPerfil.CarreraInvalida;
+            }
+        }
+
+        usuario.Valor.CompletarDatosPersonales(comando.Nombre, comando.Apellido, dni, comando.Localidad, carreras, clock.UtcNow);
         await unitOfWork.GuardarCambiosAsync(cancellationToken);
         return ADto(usuario.Valor, clock.UtcNow);
     }
@@ -182,10 +207,12 @@ public sealed class Perfil(UsuarioActual usuarioActual, IUserRepository usuarios
             usuario.Apellido,
             usuario.Dni,
             usuario.Legajo,
-            usuario.DatosConfirmados,
+            usuario.Localidad,
+            usuario.CarrerasIds,
             email,
             celular,
-            usuario.TieneDatosOficiales && email.Verificado && !email.Vencido && celular.Valor is not null);
+            usuario.TieneDatosOficiales && usuario.Localidad is not null && usuario.CarrerasIds.Count > 0
+                && email.Verificado && !email.Vencido && celular.Valor is not null);
     }
 
     private static ContactoDto Contacto(Usuario usuario, CanalContacto canal, DateTimeOffset ahora)

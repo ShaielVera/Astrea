@@ -41,7 +41,8 @@ public sealed record FiltroMesas(
     Guid? CarreraId = null,
     Guid? MateriaId = null,
     string? Texto = null,
-    EstadoMesa? Estado = null);
+    EstadoMesa? Estado = null,
+    IReadOnlyList<Guid>? Carreras = null);
 
 /// <summary>Alta o corrección de una mesa. La materia se indica por plan y materia, como en el resto de la API.</summary>
 public sealed record GuardarMesaCommand(

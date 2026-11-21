@@ -4,7 +4,7 @@ import { ingresarComoEstudianteNuevo } from "./sesiones";
 
 async function completarFormulario(page: Page, email: string, password: string) {
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Contraseña").fill(password);
+  await page.getByLabel("Contraseña", { exact: true }).fill(password);
 }
 
 async function ingresar(page: Page, email: string, password: string) {

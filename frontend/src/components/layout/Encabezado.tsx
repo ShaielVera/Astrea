@@ -41,7 +41,7 @@ export function Encabezado() {
     <header className="border-b-[3px] border-dorado-500 bg-gradient-to-b from-indigo-800 to-indigo-950 text-white shadow-md">
       <div className="mx-auto flex w-full max-w-5xl flex-col px-4 sm:px-6">
         <div className="flex items-center justify-between gap-3 py-3">
-          <Link href="/" className="flex items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-dorado-300">
+          <Link href={sesion.estado === "autenticado" && perfil ? "/inicio" : "/"} aria-label="Astrea, ir al inicio" className="flex items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-dorado-300">
             {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático, no necesita optimización */}
             <img src="/icons/astrea.svg" alt="" width={44} height={44} className="size-11 rounded-xl ring-1 ring-dorado-500/60" />
             <span className="flex flex-col leading-tight">

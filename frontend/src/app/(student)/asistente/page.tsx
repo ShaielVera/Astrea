@@ -33,7 +33,8 @@ export default function AsistentePage() {
   const [confirmarBorrado, setConfirmarBorrado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const campoPregunta = useRef<HTMLTextAreaElement>(null);
-  const finDelChat = useRef<HTMLDivElement>(null);
+  const formulario = useRef<HTMLFormElement>(null);
+  const registro = useRef<HTMLOListElement>(null);
 
   const cargarConversaciones = useCallback(async () => {
     const pagina = await asistenteApi.conversaciones(await obtenerToken());
@@ -51,8 +52,13 @@ export default function AsistentePage() {
     };
   }, [obtenerToken]);
 
+  // Después de cada mensaje queda a la vista el campo para seguir escribiendo, con la respuesta justo arriba.
+  // Si la respuesta es más alta que la pantalla, se muestra desde su comienzo (para leerla de arriba hacia abajo).
   useEffect(() => {
-    finDelChat.current?.scrollIntoView?.({ block: "end" });
+    if (mensajes.length === 0 && !pendiente) return;
+    formulario.current?.scrollIntoView?.({ block: "end" });
+    const ultimo = registro.current?.lastElementChild;
+    if (ultimo && ultimo.getBoundingClientRect().top < 0) ultimo.scrollIntoView?.({ block: "start" });
   }, [mensajes, pendiente]);
 
   function nueva() {
@@ -164,9 +170,8 @@ export default function AsistentePage() {
       <div role="note" aria-label="Antes de preguntar" className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
         <p>
           Las respuestas las redacta una inteligencia artificial y pueden tener errores: ante cualquier duda, confirmá en Secretaría. El
-          asistente no aprueba trámites ni envía nada sin que lo confirmes.
+          asistente no aprueba trámites ni envía nada sin que lo confirmes. Tus conversaciones las ves solo vos y se borran a los 30 días sin uso.
         </p>
-        <p className="mt-1">Tus conversaciones las ves solo vos y se borran a los 30 días sin uso.</p>
       </div>
 
       {error && (
@@ -239,7 +244,7 @@ export default function AsistentePage() {
             </div>
           )}
 
-          <ol role="log" aria-label="Mensajes" aria-live="polite" className="flex flex-col gap-4">
+          <ol ref={registro} role="log" aria-label="Mensajes" aria-live="polite" className="flex flex-col gap-4">
             {mensajes.map((mensaje) =>
               mensaje.rol === "Usuario" ? (
                 <li key={mensaje.id} aria-label="Tu pregunta" className="ml-auto max-w-[85%] whitespace-pre-wrap rounded-xl bg-indigo-600 px-3 py-2 text-white">
@@ -260,9 +265,8 @@ export default function AsistentePage() {
               Buscando en los documentos oficiales…
             </p>
           )}
-          <div ref={finDelChat} />
 
-          <form onSubmit={enviar} aria-label="Hacer una pregunta" className="flex flex-col gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+          <form ref={formulario} onSubmit={enviar} aria-label="Hacer una pregunta" className="flex flex-col gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
             <label htmlFor="pregunta" className="text-sm font-medium">
               Tu pregunta
             </label>

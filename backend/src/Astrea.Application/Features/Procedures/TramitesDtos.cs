@@ -19,7 +19,6 @@ public sealed record TramiteTipoDto(Guid Id, string Codigo, string Nombre, strin
 
 /// <summary>
 /// Datos de una persona. El DNI y el contacto solo se completan en la vista de administración y la del propio titular.
-/// <see cref="DatosConfirmados"/>: Secretaría ya revisó nombre, apellido y DNI (si no, los cargó el estudiante).
 /// </summary>
 public sealed record PersonaDto(
     Guid Id,
@@ -28,7 +27,6 @@ public sealed record PersonaDto(
     string? Apellido,
     string? Legajo,
     string? Dni = null,
-    bool DatosConfirmados = false,
     string? EmailContacto = null,
     DateTimeOffset? EmailContactoVerificadoEn = null,
     string? Celular = null,
@@ -143,13 +141,16 @@ public static class ErroresTramites
     public static readonly Error CarreraInvalida =
         Error.Validacion("carrera_invalida", "La carrera elegida no existe o no está activa.");
 
+    public static readonly Error CarreraAjena =
+        Error.Validacion("carrera_ajena", "Elegí una de las carreras que figuran en tu perfil (las podés cambiar en Mi perfil).");
+
     public static readonly Error TextoDemasiadoLargo =
         Error.Validacion("texto_demasiado_largo", $"La búsqueda no puede superar los {LargoMaximoTexto} caracteres.");
 
     public static readonly Error DatosOficialesIncompletos =
         Error.Validacion(
             "datos_oficiales_incompletos",
-            "Antes de aprobar, revisá y confirmá los datos oficiales del estudiante (nombre, apellido y DNI): van impresos en el documento.");
+            "Antes de aprobar, completá los datos del estudiante (nombre, apellido y DNI): van impresos en el documento.");
 
     public static readonly Error DniEnUso =
         Error.Conflicto("dni_en_uso", "Ese DNI ya figura en otra cuenta de Astrea.");

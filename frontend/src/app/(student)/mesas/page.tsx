@@ -7,13 +7,18 @@ import { academicoApi, type Carrera, type MateriaDePlan, type Pagina } from "@/f
 import { hoyEnElInstituto, mesasApi, type FiltroMesas, type MesaExamen } from "@/features/mesas/api";
 import { ListadoMesas } from "@/features/mesas/ListadoMesas";
 import { Paginacion } from "@/features/mesas/Paginacion";
+import { OpcionesCarrera } from "@/features/perfil/OpcionesCarrera";
+import { perfilApi } from "@/features/perfil/api";
 
 const campo = "w-full min-w-0 rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-normal dark:border-zinc-700 dark:bg-zinc-900";
 const botonPrimario = "rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-60";
 const POR_PAGINA = 10;
+const MIS_CARRERAS = "mis-carreras";
 
 export default function MesasPage() {
   const { obtenerToken } = useAuth();
+  // Las carreras del perfil: la búsqueda arranca con esas ("Mis carreras") en vez de todas.
+  const [misCarreras, setMisCarreras] = useState<string[]>([]);
   const [carreras, setCarreras] = useState<Carrera[] | null>(null);
   const [materias, setMaterias] = useState<MateriaDePlan[]>([]);
   const [filtro, setFiltro] = useState<FiltroMesas>({ desde: hoyEnElInstituto() });
@@ -43,18 +48,32 @@ export default function MesasPage() {
     [obtenerToken],
   );
 
-  // Carga inicial: carreras para los filtros y las mesas desde hoy.
+  // Carga inicial: carreras para los filtros y las mesas desde hoy, de las carreras del perfil si las cargó.
   useEffect(() => {
     let vigente = true;
     const numero = ++ultimaBusqueda.current;
     obtenerToken()
-      .then((token) =>
-        Promise.all([academicoApi.carreras(token), mesasApi.buscar(token, { desde: hoyEnElInstituto(), page: 1, pageSize: POR_PAGINA })]),
-      )
-      .then(([lista, primeras]) => {
+      .then(async (token) => {
+        const [lista, perfil] = await Promise.all([academicoApi.carreras(token), perfilApi.obtener(token).catch(() => null)]);
+        const mias = perfil?.carrerasIds ?? [];
+        // Con una sola carrera se elige esa (así también se puede filtrar por materia); con varias, "Mis carreras".
+        const desde = hoyEnElInstituto();
+        const inicial: FiltroMesas = mias.length === 1 ? { desde, carreraId: mias[0] } : mias.length > 1 ? { desde, carreras: mias } : { desde };
+        const primeras = await mesasApi.buscar(token, { ...inicial, page: 1, pageSize: POR_PAGINA });
+        const [plan] = inicial.carreraId ? await academicoApi.planes(token, inicial.carreraId) : [];
+        const materiasDeLaCarrera = plan ? await academicoApi.materias(token, plan.id) : [];
+        return { lista, mias, inicial, primeras, materiasDeLaCarrera };
+      })
+      .then(({ lista, mias, inicial, primeras, materiasDeLaCarrera }) => {
         if (!vigente) return;
         setCarreras(lista);
-        if (numero === ultimaBusqueda.current) setPagina(primeras);
+        setMisCarreras(mias);
+        if (numero !== ultimaBusqueda.current) return;
+        // Solo la carrera: si mientras cargaba ya cambiaron otro filtro (fechas, texto), no se pisa.
+        setFiltro((actual) => ({ ...actual, carreraId: inicial.carreraId, carreras: inicial.carreras }));
+        setAplicado(inicial);
+        setPagina(primeras);
+        setMaterias(materiasDeLaCarrera);
       })
       .catch((e) => vigente && setError(mensajeDeError(e)));
     return () => {
@@ -63,9 +82,19 @@ export default function MesasPage() {
   }, [obtenerToken]);
 
   async function elegirCarrera(carreraId: string) {
-    setFiltro((actual) => ({ ...actual, carreraId: carreraId || undefined, materiaId: undefined }));
+    const deMisCarreras = carreraId === MIS_CARRERAS;
+    setFiltro((actual) => ({
+      ...actual,
+      carreraId: carreraId && !deMisCarreras ? carreraId : undefined,
+      carreras: deMisCarreras ? misCarreras : undefined,
+      materiaId: undefined,
+    }));
     setMaterias([]);
-    if (!carreraId) return;
+    if (!carreraId || deMisCarreras) return;
+    await cargarMaterias(carreraId);
+  }
+
+  async function cargarMaterias(carreraId: string) {
     try {
       const token = await obtenerToken();
       const [plan] = await academicoApi.planes(token, carreraId);
@@ -92,13 +121,10 @@ export default function MesasPage() {
       <form onSubmit={enviar} aria-label="Buscar mesas" className="grid grid-cols-1 gap-3 rounded-xl border bg-superficie border-zinc-200 p-4 sm:grid-cols-2 lg:grid-cols-4 dark:border-zinc-800">
         <label className="flex min-w-0 flex-col gap-1 text-sm font-medium sm:col-span-2">
           Carrera
-          <select value={filtro.carreraId ?? ""} onChange={(e) => void elegirCarrera(e.target.value)} className={campo}>
+          <select value={filtro.carreras ? MIS_CARRERAS : (filtro.carreraId ?? "")} onChange={(e) => void elegirCarrera(e.target.value)} className={campo}>
+            {misCarreras.length > 1 && <option value={MIS_CARRERAS}>Mis carreras</option>}
             <option value="">{carreras ? "Todas las carreras" : "Cargando carreras…"}</option>
-            {carreras?.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nombre}
-              </option>
-            ))}
+            <OpcionesCarrera carreras={carreras} mias={misCarreras} />
           </select>
         </label>
         <label className="flex min-w-0 flex-col gap-1 text-sm font-medium sm:col-span-2">
