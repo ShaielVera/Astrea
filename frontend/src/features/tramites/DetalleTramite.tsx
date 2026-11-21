@@ -70,8 +70,13 @@ export function DetalleTramite({ tramite, vistaAdministracion = false, acciones,
               verificadoEn={tramite.solicitante.celularVerificadoEn}
             />
           </dd>
-          <dt className="text-zinc-500">Asignado a</dt>
-          <dd className="min-w-0 break-words">{tramite.administradorAsignado ?? "Nadie todavía"}</dd>
+          {/* Quién de Secretaría lo tomó: solo se muestra cuando alguien lo tomó. */}
+          {tramite.administradorAsignado && (
+            <>
+              <dt className="text-zinc-500">Lo atiende</dt>
+              <dd className="min-w-0 break-words">{tramite.administradorAsignado}</dd>
+            </>
+          )}
         </dl>
       )}
 

@@ -48,9 +48,9 @@ export const perfilApi = {
     apiFetch<MiPerfil>(`/me/perfil/verificaciones/${canal}/confirmacion`, { method: "POST", token, body: { codigo } }),
 };
 
-/** "3424123456" → "342 412-3456" (solo para mostrar). */
+/** "3424123456" → "342 4123456": código de área y número (solo para mostrar). */
 export function celularLegible(celular: string): string {
-  return celular.length === 10 ? `${celular.slice(0, 3)} ${celular.slice(3, 6)}-${celular.slice(6)}` : celular;
+  return celular.length === 10 ? `${celular.slice(0, 3)} ${celular.slice(3)}` : celular;
 }
 
 /** Qué le falta al perfil, en palabras (vacío si está completo). */

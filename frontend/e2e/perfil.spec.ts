@@ -40,7 +40,7 @@ test.describe("Mi perfil y arrepentimientos", () => {
     await contacto.getByRole("button", { name: "Guardar contacto" }).click();
 
     const celular = page.getByRole("group", { name: "Validación del celular" });
-    await expect(celular).toContainText("342 412-3456");
+    await expect(celular).toContainText("342 4123456");
     await expect(celular).toContainText("Sin validar");
     const email = page.getByRole("group", { name: "Validación del email" });
     await email.getByRole("button", { name: "Enviar código" }).click();

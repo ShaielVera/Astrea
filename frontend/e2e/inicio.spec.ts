@@ -12,8 +12,8 @@ test.describe("Página de inicio", () => {
     await page.goto("/");
 
     const modulos = page.getByRole("region", { name: "Módulos" }).getByRole("listitem");
-    await expect(modulos).toHaveCount(5);
-    for (const nombre of ["Correlatividades", "Mesas de examen", "Mis trámites", "Hallazgos", "Asistente"]) {
+    await expect(modulos).toHaveCount(8);
+    for (const nombre of ["Mi perfil", "Plan de estudios", "Correlatividades", "Mesas de examen", "Mis trámites", "Mi cursada", "Hallazgos", "Asistente"]) {
       await expect(page.getByRole("heading", { level: 3, name: nombre })).toBeVisible();
     }
   });

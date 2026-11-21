@@ -30,7 +30,8 @@ const FILTROS: Record<string, { etiqueta: string; estados: EstadoTramite[] }> = 
 
 export default function BandejaTramites() {
   const { obtenerToken } = useAuth();
-  const [filtro, setFiltro] = useState("abiertos");
+  // Arranca mostrando todos (también los listos, rechazados y cancelados).
+  const [filtro, setFiltro] = useState("todos");
   const [texto, setTexto] = useState("");
   const [pagina, setPagina] = useState<Pagina<TramiteResumen> | null>(null);
   const [seleccionado, setSeleccionado] = useState<TramiteDetalle | null>(null);
@@ -55,7 +56,7 @@ export default function BandejaTramites() {
     let vigente = true;
     const numero = ++ultimaCarga.current;
     obtenerToken()
-      .then((token) => tramitesApi.bandeja(token, { estados: FILTROS.abiertos.estados }))
+      .then((token) => tramitesApi.bandeja(token, { estados: FILTROS.todos.estados }))
       .then((resultado) => vigente && numero === ultimaCarga.current && setPagina(resultado))
       .catch((e) => vigente && setError(mensajeDeError(e)));
     return () => {
@@ -125,7 +126,15 @@ export default function BandejaTramites() {
       <form onSubmit={buscar} aria-label="Filtrar trámites" className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         <label className="flex min-w-0 flex-col gap-1 text-sm font-medium">
           Estado
-          <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className={campo}>
+          <select
+            value={filtro}
+            onChange={(e) => {
+              // Cambiar el estado ya filtra, sin tener que tocar "Buscar".
+              setFiltro(e.target.value);
+              void cargar(e.target.value, texto.trim(), 1);
+            }}
+            className={campo}
+          >
             {Object.entries(FILTROS).map(([clave, { etiqueta }]) => (
               <option key={clave} value={clave}>
                 {etiqueta}

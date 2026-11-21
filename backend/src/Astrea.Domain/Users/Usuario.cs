@@ -277,7 +277,7 @@ public sealed class Usuario : Entity
 
         if (digitos.Length != 10)
         {
-            throw new DomainException("El celular tiene que tener código de área y número: 10 dígitos en total (ej.: 342 412-3456).");
+            throw new DomainException("El celular tiene que tener código de área y número: 10 dígitos en total (ej.: 342 4123456).");
         }
 
         return digitos;

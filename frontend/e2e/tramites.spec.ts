@@ -99,7 +99,8 @@ test.describe("Trámites", () => {
     const { estudiante, admin } = await sesiones(browser);
 
     const numero = await pedir(estudiante, "Constancia de examen", async (formulario) => {
-      await formulario.getByRole("textbox", { name: /^Materia/ }).fill("Programación II");
+      // La materia se elige de la lista de la carrera (todos los años).
+      await formulario.getByRole("combobox", { name: /^Materia/ }).selectOption({ label: "Programación II" });
       await formulario.getByLabel("Fecha del examen").fill("2026-12-10");
     });
 

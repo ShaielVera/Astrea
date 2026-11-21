@@ -254,7 +254,7 @@ function DatosDeContacto({ perfil, onGuardado }: { perfil: MiPerfil; onGuardado:
               onChange={(e) => setCelular(e.target.value)}
               maxLength={25}
               autoComplete="tel-national"
-              placeholder="Ej.: 342 412-3456"
+              placeholder="Ej.: 342 4123456"
               className={campo}
             />
           </label>
