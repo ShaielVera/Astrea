@@ -69,7 +69,7 @@ internal sealed class TramiteConfiguration : IEntityTypeConfiguration<Tramite>
             .HasField("_eventos")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        // "Mis trámites" (por titular) y la bandeja (por estado, los más antiguos primero).
+        // "Mis trámites" (por titular) y la bandeja (por estado, los más recientes primero).
         builder.HasIndex(tramite => new { tramite.UsuarioId, tramite.FechaSolicitud });
         builder.HasIndex(tramite => new { tramite.Estado, tramite.FechaSolicitud });
 

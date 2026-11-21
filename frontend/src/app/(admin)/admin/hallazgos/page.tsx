@@ -207,6 +207,7 @@ function FormularioEntrega({ titulo, onEntregar, onVolver }: { titulo: string; o
   const [nombre, setNombre] = useState("");
   const [dni, setDni] = useState("");
   const [verificado, setVerificado] = useState(false);
+  const listoParaEntregar = Boolean(nombre.trim() && dni.trim() && verificado);
   const [observacion, setObservacion] = useState("");
   const [enviando, setEnviando] = useState(false);
 
@@ -240,8 +241,16 @@ function FormularioEntrega({ titulo, onEntregar, onVolver }: { titulo: string; o
         <input type="checkbox" checked={verificado} onChange={(e) => setVerificado(e.target.checked)} required className="mt-1" />
         <span>Verifiqué en persona su identidad con el DNI y que demostró que el objeto le pertenece (detalles privados, foto, factura o ticket de compra).</span>
       </label>
+      {/* El botón se habilita recién con los datos de quien retira y la verificación tildada: así queda claro qué falta. */}
+      {!listoParaEntregar && (
+        <p className="text-xs text-amber-800 dark:text-amber-300">
+          {!nombre.trim() || !dni.trim()
+            ? "Completá el nombre y el DNI de quien lo retira."
+            : "Tildá la verificación de identidad para poder confirmar la entrega."}
+        </p>
+      )}
       <div className="flex gap-2">
-        <button type="submit" className={botonPrimarioChico} disabled={enviando}>
+        <button type="submit" className={botonPrimarioChico} disabled={enviando || !listoParaEntregar}>
           Confirmar entrega
         </button>
         <button type="button" className={botonChico} onClick={onVolver}>

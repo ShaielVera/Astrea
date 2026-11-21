@@ -89,7 +89,10 @@ export default function MiCursada() {
         <h2 id="materias-titulo" className="text-lg font-semibold">
           Materias que curso {datos ? `en ${datos.cicloLectivo}` : ""}
         </h2>
-        <SelectorMateria soloMisCarreras={misCarreras} titulo="Anotarme en una materia" textoBoton="Anotarme" onElegir={inscribirse} ocupado={ocupado} />
+        <SelectorMateria
+          soloMisCarreras={misCarreras}
+          yaElegidas={datos?.materias.map((materia) => materia.planMateriaId)}
+          titulo="Anotarme en una materia" textoBoton="Anotarme" onElegir={inscribirse} ocupado={ocupado} />
         {!datos ? (
           !error && (
             <p role="status" className="text-zinc-500">

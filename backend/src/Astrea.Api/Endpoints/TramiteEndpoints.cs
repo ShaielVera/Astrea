@@ -54,7 +54,7 @@ internal static class TramiteEndpoints
         admin.MapGet("", async (EstadoTramite[]? estado, Guid? tipoId, string? texto, int? page, int? pageSize, BandejaTramites bandeja, CancellationToken ct) =>
                 (await bandeja.BuscarAsync(estado, tipoId, texto, page, pageSize, ct)).AHttp())
             .WithName("BandejaDeTramites")
-            .WithDescription("Los más antiguos primero. 'estado' admite varios valores; 'texto' busca por número o por email/apellido del titular.")
+            .WithDescription("Los más recientes primero. 'estado' admite varios valores; 'texto' busca por número o por email/apellido del titular.")
             .Produces<PagedResult<TramiteResumenDto>>();
 
         admin.MapGet("/tipos", (BandejaTramites bandeja, CancellationToken ct) => bandeja.ListarTiposAsync(ct))

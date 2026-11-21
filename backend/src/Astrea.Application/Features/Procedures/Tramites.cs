@@ -168,7 +168,8 @@ public sealed class BandejaTramites(
             return ErroresTramites.TextoDemasiadoLargo;
         }
 
-        var filtro = new FiltroTramites(Estados: estados is { Length: > 0 } ? estados : null, TipoId: tipoId, Texto: texto);
+        // Los más recientes primero, como en "Mis trámites".
+        var filtro = new FiltroTramites(Estados: estados is { Length: > 0 } ? estados : null, TipoId: tipoId, Texto: texto, MasRecientesPrimero: true);
         return await tramites.BuscarAsync(filtro, PageRequest.Create(page, pageSize), cancellationToken);
     }
 

@@ -63,6 +63,7 @@ test.describe("Hallazgos", () => {
     const entrega = enAdmin.getByRole("form", { name: `Entregar ${titulo}` });
     await entrega.getByLabel("Nombre y apellido de quien lo retira").fill("Juan López");
     await entrega.getByLabel("DNI de quien lo retira").fill("30.123.456");
+    await expect(entrega.getByRole("button", { name: "Confirmar entrega" })).toBeDisabled();
     await entrega.getByRole("checkbox", { name: /Verifiqué en persona/ }).check();
     await entrega.getByRole("button", { name: "Confirmar entrega" }).click();
     await expect(admin.getByRole("status")).toContainText(`"${titulo}" quedó entregado a Juan López`);

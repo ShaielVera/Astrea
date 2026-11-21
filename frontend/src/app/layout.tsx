@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Lora } from "next/font/google";
 import { Encabezado } from "@/components/layout/Encabezado";
+import { ListasDesplegables } from "@/components/ui/ListasDesplegables";
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import { RegistrarServiceWorker } from "@/features/pwa/RegistrarServiceWorker";
 import "./globals.css";
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
         </AuthProvider>
         <RegistrarServiceWorker />
+        <ListasDesplegables />
       </body>
     </html>
   );

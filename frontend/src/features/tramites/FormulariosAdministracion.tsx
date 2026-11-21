@@ -15,13 +15,30 @@ type DatosOficiales = { nombre: string; apellido: string; dni: string; legajo: s
  * Datos del titular que se imprimen en el documento. Los carga el estudiante en "Mi perfil";
  * Secretaría los completa o corrige si hace falta antes de aprobar un trámite que emite PDF.
  */
-export function FormularioDatosOficiales({ persona, onGuardar }: { persona: Persona; onGuardar: (datos: DatosOficiales) => Promise<void> }) {
+export function FormularioDatosOficiales({ persona, onGuardar }: { persona: Persona; onGuardar: (datos: DatosOficiales) => Promise<boolean> }) {
   const [nombre, setNombre] = useState(persona.nombre ?? "");
   const [apellido, setApellido] = useState(persona.apellido ?? "");
   const [dni, setDni] = useState(persona.dni ?? "");
   const [legajo, setLegajo] = useState(persona.legajo ?? "");
   const [guardando, setGuardando] = useState(false);
   const completos = Boolean(persona.nombre && persona.apellido && persona.dni);
+  // Completos: se muestran en una línea y el formulario se abre solo para corregir. Si falta algo, abierto.
+  const [editando, setEditando] = useState(!completos);
+
+  if (!editando) {
+    return (
+      <div aria-label="Datos oficiales del titular" role="group" className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <p className="min-w-0">
+          <span className="font-medium">Datos para la constancia:</span> {persona.nombre} {persona.apellido} · DNI {persona.dni}
+          {persona.legajo && <> · Legajo {persona.legajo}</>}
+          <span className="block text-xs text-zinc-500">Los cargó el estudiante en Mi perfil. Corregilos solo si hay un error.</span>
+        </p>
+        <button type="button" className={botonChico} onClick={() => setEditando(true)}>
+          Corregir datos
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form
@@ -31,7 +48,8 @@ export function FormularioDatosOficiales({ persona, onGuardar }: { persona: Pers
         e.preventDefault();
         setGuardando(true);
         try {
-          await onGuardar({ nombre, apellido, dni, legajo: legajo.trim() || null });
+          // Si no se pudo guardar (ej.: DNI repetido), el formulario queda abierto para corregir.
+          if (await onGuardar({ nombre, apellido, dni, legajo: legajo.trim() || null })) setEditando(false);
         } finally {
           setGuardando(false);
         }
@@ -61,10 +79,15 @@ export function FormularioDatosOficiales({ persona, onGuardar }: { persona: Pers
           <input value={legajo} onChange={(e) => setLegajo(e.target.value)} maxLength={30} className={campo} />
         </label>
       </div>
-      <div>
+      <div className="flex gap-2">
         <button type="submit" className={botonChico} disabled={guardando}>
           Guardar datos oficiales
         </button>
+        {completos && (
+          <button type="button" className={botonChico} disabled={guardando} onClick={() => setEditando(false)}>
+            Cancelar
+          </button>
+        )}
       </div>
     </form>
   );

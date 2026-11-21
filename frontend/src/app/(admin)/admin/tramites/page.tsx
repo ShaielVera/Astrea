@@ -109,7 +109,7 @@ export default function BandejaTramites() {
           ← Administración
         </Link>
         <h1 className="text-3xl font-semibold tracking-tight">Bandeja de trámites</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">Los pedidos más antiguos aparecen primero.</p>
+        <p className="text-zinc-600 dark:text-zinc-400">Los pedidos más recientes aparecen primero.</p>
       </div>
 
       {aviso && (
@@ -209,8 +209,10 @@ export default function BandejaTramites() {
                           await tramitesApi.datosOficiales(token, seleccionado.solicitante.id, datos);
                           setSeleccionado(await tramitesApi.detalleAdmin(token, seleccionado.id));
                           setAviso("Datos oficiales guardados.");
+                          return true;
                         } catch (e) {
                           setError(mensajeDeError(e));
+                          return false;
                         }
                       }}
                     />

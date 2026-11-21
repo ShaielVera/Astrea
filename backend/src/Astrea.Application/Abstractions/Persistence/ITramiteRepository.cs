@@ -19,7 +19,7 @@ public interface ITramiteRepository
 
     /// <summary>
     /// Trámites filtrados y paginados. Con <see cref="FiltroTramites.UsuarioId"/> se limita a los de ese titular.
-    /// Orden estable: la bandeja ve primero los más antiguos; el estudiante, los más recientes.
+    /// Orden estable: la bandeja y el estudiante ven primero los más recientes.
     /// </summary>
     Task<PagedResult<TramiteResumenDto>> BuscarAsync(FiltroTramites filtro, PageRequest pagina, CancellationToken cancellationToken);
 

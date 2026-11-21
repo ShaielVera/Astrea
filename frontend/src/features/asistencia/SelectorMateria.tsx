@@ -16,7 +16,10 @@ export function SelectorMateria({
   onElegir,
   ocupado = false,
   soloMisCarreras,
+  yaElegidas = [],
 }: {
+  /** Materias en las que ya está anotado: se marcan con un tilde y no se pueden volver a elegir. */
+  yaElegidas?: string[];
   /**
    * Para el estudiante: solo se eligen las carreras de su perfil (null mientras carga). Sin la prop (Secretaría), todas.
    */
@@ -59,9 +62,12 @@ export function SelectorMateria({
     }
   }
 
-  function enviar(evento: FormEvent<HTMLFormElement>) {
+  async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-    if (planMateriaId) void onElegir(planMateriaId);
+    if (!planMateriaId) return;
+    await onElegir(planMateriaId);
+    // Lista para elegir la próxima (la recién elegida queda marcada como ya anotada).
+    setPlanMateriaId("");
   }
 
   const disponibles = soloMisCarreras === undefined ? carreras : (carreras?.filter((c) => soloMisCarreras?.includes(c.id)) ?? null);
@@ -98,8 +104,14 @@ export function SelectorMateria({
               {materias
                 ?.filter((materia) => materia.anio === anio)
                 .map((materia) => (
-                  <option key={materia.planMateriaId} value={materia.planMateriaId}>
+                  <option
+                    key={materia.planMateriaId}
+                    value={materia.planMateriaId}
+                    disabled={yaElegidas.includes(materia.planMateriaId)}
+                    data-ya-anotada={yaElegidas.includes(materia.planMateriaId) || undefined}
+                  >
                     {materia.nombre}
+                    {yaElegidas.includes(materia.planMateriaId) && <span className="ya-anotada"> ✓ Ya anotada</span>}
                   </option>
                 ))}
             </optgroup>

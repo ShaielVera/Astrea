@@ -63,6 +63,9 @@ test.describe("Trámites", () => {
     await enBandeja.getByRole("button", { name: "Tomar trámite" }).click();
     await expect(admin.getByRole("status")).toContainText(`${numero} quedó en proceso`);
     // La constancia de alumno regular emite PDF: Secretaría puede corregir los datos del titular antes de aprobar.
+    // Los datos ya los cargó el estudiante: se ven en una línea y se abren solo para corregir.
+    await expect(enBandeja.getByRole("group", { name: "Datos oficiales del titular" })).toContainText("Ana Pérez");
+    await enBandeja.getByRole("button", { name: "Corregir datos" }).click();
     const datos = enBandeja.getByRole("form", { name: "Datos oficiales del titular" });
     await datos.getByLabel("Nombre").fill("Ana");
     await datos.getByLabel("Apellido").fill("Pérez");
