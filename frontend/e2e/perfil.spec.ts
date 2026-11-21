@@ -44,9 +44,14 @@ test.describe("Mi perfil y arrepentimientos", () => {
     await expect(celular).toContainText("Sin validar");
     const email = page.getByRole("group", { name: "Validación del email" });
     await email.getByRole("button", { name: "Enviar código" }).click();
-    // En E2E no hay SMTP: el código queda en el registro del servidor (modo demostración).
-    await expect(email).toContainText("Modo demostración");
-    await expect(email.getByLabel("Código de 6 dígitos")).toBeVisible();
+    // En E2E no hay SMTP: en modo demostración el código se muestra en pantalla y con él se valida.
+    const aviso = email.getByRole("note");
+    await expect(aviso).toContainText("Modo demostración");
+    const codigo = (await aviso.locator("strong").textContent())!.trim();
+    expect(codigo).toMatch(/^\d{6}$/);
+    await email.getByLabel("Código de 6 dígitos").fill(codigo);
+    await email.getByRole("button", { name: "Validar" }).click();
+    await expect(email).toContainText("Validado");
   });
 
   test("un trámite se puede descartar antes de enviarlo y cancelar después", async ({ page }) => {

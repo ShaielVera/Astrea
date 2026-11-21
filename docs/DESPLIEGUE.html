@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Publicar Astrea</title>
+<style>
+  :root { --navy:#132c4a; --navy2:#1f4f86; --oro:#c99a2e; --fondo:#f3efe7; --sup:#fffdf8; --tinta:#1b2433; --t2:#5b6575; --linea:#e4ded2; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Segoe UI", system-ui, sans-serif; color:var(--tinta); background:var(--fondo); line-height:1.6; }
+  header { background:linear-gradient(160deg,var(--navy2),var(--navy)); color:#fff; padding:28px 16px; border-bottom:3px solid var(--oro); }
+  header div, main { max-width:880px; margin:0 auto; }
+  header h1 { margin:0; font-family:Georgia, serif; font-size:30px; }
+  header p { margin:6px 0 0; color:#c8d5e6; }
+  main { padding:24px 16px 60px; display:flex; flex-direction:column; gap:18px; }
+  section { background:var(--sup); border:1px solid var(--linea); border-radius:14px; padding:20px 22px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+  h2 { margin:0 0 10px; font-family:Georgia, serif; color:var(--navy); font-size:21px; display:flex; gap:10px; align-items:center; }
+  h2 .n { background:var(--navy); color:#f3d77a; font:700 14px "Segoe UI"; border-radius:999px; width:28px; height:28px; display:inline-grid; place-items:center; flex-shrink:0; }
+  ol, ul { padding-left:22px; margin:8px 0; } li { margin:6px 0; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin:10px 0; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--linea); vertical-align:top; }
+  th { background:#f6f1e6; color:var(--navy); }
+  code { background:#eef1f6; border-radius:5px; padding:1px 6px; font-family:Consolas, monospace; font-size:13px; word-break:break-all; }
+  pre { background:#132c4a; color:#e8eef7; padding:12px 14px; border-radius:8px; overflow-x:auto; font-size:13px; }
+  pre code { background:none; color:inherit; padding:0; }
+  .aviso { background:#fdf3dc; border:1px solid #ecd49a; border-radius:10px; padding:10px 14px; font-size:14px; }
+  .ok { background:#e6f4ec; border:1px solid #b7dfc6; border-radius:10px; padding:10px 14px; font-size:14px; }
+  a { color:var(--navy2); }
+  label.check { display:flex; gap:8px; align-items:flex-start; cursor:pointer; }
+  input[type=checkbox] { margin-top:5px; accent-color:var(--navy2); }
+  .convertidor { margin-top:12px; background:#f6f1e6; border:1px solid var(--linea); border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; font-size:14px; }
+  .convertidor input[type=password], .convertidor input[type=text] { width:100%; padding:8px 10px; border:1px solid #cfc7b6; border-radius:8px; font-family:Consolas, monospace; font-size:13px; background:#fff; }
+  .convertidor .fila { display:flex; gap:10px; align-items:center; }
+  .convertidor button { background:var(--navy2); color:#fff; border:0; border-radius:8px; padding:8px 16px; font-weight:600; cursor:pointer; }
+  .convertidor button:disabled { opacity:.5; cursor:default; }
+  @media (max-width:600px) { th, td { padding:6px; font-size:13px; } }
+</style>
+</head>
+<body>
+<header><div>
+  <h1>Publicar Astrea en internet</h1>
+  <p>Versión de demostración · Vercel + Azure + Neon + Firebase</p>
+</div></header>
+<main>
+
+<section>
+  <table>
+    <tr><th>Parte</th><th>Dónde</th><th>Costo</th></tr>
+    <tr><td>Página (Next.js)</td><td>Vercel</td><td>Gratis</td></tr>
+    <tr><td>API (.NET 10)</td><td>Azure App Service (Linux)</td><td>Crédito de Azure for Students</td></tr>
+    <tr><td>Base de datos (PostgreSQL + pgvector)</td><td>Neon</td><td>Gratis</td></tr>
+    <tr><td>Inicio de sesión</td><td>Firebase (proyecto <code>astreaisp20</code>, el de siempre)</td><td>Gratis</td></tr>
+    <tr><td>Asistente</td><td>Gemini (tu clave)</td><td>Gratis</td></tr>
+  </table>
+  <p class="aviso"><strong>Importante:</strong> las claves y contraseñas se cargan <strong>solo</strong> en el portal de cada servicio. Nunca en el código, en GitHub ni en un chat.</p>
+  <p>En esta versión no se mandan emails ni SMS: el código de validación del perfil aparece en pantalla. Podés ir tildando cada paso a medida que lo hacés.</p>
+</section>
+
+<section>
+  <h2><span class="n">1</span>Base de datos en Neon</h2>
+  <ol>
+    <li><label class="check"><input type="checkbox">Entrá a <a href="https://neon.com" target="_blank">neon.com</a>, creá una cuenta y un proyecto (región: la más cercana, por ejemplo São Paulo).</label></li>
+    <li><label class="check"><input type="checkbox">En <strong>Connection Details</strong> copiá los datos de conexión. Neon los muestra así:</label>
+      <pre><code>postgresql://USUARIO:CONTRASEÑA@HOST/neondb?sslmode=require</code></pre></li>
+    <li><label class="check"><input type="checkbox">Armá la conexión en el formato que usa la API, reemplazando cada parte:</label>
+      <pre><code>Host=HOST;Database=neondb;Username=USUARIO;Password=CONTRASEÑA;SSL Mode=Require</code></pre>
+      Guardala para el paso 2.</li>
+  </ol>
+  <div class="convertidor">
+    <p><strong>Convertidor:</strong> pegá lo que te dio Neon y copiá el resultado. Funciona solo dentro de esta página: no se envía a ningún lado.</p>
+    <label for="neon">Lo que te dio Neon (<code>postgresql://…</code>)</label>
+    <input id="neon" type="password" autocomplete="off" spellcheck="false" placeholder="postgresql://usuario:contraseña@host/neondb?sslmode=require">
+    <label class="check"><input type="checkbox" id="ver"> Mostrar el texto</label>
+    <label for="api">Para la API (lo vas a pegar en Azure en el paso 2)</label>
+    <input id="api" type="password" readonly placeholder="Acá aparece la conexión convertida">
+    <div class="fila">
+      <button type="button" id="copiar" disabled>Copiar</button>
+      <span id="estado" role="status"></span>
+    </div>
+  </div>
+  <p class="ok">No hace falta crear tablas: la API las crea sola al arrancar y carga el catálogo de carreras y las mesas del instituto.</p>
+</section>
+
+<section>
+  <h2><span class="n">2</span>API en Azure App Service</h2>
+  <ol>
+    <li><label class="check"><input type="checkbox">En <a href="https://portal.azure.com" target="_blank">portal.azure.com</a>, con tu cuenta de Azure for Students: <strong>Crear un recurso → Aplicación web</strong>.</label>
+      <ul>
+        <li><strong>Publicar:</strong> Código · <strong>Pila:</strong> .NET 10 (LTS) · <strong>Sistema operativo:</strong> Linux</li>
+        <li><strong>Región:</strong> la más cercana disponible (por ejemplo Brazil South)</li>
+        <li><strong>Plan de Linux:</strong> <em>Crear nuevo</em> (por ejemplo <code>plan-astrea</code>; no uses el de otra aplicación) · <strong>Plan de precios:</strong> <em>Gratis F1</em>. Se duerme si nadie la usa: abrila unos minutos antes de presentar.</li>
+        <li><strong>Base de datos:</strong> sin tildar (la base está en Neon) · <strong>Application Insights:</strong> No</li>
+        <li>Anotá el <strong>nombre</strong>: la dirección queda <code>https://NOMBRE.azurewebsites.net</code></li>
+      </ul></li>
+    <li><label class="check"><input type="checkbox">En la Web App: <strong>Configuración → Configuración general</strong>:</label>
+      <ul>
+        <li><strong>Comando de inicio:</strong> <code>dotnet Astrea.Api.dll</code></li>
+        <li><strong>Siempre activo:</strong> no existe en F1 (saltealo)</li>
+      </ul></li>
+    <li><label class="check"><input type="checkbox">En <strong>Configuración → Variables de entorno</strong>, agregá estas (el doble guion bajo <code>__</code> va así):</label>
+      <table>
+        <tr><th>Nombre</th><th>Valor</th></tr>
+        <tr><td><code>ASPNETCORE_ENVIRONMENT</code></td><td><code>Demostracion</code></td></tr>
+        <tr><td><code>ASPNETCORE_FORWARDEDHEADERS_ENABLED</code></td><td><code>true</code></td></tr>
+        <tr><td><code>ConnectionStrings__Astrea</code></td><td>la conexión del paso 1</td></tr>
+        <tr><td><code>Ia__Gemini__ApiKey</code></td><td>tu clave de Gemini</td></tr>
+        <tr><td><code>Identidad__AdministradoresIniciales__0</code></td><td>el email de tu cuenta de administradora</td></tr>
+        <tr><td><code>Cors__AllowedOrigins__0</code></td><td><code>https://TU-PAGINA.vercel.app</code> (la completás después del paso 4)</td></tr>
+        <tr><td><code>Documentos__UrlValidacion</code></td><td><code>https://TU-PAGINA.vercel.app/validar/{codigo}</code> (después del paso 4)</td></tr>
+      </table></li>
+    <li><label class="check"><input type="checkbox"><em>(Opcional)</em> <strong>Supervisión → Comprobación de estado:</strong> ruta <code>/health/ready</code>.</label></li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="n">3</span>Publicar la API desde GitHub</h2>
+  <p>Se configura al crear la Web App, en la pestaña <strong>Implementación</strong>: Azure agrega el archivo de GitHub Actions al repositorio y carga solo los permisos.</p>
+  <ol>
+    <li><label class="check"><input type="checkbox"><strong>Implementación continua:</strong> Habilitar · cuenta de GitHub · <strong>Organización</strong> ShaielVera · <strong>Repositorio</strong> Astrea · <strong>Rama</strong> main · <strong>Autenticación:</strong> la que viene por defecto.</label></li>
+    <li><label class="check"><input type="checkbox">La primera ejecución puede fallar (Azure busca la API en la raíz y está en <code>backend/src/Astrea.Api</code>). Avisale a Claude: corrige el archivo y lo vuelve a subir.</label></li>
+    <li><label class="check"><input type="checkbox">Cuando termine bien, abrí <code>https://NOMBRE.azurewebsites.net/health/ready</code>: tiene que decir <code>Healthy</code>.</label></li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="n">4</span>Página en Vercel</h2>
+  <ol>
+    <li><label class="check"><input type="checkbox">En <a href="https://vercel.com" target="_blank">vercel.com</a>: <strong>Add New → Project</strong> e importá el repositorio de GitHub.</label></li>
+    <li><label class="check"><input type="checkbox"><strong>Root Directory:</strong> <code>frontend</code>. El resto, como lo propone Vercel.</label></li>
+    <li><label class="check"><input type="checkbox"><strong>Environment Variables</strong> (las mismas de <code>frontend/.env.local</code>, menos la del emulador):</label>
+      <table>
+        <tr><th>Nombre</th><th>Valor</th></tr>
+        <tr><td><code>NEXT_PUBLIC_API_URL</code></td><td><code>https://NOMBRE.azurewebsites.net</code></td></tr>
+        <tr><td><code>NEXT_PUBLIC_FIREBASE_API_KEY</code> … <code>NEXT_PUBLIC_FIREBASE_APP_ID</code></td><td>los de tu <code>.env.local</code></td></tr>
+      </table></li>
+    <li><label class="check"><input type="checkbox"><strong>Deploy.</strong> Anotá la dirección (<code>https://TU-PAGINA.vercel.app</code>) y completá en Azure las dos variables que faltaban del paso 2. Azure reinicia la API solo.</label></li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="n">5</span>Firebase</h2>
+  <ol>
+    <li><label class="check"><input type="checkbox">En <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → proyecto <code>astreaisp20</code> → <strong>Authentication → Configuración → Dominios autorizados → Agregar dominio:</strong> <code>TU-PAGINA.vercel.app</code></label></li>
+  </ol>
+  <p>Sin esto, "Continuar con Google" no funciona en la página publicada (el ingreso con email y contraseña sí).</p>
+</section>
+
+<section>
+  <h2><span class="n">6</span>Primer uso</h2>
+  <ol>
+    <li><label class="check"><input type="checkbox">Entrá a la página y creá tu cuenta (o ingresá con Google) con el email que pusiste como administradora.</label></li>
+    <li><label class="check"><input type="checkbox">En <strong>Administración → Documentos del asistente</strong>, volvé a subir los reglamentos: la base de Neon empieza vacía.</label></li>
+    <li><label class="check"><input type="checkbox">Los estudiantes de la demostración crean su cuenta desde la página.</label></li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="n">?</span>Si algo falla</h2>
+  <ul>
+    <li><strong>La página dice que el servidor no responde:</strong> abrí <code>https://NOMBRE.azurewebsites.net/health/ready</code>. En el plan F1 la primera visita después de un rato tarda unos segundos.</li>
+    <li><strong>Errores de la API:</strong> en Azure, <strong>Supervisión → Secuencia de registro</strong> muestra lo que va pasando.</li>
+    <li><strong>"CORS" en la consola del navegador:</strong> revisá que <code>Cors__AllowedOrigins__0</code> sea exactamente la dirección de Vercel, con <code>https://</code> y sin <code>/</code> al final.</li>
+  </ul>
+</section>
+
+</main>
+<script>
+  // Convierte "postgresql://usuario:contraseña@host/base?sslmode=require" al formato de Npgsql. Todo queda en esta página.
+  const neon = document.getElementById("neon"), api = document.getElementById("api"), estado = document.getElementById("estado"), copiar = document.getElementById("copiar");
+  function convertir() {
+    const texto = neon.value.trim().replace(/^psql\s+/, "").replace(/^['"]|['"]$/g, "");
+    estado.textContent = ""; api.value = ""; copiar.disabled = true;
+    if (!texto) return;
+    try {
+      const url = new URL(texto.replace(/^postgres(ql)?:/, "http:"));
+      const usuario = decodeURIComponent(url.username), clave = decodeURIComponent(url.password);
+      const base = decodeURIComponent(url.pathname.replace(/^\//, "")) || "neondb";
+      if (!usuario || !clave || !url.hostname) throw new Error();
+      api.value = "Host=" + url.hostname + (url.port ? ";Port=" + url.port : "") + ";Database=" + base + ";Username=" + usuario + ";Password=" + clave + ";SSL Mode=Require";
+      copiar.disabled = false;
+      estado.textContent = "Listo. Copialo y guardalo para el paso 2.";
+    } catch {
+      estado.textContent = "No se reconoce: tiene que empezar con postgresql:// y tener usuario, contraseña y host.";
+    }
+  }
+  neon.addEventListener("input", convertir);
+  document.getElementById("ver").addEventListener("change", (e) => { neon.type = api.type = e.target.checked ? "text" : "password"; });
+  copiar.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(api.value); estado.textContent = "Copiado."; }
+    catch { api.type = "text"; api.select(); estado.textContent = "Seleccionado: copialo con Ctrl+C."; }
+  });
+</script>
+</body>
+</html>

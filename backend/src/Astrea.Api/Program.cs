@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using Astrea.Api;
 using Astrea.Api.Authentication;
 using Astrea.Api.Authorization;
 using Astrea.Api.Endpoints;
@@ -42,7 +43,9 @@ var carpetaPrivada = Path.Combine(
 
 // IA: proveedor de embeddings. La API key de Gemini va en user-secrets (Ia:Gemini:ApiKey), nunca en el repositorio.
 var ia = builder.Configuration.GetSection(ConfiguracionIa.Seccion).Get<ConfiguracionIa>() ?? new ConfiguracionIa();
-if (builder.Environment.IsProduction() && string.Equals(ia.Proveedor, ConfiguracionIa.ProveedorPrueba, StringComparison.OrdinalIgnoreCase))
+// La versión de demostración publicada en internet (ambiente "Demostracion") usa la IA real, como producción.
+if ((builder.Environment.IsProduction() || builder.Environment.IsEnvironment(Ambientes.Demostracion))
+    && string.Equals(ia.Proveedor, ConfiguracionIa.ProveedorPrueba, StringComparison.OrdinalIgnoreCase))
 {
     throw new InvalidOperationException("Los embeddings de prueba no se pueden usar en producción.");
 }
@@ -52,6 +55,8 @@ builder.Services.AddInfrastructure(connectionString, carpetaPrivada, ia);
 builder.Services.AddSingleton(ia);
 
 // Códigos de verificación del perfil. La contraseña SMTP va en user-secrets (Mensajeria:Smtp:Password).
+// El modo demostración (el código se muestra en pantalla, sin email ni SMS) se permite en la versión de demostración
+// publicada ("Demostracion"), nunca en producción.
 var mensajeria = builder.Configuration.GetSection(ConfiguracionMensajeria.Seccion).Get<ConfiguracionMensajeria>() ?? new ConfiguracionMensajeria();
 if (builder.Environment.IsProduction() && mensajeria.ModoDemostracion)
 {

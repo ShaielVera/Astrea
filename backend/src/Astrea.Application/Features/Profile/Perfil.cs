@@ -29,7 +29,11 @@ public sealed record LocalidadDto(string Nombre, string Departamento, IReadOnlyL
 
 public sealed record ContactoCommand(string? EmailContacto, string? Celular);
 
-public sealed record CodigoEnviadoDto(string Destino, DateTimeOffset VenceEl, bool Simulado);
+/// <summary>
+/// <see cref="CodigoDemostracion"/>: solo en modo demostración (prohibido en producción), el código para mostrarlo en pantalla,
+/// así la validación se puede probar sin servicio de email ni de SMS.
+/// </summary>
+public sealed record CodigoEnviadoDto(string Destino, DateTimeOffset VenceEl, bool Simulado, string? CodigoDemostracion = null);
 
 public sealed record ValidarCodigoCommand(string Codigo);
 
@@ -162,7 +166,8 @@ public sealed class Perfil(
 
         usuarios.Agregar(codigo);
         await unitOfWork.GuardarCambiosAsync(cancellationToken);
-        return new CodigoEnviadoDto(Enmascarar(canal, destino), codigo.VenceEn, entrega == EntregaCodigo.Simulado);
+        var simulado = entrega == EntregaCodigo.Simulado;
+        return new CodigoEnviadoDto(Enmascarar(canal, destino), codigo.VenceEn, simulado, simulado ? enClaro : null);
     }
 
     public async Task<Result<MiPerfilDto>> ValidarCodigoAsync(CanalContacto canal, ValidarCodigoCommand comando, CancellationToken cancellationToken)

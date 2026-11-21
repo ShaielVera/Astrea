@@ -28,7 +28,8 @@ export type Localidad = { nombre: string; departamento: string; otrosNombres: st
 
 export type DatosPersonales = { nombre: string; apellido: string; dni: string; localidad: string | null; carrerasIds: string[] };
 
-export type CodigoEnviado = { destino: string; venceEl: string; simulado: boolean };
+/** `codigoDemostracion`: solo en modo demostración (nunca en producción), para mostrarlo en pantalla. */
+export type CodigoEnviado = { destino: string; venceEl: string; simulado: boolean; codigoDemostracion: string | null };
 
 export const perfilApi = {
   obtener: (token: string) => apiFetch<MiPerfil>("/me/perfil", { token }),

@@ -131,7 +131,7 @@ public sealed class PerfilTests(AstreaApiFactory factory)
         return (await LeerAsync<CarreraCreada>(respuesta)).Id;
     }
 
-    private sealed record CodigoEnviado(string Destino, DateTimeOffset VenceEl, bool Simulado);
+    private sealed record CodigoEnviado(string Destino, DateTimeOffset VenceEl, bool Simulado, string? CodigoDemostracion);
 
     private sealed record Yo(Guid Id);
 }

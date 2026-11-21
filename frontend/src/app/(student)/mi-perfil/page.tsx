@@ -353,11 +353,19 @@ function Validacion({
 
       {enviado && !vigente && (
         <form onSubmit={validar} aria-label={`Código del ${titulo.toLowerCase()}`} className="flex flex-col gap-2">
-          <p className="text-xs text-zinc-600 dark:text-zinc-400">
-            {enviado.simulado
-              ? "Modo demostración: el código no se mandó, está en la consola del servidor."
-              : `Te mandamos un código a ${enviado.destino}. Vence en 10 minutos.`}
-          </p>
+          {enviado.simulado ? (
+            <p role="note" className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+              <span className="font-semibold">Modo demostración:</span> en esta versión no se envían emails ni SMS.
+              {enviado.codigoDemostracion && (
+                <>
+                  {" "}
+                  Tu código es <strong className="font-mono text-sm tracking-widest">{enviado.codigoDemostracion}</strong>.
+                </>
+              )}
+            </p>
+          ) : (
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">Te mandamos un código a {enviado.destino}. Vence en 10 minutos.</p>
+          )}
           <label className="flex flex-col gap-1 font-medium">
             Código de 6 dígitos
             <input
