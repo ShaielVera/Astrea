@@ -5,6 +5,7 @@ import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react
 import { useAuth } from "@/features/auth/AuthProvider";
 import { ROLES, tieneRol } from "@/features/auth/tipos";
 import { pendientesDelPerfil, perfilApi } from "@/features/perfil/api";
+import { AvisosDeTramites } from "@/features/tramites/AvisosDeTramites";
 
 // Íconos de trazo simple (24×24), en la línea de los de Atenea.
 const ICONOS: Record<string, ReactNode> = {
@@ -178,6 +179,8 @@ export default function InicioEstudiante() {
           {rol}
         </span>
       </section>
+
+      <AvisosDeTramites />
 
       {pendientes.length > 0 && (
         <p role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dorado-500/40 bg-dorado-100/60 px-4 py-3 text-sm text-indigo-950 dark:bg-indigo-900/50 dark:text-indigo-100">

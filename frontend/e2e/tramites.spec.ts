@@ -82,6 +82,17 @@ test.describe("Trámites", () => {
     await expect(historial.nth(0)).toContainText("Vos");
     await expect(historial.nth(1)).toContainText("Secretaría");
     await expect(visto).not.toContainText("admin@astrea.test");
+
+    // En el inicio le aparece el aviso (sin número de trámite) hasta que toca "Entendido".
+    await estudiante.goto("/inicio");
+    const avisos = estudiante.getByRole("list", { name: "Avisos de tus trámites" });
+    await expect(avisos).toContainText("Tu constancia de alumno regular está lista para retirar.");
+    await expect(avisos).not.toContainText(numero);
+    await avisos.getByRole("button", { name: "Entendido" }).click();
+    await expect(avisos).toBeHidden();
+    await estudiante.reload();
+    await expect(estudiante.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(estudiante.getByRole("list", { name: "Avisos de tus trámites" })).toBeHidden();
   });
 
   test("un trámite rechazado muestra el motivo al estudiante", async ({ browser }) => {
