@@ -15,10 +15,22 @@ internal sealed class GeminiEmbeddingService(HttpClient http, ConfiguracionGemin
     /// <summary>Máximo de textos por pedido que admite la API.</summary>
     public const int TandaMaxima = 100;
 
+    /// <summary>
+    /// Los documentos se mandan de a pocos fragmentos: el plan gratis de Gemini limita el texto por minuto, y una tanda de 100
+    /// fragmentos de un reglamento largo lo supera de una sola vez (y fallaría siempre, por más que se reintente).
+    /// </summary>
+    public const int TandaDocumentos = 20;
+
     private const int Intentos = 4;
 
-    /// <summary>Espera antes de reintentar; se puede acortar en los tests.</summary>
+    /// <summary>Al indexar no hay nadie esperando: ante un límite de uso se reintenta más veces y esperando más.</summary>
+    private const int IntentosDocumentos = 6;
+
+    /// <summary>Espera antes de reintentar una consulta (alguien está esperando la respuesta); se puede acortar en los tests.</summary>
     internal Func<int, TimeSpan> Espera { get; init; } = intento => TimeSpan.FromSeconds(Math.Pow(2, intento));
+
+    /// <summary>Espera antes de reintentar al indexar: 10, 20, 40 y 60 segundos, para que se renueve el límite por minuto.</summary>
+    internal Func<int, TimeSpan> EsperaDocumentos { get; init; } = intento => TimeSpan.FromSeconds(Math.Min(60, 10 * Math.Pow(2, intento - 1)));
 
     public async Task<IReadOnlyList<float[]>> GenerarAsync(IReadOnlyList<string> textos, PropositoEmbedding proposito, CancellationToken cancellationToken)
     {
@@ -34,7 +46,8 @@ internal sealed class GeminiEmbeddingService(HttpClient http, ConfiguracionGemin
         }
 
         var vectores = new List<float[]>(textos.Count);
-        foreach (var tanda in textos.Chunk(TandaMaxima))
+        var tamanio = proposito == PropositoEmbedding.Documento ? TandaDocumentos : TandaMaxima;
+        foreach (var tanda in textos.Chunk(tamanio))
         {
             vectores.AddRange(await PedirAsync(tanda, proposito, cancellationToken));
         }
@@ -57,7 +70,16 @@ internal sealed class GeminiEmbeddingService(HttpClient http, ConfiguracionGemin
         HttpResponseMessage respuesta;
         try
         {
-            respuesta = await GeminiHttp.EnviarAsync(http, url, configuracion.ApiKey!, pedido, Intentos, Espera, TimeSpan.FromMinutes(1), cancellationToken);
+            var esDocumento = proposito == PropositoEmbedding.Documento;
+            respuesta = await GeminiHttp.EnviarAsync(
+                http,
+                url,
+                configuracion.ApiKey!,
+                pedido,
+                esDocumento ? IntentosDocumentos : Intentos,
+                esDocumento ? EsperaDocumentos : Espera,
+                TimeSpan.FromMinutes(1),
+                cancellationToken);
         }
         catch (Exception ex) when (GeminiHttp.EsFallaDeRed(ex, cancellationToken))
         {

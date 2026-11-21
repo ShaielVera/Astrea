@@ -18,6 +18,7 @@ public sealed class GeminiEmbeddingServiceTests
         new(new HttpClient(_servidor), new ConfiguracionGemini { ApiKey = apiKey, UrlBase = "https://gemini.test/v1beta/" })
         {
             Espera = _ => TimeSpan.Zero,
+            EsperaDocumentos = _ => TimeSpan.Zero,
         };
 
     private static string Respuesta(int cantidad, float valor = 3) =>
@@ -54,15 +55,35 @@ public sealed class GeminiEmbeddingServiceTests
     }
 
     [Fact]
-    public async Task Mas_de_100_textos_se_parten_en_varios_pedidos()
+    public async Task Los_documentos_se_piden_en_tandas_chicas_para_no_superar_el_limite_por_minuto()
     {
-        _servidor.Responder(HttpStatusCode.OK, Respuesta(100));
-        _servidor.Responder(HttpStatusCode.OK, Respuesta(30));
+        for (var i = 0; i < 6; i++)
+        {
+            _servidor.Responder(HttpStatusCode.OK, Respuesta(20));
+        }
+
+        _servidor.Responder(HttpStatusCode.OK, Respuesta(10));
 
         var vectores = await Servicio().GenerarAsync(Enumerable.Range(0, 130).Select(i => $"texto {i}").ToList(), PropositoEmbedding.Documento, CancellationToken.None);
 
         vectores.Should().HaveCount(130);
-        _servidor.Pedidos.Should().HaveCount(2);
+        _servidor.Pedidos.Should().HaveCount(7);
+    }
+
+    [Fact]
+    public async Task Al_indexar_insiste_mas_veces_ante_el_limite_de_uso()
+    {
+        for (var i = 0; i < 5; i++)
+        {
+            _servidor.Responder(HttpStatusCode.TooManyRequests, "{}");
+        }
+
+        _servidor.Responder(HttpStatusCode.OK, Respuesta(1));
+
+        var vectores = await Servicio().GenerarAsync(["uno"], PropositoEmbedding.Documento, CancellationToken.None);
+
+        vectores.Should().HaveCount(1);
+        _servidor.Pedidos.Should().HaveCount(6);
     }
 
     [Fact]
