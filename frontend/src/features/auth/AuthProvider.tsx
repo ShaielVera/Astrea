@@ -34,6 +34,8 @@ type AuthContextValue = {
   ingresarConGoogle: () => Promise<void>;
   /** Firebase manda un correo (gratis) con un enlace para elegir una contraseña nueva. */
   recuperarPassword: (email: string) => Promise<void>;
+  /** Pasa a la sesión los datos que se acaban de guardar en Mi perfil, para no tener que recargar la página. */
+  actualizarPerfil: (cambios: Partial<Pick<Perfil, "nombre" | "apellido">>) => void;
   cerrarSesion: () => Promise<void>;
   /** Vuelve a conectar con la API cuando no respondió. */
   reintentar: () => void;
@@ -122,6 +124,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const actualizarPerfil = useCallback((cambios: Partial<Pick<Perfil, "nombre" | "apellido">>) => {
+    setSesion((actual) => (actual.estado === "autenticado" ? { ...actual, perfil: { ...actual.perfil, ...cambios } } : actual));
+  }, []);
+
   const cerrarSesion = useCallback(async () => {
     await signOut(obtenerAuth());
   }, []);
@@ -141,11 +147,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       crearCuenta,
       ingresarConGoogle,
       recuperarPassword,
+      actualizarPerfil,
       cerrarSesion,
       reintentar,
       obtenerToken,
     }),
-    [sesion, errorSesion, ingresarConEmail, crearCuenta, ingresarConGoogle, recuperarPassword, cerrarSesion, reintentar, obtenerToken],
+    [sesion, errorSesion, ingresarConEmail, crearCuenta, ingresarConGoogle, recuperarPassword, actualizarPerfil, cerrarSesion, reintentar, obtenerToken],
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

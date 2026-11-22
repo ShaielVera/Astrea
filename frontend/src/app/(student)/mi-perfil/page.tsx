@@ -17,7 +17,7 @@ const botonSecundario =
   "rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800";
 
 export default function MiPerfilPage() {
-  const { obtenerToken } = useAuth();
+  const { obtenerToken, actualizarPerfil } = useAuth();
   const [perfil, setPerfil] = useState<MiPerfil | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,7 +55,14 @@ export default function MiPerfilPage() {
 
       {perfil && (
         <>
-          <DatosPersonales perfil={perfil} onGuardado={setPerfil} />
+          <DatosPersonales
+            perfil={perfil}
+            onGuardado={(guardado) => {
+              setPerfil(guardado);
+              // El saludo del inicio y las iniciales del encabezado se actualizan sin recargar la página.
+              actualizarPerfil({ nombre: guardado.nombre, apellido: guardado.apellido });
+            }}
+          />
           <DatosDeContacto key={`${perfil.emailContacto.valor}-${perfil.celular.valor}`} perfil={perfil} onGuardado={setPerfil} />
         </>
       )}

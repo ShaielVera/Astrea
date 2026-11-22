@@ -52,6 +52,11 @@ test.describe("Mi perfil y arrepentimientos", () => {
     await email.getByLabel("Código de 6 dígitos").fill(codigo);
     await email.getByRole("button", { name: "Validar" }).click();
     await expect(email).toContainText("Validado");
+
+    // Al volver al inicio ya saluda con el nombre nuevo, sin recargar la página.
+    await page.getByRole("link", { name: "Mi inicio" }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Brenda");
+    await expect(page.getByRole("status").filter({ hasText: "Completá tu perfil" })).toHaveCount(0);
   });
 
   test("un trámite se puede descartar antes de enviarlo y cancelar después", async ({ page }) => {
