@@ -30,6 +30,10 @@ export default function AdministracionAcademica() {
   const [editando, setEditando] = useState<MateriaDePlan | null>(null);
   const [correlativasDe, setCorrelativasDe] = useState<MateriaDePlan | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [verDesactivadas, setVerDesactivadas] = useState(false);
+  const activas = carreras.filter((c) => c.activa);
+  const desactivadas = carreras.filter((c) => !c.activa);
 
   /** Ejecuta una acción contra la API mostrando el error, si lo hay. */
   const ejecutar = useCallback(
@@ -54,6 +58,25 @@ export default function AdministracionAcademica() {
       vigente = false;
     };
   }, [obtenerToken]);
+
+  /** Desactivar saca la carrera de la lista; restaurarla la devuelve. */
+  async function cambiarEstado(objetivo: Carrera, activa: boolean) {
+    await ejecutar(async (token) => {
+      const actualizada = await academicoApi.actualizarCarrera(token, { ...objetivo, activa });
+      setCarreras((lista) => lista.map((c) => (c.id === actualizada.id ? actualizada : c)));
+      if (activa) {
+        setAviso(`Se restauró ${actualizada.nombre}.`);
+        if (desactivadas.length <= 1) setVerDesactivadas(false);
+        await elegirCarrera(actualizada);
+      } else {
+        setCarrera(null);
+        setPlanes([]);
+        setPlan(null);
+        setMaterias([]);
+        setAviso(`Se desactivó ${actualizada.nombre}. Podés recuperarla con “Restaurar carreras desactivadas”.`);
+      }
+    });
+  }
 
   async function elegirCarrera(elegida: Carrera) {
     setCarrera(elegida);
@@ -90,6 +113,11 @@ export default function AdministracionAcademica() {
           {error}
         </p>
       )}
+      {aviso && (
+        <p role="status" className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+          {aviso}
+        </p>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
         <aside className="flex flex-col gap-4">
@@ -97,8 +125,8 @@ export default function AdministracionAcademica() {
             <h2 id="carreras-titulo" className="px-3 pt-1 font-semibold">
               Carreras
             </h2>
-            <ul className="flex flex-col gap-1">
-              {carreras.map((c) => (
+            <ul aria-label="Carreras activas" className="flex flex-col gap-1">
+              {activas.map((c) => (
                 <li key={c.id}>
                   <button
                     type="button"
@@ -106,7 +134,7 @@ export default function AdministracionAcademica() {
                     aria-current={carrera?.id === c.id}
                     className={`w-full rounded-md px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
                       carrera?.id === c.id ? "bg-indigo-50 font-medium dark:bg-indigo-950" : ""
-                    } ${c.activa ? "" : "text-zinc-400"}`}
+                    }`}
                   >
                     <span className="block">{c.codigo}</span>
                     <span className="block text-xs text-zinc-500">{c.nombre}</span>
@@ -114,6 +142,34 @@ export default function AdministracionAcademica() {
                 </li>
               ))}
             </ul>
+
+            {desactivadas.length > 0 && (
+              <div className="flex flex-col gap-2 border-t border-zinc-200 px-1 pt-3 dark:border-zinc-800">
+                <button
+                  type="button"
+                  aria-expanded={verDesactivadas}
+                  onClick={() => setVerDesactivadas((v) => !v)}
+                  className={botonSecundario}
+                >
+                  {verDesactivadas ? "Ocultar carreras desactivadas" : `Restaurar carreras desactivadas (${desactivadas.length})`}
+                </button>
+                {verDesactivadas && (
+                  <ul aria-label="Carreras desactivadas" className="flex flex-col gap-1">
+                    {desactivadas.map((c) => (
+                      <li key={c.id} aria-label={c.nombre} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm">
+                        <span className="min-w-0 text-zinc-500">
+                          <span className="block">{c.codigo}</span>
+                          <span className="block text-xs">{c.nombre}</span>
+                        </span>
+                        <button type="button" className={botonSecundario} onClick={() => void cambiarEstado(c, true)}>
+                          Restaurar
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </section>
 
           <FormularioCarrera
@@ -138,18 +194,8 @@ export default function AdministracionAcademica() {
                   {carrera.codigo} · {carrera.duracionAnios} años · {carrera.activa ? "Activa" : "Inactiva"}
                 </p>
               </div>
-              <button
-                type="button"
-                className={botonSecundario}
-                onClick={() =>
-                  ejecutar(async (token) => {
-                    const actualizada = await academicoApi.actualizarCarrera(token, { ...carrera, activa: !carrera.activa });
-                    setCarrera(actualizada);
-                    setCarreras((lista) => lista.map((c) => (c.id === actualizada.id ? actualizada : c)));
-                  })
-                }
-              >
-                {carrera.activa ? "Desactivar carrera" : "Activar carrera"}
+              <button type="button" className={botonSecundario} onClick={() => void cambiarEstado(carrera, !carrera.activa)}>
+                {carrera.activa ? "Desactivar carrera" : "Restaurar carrera"}
               </button>
             </div>
 

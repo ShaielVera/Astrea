@@ -56,6 +56,35 @@ test.describe("Catálogo académico", () => {
     await contexto.close();
   });
 
+  test("Secretaría desactiva una carrera, sale de la lista y la restaura", async ({ page }) => {
+    await ingresarComoAdministrador(page);
+    await page.goto("/admin/academico");
+    const marca = `${Date.now()}`.slice(-6);
+    const nombre = `Carrera de prueba ${marca}`;
+    const nueva = page.getByRole("form", { name: "Nueva carrera" });
+    await nueva.getByLabel("Código").fill(`CP${marca}`);
+    await nueva.getByLabel("Nombre").fill(nombre);
+    await nueva.getByRole("button", { name: "Guardar" }).click();
+    const activas = page.getByRole("list", { name: "Carreras activas" });
+    await expect(activas).toContainText(nombre);
+    await expect(page.getByRole("heading", { name: nombre, level: 2 })).toBeVisible();
+
+    await page.getByRole("button", { name: "Desactivar carrera" }).click();
+    await expect(page.getByRole("status")).toContainText(`Se desactivó ${nombre}`);
+    await expect(activas).not.toContainText(nombre);
+    await expect(page.getByRole("heading", { name: nombre, level: 2 })).toHaveCount(0);
+
+    await page.getByRole("button", { name: /^Restaurar carreras desactivadas \(\d+\)$/ }).click();
+    await page.getByRole("list", { name: "Carreras desactivadas" }).getByRole("listitem", { name: nombre }).getByRole("button", { name: "Restaurar" }).click();
+    await expect(page.getByRole("status")).toContainText(`Se restauró ${nombre}`);
+    await expect(activas).toContainText(nombre);
+    await expect(page.getByRole("heading", { name: nombre, level: 2 })).toBeVisible();
+
+    // Queda guardado.
+    await page.reload();
+    await expect(page.getByRole("list", { name: "Carreras activas" })).toContainText(nombre);
+  });
+
   test("un estudiante no puede entrar a la administración del plan de estudios", async ({ page }) => {
     await ingresarComoEstudianteNuevo(page);
 
