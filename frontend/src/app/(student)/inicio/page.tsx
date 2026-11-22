@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { ROLES, tieneRol } from "@/features/auth/tipos";
+import { asistenciaApi, fechaCorta } from "@/features/asistencia/api";
 import { pendientesDelPerfil, perfilApi } from "@/features/perfil/api";
 import { AvisosDeTramites } from "@/features/tramites/AvisosDeTramites";
 import { ICONOS, MODULOS } from "@/features/inicio/modulos";
@@ -16,6 +17,40 @@ const sitiosDelInstituto = [
   { titulo: "Atenea", descripcion: "Biblioteca del instituto: pedí libros.", href: "https://atenea.isp20.edu.ar/" },
   { titulo: "Préstamos", descripcion: "Préstamo de equipos y materiales.", href: "https://prestamos.isp20.edu.ar/" },
 ];
+
+/** Para el docente: si hay un pedido de asistencia abierto y le faltan estudiantes por confirmar, se lo recuerda. */
+function AvisoDocente() {
+  const { obtenerToken } = useAuth();
+  const [aviso, setAviso] = useState<{ cierre: string; faltan: number } | null>(null);
+
+  useEffect(() => {
+    let vigente = true;
+    (async () => {
+      const token = await obtenerToken();
+      const abierto = (await asistenciaApi.relevamientosDocente(token)).find((relevamiento) => relevamiento.abierto);
+      if (!abierto) return;
+      const panel = await asistenciaApi.panel(token, abierto.id);
+      const faltan = panel.materias.flatMap((materia) => materia.estudiantes).filter((estudiante) => !estudiante.valor).length;
+      if (vigente && faltan > 0) setAviso({ cierre: fechaCorta(abierto.fechaCierre), faltan });
+    })().catch(() => undefined);
+    return () => {
+      vigente = false;
+    };
+  }, [obtenerToken]);
+
+  if (!aviso) return null;
+  return (
+    <p role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dorado-500/40 bg-dorado-100/60 px-4 py-3 text-sm text-indigo-950 dark:bg-indigo-900/50 dark:text-indigo-100">
+      <span>
+        <span className="font-semibold">Confirmá la asistencia:</span> la dirección lo pide hasta el {aviso.cierre} y te{" "}
+        {aviso.faltan === 1 ? "falta 1 estudiante" : `faltan ${aviso.faltan} estudiantes`} por confirmar.
+      </span>
+      <Link href="/docente" className="rounded-full bg-indigo-700 px-3.5 py-1.5 font-semibold text-white hover:bg-indigo-800">
+        Ir a confirmar
+      </Link>
+    </p>
+  );
+}
 
 function saludo(hora: number): string {
   if (hora >= 5 && hora < 13) return "Buen día";
@@ -127,6 +162,8 @@ export default function InicioEstudiante() {
       </section>
 
       <AvisosDeTramites />
+
+      {tieneRol(perfil, ROLES.docente) && <AvisoDocente />}
 
       {pendientes.length > 0 && (
         <p role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dorado-500/40 bg-dorado-100/60 px-4 py-3 text-sm text-indigo-950 dark:bg-indigo-900/50 dark:text-indigo-100">

@@ -52,6 +52,13 @@ export default function AsistenciaDocente() {
     };
   }, [elegido, obtenerToken, version]);
 
+  // En un pedido cerrado solo importan las materias donde se confirmó algo: las que el docente sumó después no tienen nada que mostrar.
+  const materiasVisibles = !panel
+    ? []
+    : panel.relevamiento.abierto
+      ? panel.materias
+      : panel.materias.filter((materia) => materia.estudiantes.some((estudiante) => estudiante.valor));
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-10 sm:px-6">
       <div className="flex flex-col gap-1">
@@ -93,11 +100,15 @@ export default function AsistenciaDocente() {
         </label>
       )}
 
-      {panel && panel.materias.length === 0 && (
-        <p className="text-zinc-500">Todavía no marcaste las materias que das: elegilas arriba, en “Las materias que doy”.</p>
+      {panel && materiasVisibles.length === 0 && (
+        <p className="text-zinc-500">
+          {panel.relevamiento.abierto
+            ? "Todavía no marcaste las materias que das: elegilas arriba, en “Las materias que doy”."
+            : "En este pedido no hay asistencias confirmadas en tus materias."}
+        </p>
       )}
 
-      {panel?.materias.map((materia) => (
+      {panel && materiasVisibles.map((materia) => (
         <TablaMateria key={`${panel.relevamiento.id}-${materia.planMateriaId}`} relevamiento={panel.relevamiento} materia={materia} />
       ))}
     </main>
@@ -200,17 +211,6 @@ function MisMaterias({ onCambio }: { onCambio: () => void }) {
         </ul>
       )}
 
-      {mias && (
-        <button
-          type="button"
-          aria-expanded={abierta}
-          onClick={() => setEditando(!abierta)}
-          className="self-start rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-        >
-          {abierta ? "Listo, cerrar la lista" : mias.length > 0 ? "Cambiar mis materias" : "Elegir mis materias"}
-        </button>
-      )}
-
       {abierta && (
       <>
       <label className="flex max-w-md flex-col gap-1 text-sm font-medium">
@@ -260,6 +260,18 @@ function MisMaterias({ onCambio }: { onCambio: () => void }) {
       </>
       )}
 
+      {/* Un solo botón, al final: abre la lista y, cuando está abierta, la cierra sin tener que volver a subir. */}
+      {mias && (
+        <button
+          type="button"
+          aria-expanded={abierta}
+          onClick={() => setEditando(!abierta)}
+          className="self-start rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+        >
+          {abierta ? "Listo, cerrar la lista" : mias.length > 0 ? "Cambiar mis materias" : "Elegir mis materias"}
+        </button>
+      )}
+
       {error && (
         <p role="alert" className="text-sm text-red-700 dark:text-red-300">
           {error}
@@ -278,7 +290,11 @@ function TablaMateria({ relevamiento, materia }: { relevamiento: Relevamiento; m
   );
   const [estado, setEstado] = useState<{ tipo: "ok" | "error"; mensaje: string } | null>(null);
   const [guardando, setGuardando] = useState(false);
+  /** Cuántos estudiantes ya tienen la asistencia guardada (no cuenta lo marcado sin guardar). */
+  const [confirmados, setConfirmados] = useState(() => materia.estudiantes.filter((estudiante) => estudiante.valor).length);
   const soloLectura = !relevamiento.abierto;
+  const total = materia.estudiantes.length;
+  const completa = total > 0 && confirmados === total;
   const titulo = `${materia.materia} (${materia.carrera}, ${NOMBRE_ANIO[materia.anio] ?? `año ${materia.anio}`})`;
 
   function cambiar(id: string, cambios: Partial<Fila>) {
@@ -299,6 +315,7 @@ function TablaMateria({ relevamiento, materia }: { relevamiento: Relevamiento; m
     setGuardando(true);
     try {
       const guardadas = await asistenciaApi.confirmar(await obtenerToken(), relevamiento.id, materia.planMateriaId, confirmaciones);
+      setConfirmados(confirmaciones.length);
       const faltan = materia.estudiantes.length - confirmaciones.length;
       setEstado({ tipo: "ok", mensaje: `Guardado: ${guardadas} ${guardadas === 1 ? "estudiante" : "estudiantes"}.${faltan > 0 ? ` Faltan ${faltan}.` : ""}` });
     } catch (e) {
@@ -310,13 +327,25 @@ function TablaMateria({ relevamiento, materia }: { relevamiento: Relevamiento; m
 
   return (
     <section aria-label={titulo} className="flex flex-col gap-3 rounded-xl border bg-superficie border-zinc-200 p-4 dark:border-zinc-800">
-      <h2 className="text-lg font-semibold">
-        {materia.materia}
-        <span className="block text-sm font-normal text-zinc-500">
-          {materia.carrera} · {NOMBRE_ANIO[materia.anio] ?? `Año ${materia.anio}`} · {materia.estudiantes.length}{" "}
-          {materia.estudiantes.length === 1 ? "estudiante anotado" : "estudiantes anotados"}
-        </span>
-      </h2>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <h2 className="text-lg font-semibold">
+          {materia.materia}
+          <span className="block text-sm font-normal text-zinc-500">
+            {materia.carrera} · {NOMBRE_ANIO[materia.anio] ?? `Año ${materia.anio}`} · {materia.estudiantes.length}{" "}
+            {materia.estudiantes.length === 1 ? "estudiante anotado" : "estudiantes anotados"}
+          </span>
+        </h2>
+        {total > 0 && (
+          <span
+            data-testid="avance-materia"
+            className={`rounded-full px-3 py-1 text-sm font-medium ${
+              completa ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200" : "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200"
+            }`}
+          >
+            {completa ? "✓ " : ""}Confirmaste {confirmados} de {total}
+          </span>
+        )}
+      </div>
 
       {materia.estudiantes.length === 0 ? (
         <p className="text-sm text-zinc-500">Todavía no hay estudiantes anotados en esta materia.</p>

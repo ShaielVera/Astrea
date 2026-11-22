@@ -50,7 +50,10 @@ test.describe("Confirmación de asistencia", () => {
     await expect(admin.getByRole("status")).toContainText(`Se abrió "Receso ${marca}"`);
 
     // 4. El profesor (al volver a entrar ya tiene el rol) confirma que el estudiante no asiste.
-    await profe.goto("/docente");
+    // En su inicio lo espera un aviso con lo que le falta confirmar.
+    await profe.goto("/inicio");
+    await expect(profe.getByRole("status").filter({ hasText: "Confirmá la asistencia" })).toContainText(/por confirmar/);
+    await profe.getByRole("link", { name: "Ir a confirmar" }).click();
     await expect(profe.getByRole("heading", { name: "Confirmar asistencia", level: 1 })).toBeVisible();
     const pedido = profe.getByLabel("Pedido de la dirección");
     const opcion = pedido.locator("option", { hasText: `Receso ${marca}` });
@@ -58,8 +61,13 @@ test.describe("Confirmación de asistencia", () => {
     const materia = profe.getByRole("region", { name: new RegExp(`^${MATERIA} \\(`) });
     await materia.getByRole("group", { name: `Asistencia de ${nombreVisible}` }).getByLabel("No asiste").check();
     await materia.getByRole("textbox", { name: `Observación sobre ${nombreVisible}` }).fill("No vino desde abril");
+    const avance = materia.getByTestId("avance-materia");
+    const antes = await avance.textContent();
     await materia.getByRole("button", { name: "Guardar" }).click();
     await expect(materia.getByRole("status")).toContainText("Guardado: 1 estudiante");
+    // El contador de la materia sube con lo guardado.
+    await expect(avance).not.toHaveText(antes!);
+    await expect(avance).toContainText(/Confirmaste \d+ de \d+/);
 
     // 5. El estudiante ve lo que confirmó su profesor y ya no puede borrarlo dándose de baja.
     await page.reload();
