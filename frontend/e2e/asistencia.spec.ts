@@ -107,8 +107,14 @@ test.describe("Confirmación de asistencia", () => {
     await expect(seccion.getByRole("list", { name: "Materias que doy" }).getByRole("listitem")).toHaveCount(1);
 
     // Queda guardado y Secretaría lo ve.
+    // Al volver, la lista de tildes arranca cerrada para que los estudiantes queden a la vista.
     await page.reload();
-    await expect(page.getByRole("region", { name: "Las materias que doy" }).getByRole("checkbox", { name: MATERIA, exact: true })).toBeChecked();
+    const despues = page.getByRole("region", { name: "Las materias que doy" });
+    await expect(despues.getByRole("list", { name: "Materias que doy" })).toContainText(MATERIA);
+    await expect(despues.getByRole("checkbox")).toHaveCount(0);
+    await despues.getByRole("button", { name: "Cambiar mis materias" }).click();
+    await despues.getByRole("combobox", { name: "Carrera" }).selectOption({ label: CARRERA });
+    await expect(despues.getByRole("checkbox", { name: MATERIA, exact: true })).toBeChecked();
     await admin.reload();
     await admin.getByLabel("Buscar por apellido, nombre o DNI").fill(emailProfe);
     await cuenta.getByRole("button", { name: "Materias que dicta (1)" }).click();

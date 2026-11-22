@@ -116,6 +116,8 @@ function MisMaterias({ onCambio }: { onCambio: () => void }) {
   const [materias, setMaterias] = useState<MateriaDePlan[] | null>(null);
   /** El tilde cambia al tocarlo, sin esperar al servidor; si no se pudo guardar, vuelve como estaba. */
   const [pendientes, setPendientes] = useState<Record<string, boolean>>({});
+  /** null: decide sola (abierta solo si todavía no eligió ninguna materia). */
+  const [editando, setEditando] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const elegirCarrera = useCallback(
@@ -155,6 +157,7 @@ function MisMaterias({ onCambio }: { onCambio: () => void }) {
   async function cambiar(materia: MateriaDePlan, marcar: boolean) {
     const id = materia.planMateriaId;
     setError(null);
+    setEditando(true);
     setPendientes((actuales) => ({ ...actuales, [id]: marcar }));
     try {
       const token = await obtenerToken();
@@ -171,6 +174,8 @@ function MisMaterias({ onCambio }: { onCambio: () => void }) {
 
   const marcadas = new Set(mias?.map((materia) => materia.planMateriaId));
   const marcada = (id: string) => pendientes[id] ?? marcadas.has(id);
+  // La lista de tildes arranca cerrada si ya eligió sus materias: así los estudiantes quedan a la vista.
+  const abierta = editando ?? mias?.length === 0;
 
   return (
     <section aria-labelledby="mis-materias-titulo" className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-superficie p-5 shadow-sm dark:border-zinc-800">
@@ -178,9 +183,11 @@ function MisMaterias({ onCambio }: { onCambio: () => void }) {
         <h2 id="mis-materias-titulo" className="text-lg font-semibold">
           Las materias que doy
         </h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Elegí la carrera y marcá con un tilde las materias que das. Si marcaste una por error, tocala de nuevo para sacarle el tilde. Se guarda solo.
-        </p>
+        {abierta && (
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Elegí la carrera y marcá con un tilde las materias que das. Si marcaste una por error, tocala de nuevo para sacarle el tilde. Se guarda solo.
+          </p>
+        )}
       </div>
 
       {mias && mias.length > 0 && (
@@ -193,6 +200,19 @@ function MisMaterias({ onCambio }: { onCambio: () => void }) {
         </ul>
       )}
 
+      {mias && (
+        <button
+          type="button"
+          aria-expanded={abierta}
+          onClick={() => setEditando(!abierta)}
+          className="self-start rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+        >
+          {abierta ? "Listo, cerrar la lista" : mias.length > 0 ? "Cambiar mis materias" : "Elegir mis materias"}
+        </button>
+      )}
+
+      {abierta && (
+      <>
       <label className="flex max-w-md flex-col gap-1 text-sm font-medium">
         Carrera
         <select
@@ -214,14 +234,14 @@ function MisMaterias({ onCambio }: { onCambio: () => void }) {
       {materias?.length === 0 && <p className="text-sm text-zinc-500">Esta carrera todavía no tiene materias cargadas.</p>}
 
       {materias && materias.length > 0 && (
-        <div className="flex flex-col gap-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {agruparPorAnio(materias).map(([anio, delAnio]) => (
-            <fieldset key={anio} className="flex flex-col gap-1">
+            <fieldset key={anio} className="flex flex-col">
               <legend className="mb-1 text-sm font-semibold text-zinc-700 dark:text-zinc-300">{NOMBRE_ANIO[anio] ?? `Año ${anio}`}</legend>
               {delAnio.map((materia) => (
                 <label
                   key={materia.planMateriaId}
-                  className="flex min-h-11 items-center gap-3 rounded-md px-2 py-1.5 hover:bg-zinc-100 has-[:checked]:bg-emerald-50 dark:hover:bg-zinc-800 dark:has-[:checked]:bg-emerald-950/50"
+                  className="flex min-h-10 items-center gap-2.5 rounded-md px-2 py-1 text-sm hover:bg-zinc-100 has-[:checked]:bg-emerald-50 dark:hover:bg-zinc-800 dark:has-[:checked]:bg-emerald-950/50"
                 >
                   <input
                     type="checkbox"
@@ -236,6 +256,8 @@ function MisMaterias({ onCambio }: { onCambio: () => void }) {
             </fieldset>
           ))}
         </div>
+      )}
+      </>
       )}
 
       {error && (
