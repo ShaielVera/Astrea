@@ -1,7 +1,7 @@
 # ⚖️ Astrea — Portal Académico e Institucional (2026)
 
-**Carrera:** Técnico Superior en Desarrollo de Software (TSDS) & Técnico Superior en Redes e Infraestructura de Tecnologías de la Información (TSSITI)  
-**Cátedra:** Prácticas Profesionalizantes 2  
+**Carrera:** Técnico Superior en Desarrollo de Software (TSDS) & Técnico Superior en Soporte de Infraestructura de Tecnología de la Información (TSSITI)  
+**Materia:** Práctica Profesionalizante I  
 **Año:** 2026  
 **Institución:** Instituto Superior de Profesorado Nº20  
 **Autora:** Brenda Shaiel Vera  
@@ -47,7 +47,8 @@ Desarrollar una aplicación web moderna (con soporte PWA instalable) basada en S
 **3. Objetos Perdidos ("Hallazgos")**
 - **3.1** Formulario de reporte con foto (se amplía con zoom para ver detalles; con vista previa para quitarla si se eligió otra por error, validada en el servidor y guardada en almacenamiento privado), lugar, fecha y punto de resguardo.
 - **3.2** Listado público seguro (ocultando datos sensibles).
-- **3.3** Cierre de caso por la Secretaría con registro de quién retira (nombre y DNI), quién verificó y cuándo. Los datos de quien retira se borran a los 30 días.
+- **3.3** Cualquier cuenta con sesión puede publicar; la Secretaría puede dar de baja una publicación indicando el motivo.
+- **3.4** Cierre de caso por la Secretaría con registro de quién retira (nombre y DNI), quién verificó la identidad y cuándo. A los 30 días del cierre se borra el hallazgo de la base, con su foto y los datos de quien lo retiró.
 
 **4. Asistente con Inteligencia Artificial (Agente RAG)**
 - **4.1** Ingesta de documentos oficiales en PDF (reglamentos, planes, cronogramas) cargados por la Secretaría, con versiones.
@@ -57,7 +58,7 @@ Desarrollar una aplicación web moderna (con soporte PWA instalable) basada en S
 - **4.5** Panel de métricas para Secretaría: frecuencia de preguntas, temas sin respuesta y errores de la IA, con datos anónimos.
 
 **5. Confirmación de asistencia (por ejemplo, para la beca Progresar)**
-- **5.1** Rol Docente: Secretaría asigna a cada profesor las materias que dicta, y solo ve a los estudiantes de esas materias.
+- **5.1** Rol Docente: cada profesor elige las materias que dicta (también puede asignárselas Secretaría) y solo ve a los estudiantes de esas materias.
 - **5.2** El estudiante anota las materias que cursa en el año (solo de las carreras de su perfil) y ve lo que confirmaron sus profesores.
 - **5.3** La dirección pide una confirmación con fecha de cierre y cada profesor marca si el estudiante asiste regularmente, de forma irregular o no asiste. La dirección sigue el avance por materia.
 - **5.4** El informe se filtra con la lista de DNI de la beca (se pega completa, por ejemplo desde Excel), que Astrea no guarda, y se descarga en CSV. El sistema informa; la decisión es de la dirección.
@@ -65,6 +66,11 @@ Desarrollar una aplicación web moderna (con soporte PWA instalable) basada en S
 **6. Mi perfil**
 - **6.1** El estudiante completa nombre, apellido, DNI, localidad (se elige de una lista de 215 localidades y parajes a 100 km o menos de San Justo, tomada de Georef, para que no haya la misma ciudad escrita de varias formas) y las carreras que cursa. Se guardan directamente; los trámites y Mi cursada solo ofrecen esas carreras, las mesas arrancan filtradas por ellas y en los demás selectores aparecen primero.
 - **6.2** Email y celular de contacto validados con un código de 6 dígitos (vence a los 10 minutos, 5 intentos, se guarda solo su hash). La validación dura un año y después se pide renovarla.
+
+**7. Cuentas, roles y administración**
+- **7.1** Ingreso con email y contraseña o con Google, creación de cuenta y recuperación de contraseña (Firebase Auth).
+- **7.2** Tres roles: **Estudiante** (toda cuenta al registrarse), **Docente** y **Administrador** (Secretaría y Dirección). No hay un rol de Director aparte: la dirección usa el rol Administrador.
+- **7.3** Panel de administración: usuarios y roles, plan de estudios (las carreras desactivadas se ocultan y se pueden restaurar), mesas, trámites, plantillas, hallazgos, documentos del asistente, métricas y confirmación de asistencia.
 
 ---
 
@@ -107,6 +113,10 @@ Desarrollado en 14 slices verticales, cada uno con sus tests unitarios, de integ
 | 12 | Confirmación de asistencia: rol docente, inscripción a cursada, relevamientos e informe para la dirección |
 | 13 | Identidad visual (logo y paleta institucional), Mi perfil con email y celular validados, y mejoras de uso |
 
+**Parcial:** la validación del celular funciona solo en modo demostración (no hay proveedor de SMS) y el envío del código por email está programado, pero no configurado en la versión publicada. La verificación de correlatividades es una simulación con los datos que indica el estudiante, porque Astrea no guarda notas.
+
+**Pendiente (de la idea original):** trámites de analítico parcial y justificación de inasistencia, redacción de rechazos asistida por IA, sincronización con la web del instituto y notificaciones por email o push. Firebase Storage se reemplazó por la carpeta privada del servidor.
+
 ---
 
 ## 🔖 Convenciones del repositorio
@@ -125,6 +135,6 @@ Desarrollado en 14 slices verticales, cada uno con sus tests unitarios, de integ
 ---
 
 ## 🧑‍🏫 Créditos
-Proyecto educativo de **Prácticas Profesionalizantes 2** — ISP Nº20 (2026).  
+Proyecto educativo de **Práctica Profesionalizante I** — ISP Nº20 (2026).  
 Estudiante: **Brenda Shaiel Vera** (TSDS & TSSITI).  
 Docente a cargo: **Alejandro Ramírez**. 💙
